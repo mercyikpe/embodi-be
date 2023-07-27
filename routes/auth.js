@@ -4,13 +4,23 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 
+router.get('/', (req, res)=>{
+    res.send(' running here')
+}
+)
+
 // User registration route
-router.post('register', authController.register);
+router.post('/register', authController.registerUser); 
 
 // User login route
-router.post('login', authController.login);
+router.post('/login', authController.loginUser);
+
+/// verify Otp
+router.post('/verifyotp', authController.verifyOTP);
 
 // User Google sign-in route
-router.post('google-signin', authController.googleSignIn);
+//router.post('google-signin', authController.googleSignIn);
+
+
 
 module.exports = router;

@@ -5,18 +5,22 @@ const mongoose  = require('mongoose');
 dotenv.config();
 const PORT = process.env.PORT || 5000
 
+app.use(express.json());
 
 // Import routes
-//onst authRoute = require('./routes/auth');
+const authRoute = require('./routes/auth.js');
+
+// Routes middlewares
+app.use('/api/auth', authRoute);
 
 
 ////// URL FOR THE PROJECT
 const prodUrl = `http://127.0.0.1:${PORT}`
-const liveUrl =  `${process.env.currentUrl}`
+const liveUrl =  `${process.env.currentUrl}:${PORT}`
 const currentUrl = liveUrl ||  prodUrl  
 
 //// DATABSE URL local: process.env.MONGODB_URI ||| cloud:process.env.databaseUrl 
-const dbUrl = process.env.databaseUrl || process.env.MONGODB_URI
+const dbUrl =  process.env.MONGODB_URI
 
 
 // Database connection
@@ -41,8 +45,7 @@ app.get('/', (req, res) =>{
 })
 
 
-// Routes middlewares
-//app.use('/api/auth', authRoute);
+
 
 app.listen(PORT, ()=>{
   console.log(`Connected on PORT ${PORT} || ${currentUrl}`)

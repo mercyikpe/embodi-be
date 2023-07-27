@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User')
+const OtpCode = require('../models/OtpCode');
 const cookieParser = require ('cookie-parser');
 const bodyParser = require('body-parser');
 const cookie = require('cookie');
