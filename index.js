@@ -5,6 +5,11 @@ const mongoose  = require('mongoose');
 dotenv.config();
 const PORT = process.env.PORT || 5000
 
+
+// Import routes
+//onst authRoute = require('./routes/auth');
+
+
 ////// URL FOR THE PROJECT
 const prodUrl = `http://127.0.0.1:${PORT}`
 const liveUrl =  `${process.env.currentUrl}:${PORT}`
@@ -36,7 +41,8 @@ app.get('/', (req, res) =>{
 })
 
 
-
+// Routes middlewares
+//app.use('/api/auth', authRoute);
 
 app.listen(PORT, ()=>{
   console.log(`Connected on PORT ${PORT} || ${currentUrl}`)
