@@ -1,0 +1,27 @@
+{
+  "name": "embody",
+  "version": "1.0.0",
+  "description": "DOCTOR'S APPOINTMENT APP FOR HOSPITALS",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon app.js"
+  },
+  "author": "EFFIOG GODSWILL",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DONNWILZY/embodi.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DONNWILZY/embodi/issues"
+  },
+  "homepage": "https://github.com/DONNWILZY/embodi#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongoose": "^7.4.1",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.0.1"
+  }
+}
