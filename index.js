@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 5000
 
 ////// URL FOR THE PROJECT
 const prodUrl = `http://127.0.0.1:${PORT}`
-const liveUrl =  `${process.env.currentUrl}:${PORT}`
+const liveUrl =  `${process.env.currentUrl}`
 const currentUrl = liveUrl ||  prodUrl  
 
 //// DATABSE URL local: process.env.MONGODB_URI ||| cloud:process.env.databaseUrl 

@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/DONNWILZY/embodi/issues"
   },
-  "homepage": "https://github.com/DONNWILZY/embodi#readme",
+  "homepage": "https://embodi.vercel.app",
   "dependencies": {
     "bcrypt": "^5.1.0",
     "crypto": "^1.0.1",
