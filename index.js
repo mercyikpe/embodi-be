@@ -41,8 +41,8 @@ db.once('close', () => {
 
 
 app.get('/', (req, res) =>{
-    res.send( `connected via ${currentUrl}`)
-})
+    res.send( `DEFAULT ROUTE IS WORKING`)
+});
 
 
 
