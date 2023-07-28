@@ -9,9 +9,11 @@ app.use(express.json());
 
 // Import routes
 const authRoute = require('./routes/auth.js');
+const userRoute = require('./routes/user');
 
 // Routes middlewares
 app.use('/api/auth', authRoute);
+app.use('/api/user', userRoute);
 
 
 ////// URL FOR THE PROJECT

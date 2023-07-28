@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const createError = require('../utilities/createError');
 const User = require('../models/User');
 const transporter = require('../utilities/transporter')
-const OTPCode = require('../models/otpCode'); // Add this line to import the OtpCode model
+const OTPCode = require('../models/OtpCode'); // Add this line to import the OtpCode model
 require('dotenv').config();
 
 
