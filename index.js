@@ -20,7 +20,7 @@ const liveUrl =  `${process.env.currentUrl}:${PORT}`
 const currentUrl = liveUrl ||  prodUrl  
 
 //// DATABSE URL local: process.env.MONGODB_URI ||| cloud:process.env.databaseUrl 
-const dbUrl =  process.env.MONGODB_URI
+const dbUrl = process.env.databaseUrl ||  process.env.MONGODB_URI
 
 
 // Database connection
