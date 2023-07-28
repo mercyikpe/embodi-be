@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "DOCTOR'S APPOINTMENT APP FOR HOSPITALS",
   "main": "index.js",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
-    "build": "tsc && node src",
-    "dev": "nodemon app.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "author": "EFFIOG GODSWILL",
   "license": "MIT",
