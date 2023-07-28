@@ -4,7 +4,7 @@
   "description": "DOCTOR'S APPOINTMENT APP FOR HOSPITALS",
   "main": "index.js",
   "engines": {
-    "node": "v18.16.1"
+    "node": "18"
   },
   "scripts": {
     "start": "node index.js",
