@@ -202,7 +202,6 @@ const generateOTPCode = () => {
   
       // If the user does not exist, proceed with the normal sign-up process
   
-      // ... (the rest of the sign-up logic remains the same)
   
       // Save the new user record
       const newUser = new User({
