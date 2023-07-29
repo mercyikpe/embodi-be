@@ -26,6 +26,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
     isAdmin: {
       type: Boolean,
       default: false,
@@ -34,6 +35,13 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    
+    // Additional field to reference DoctorInfo model
+    doctorInfo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'DoctorInfo',
+    },
+    
     isActive: {
       type: Boolean,
       default: true,
@@ -55,6 +63,8 @@ const UserSchema = new mongoose.Schema(
     allergies: {
       type: [String ] 
     },
+
+
   },
   { timestamps: true }
 );
