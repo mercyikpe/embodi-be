@@ -15,6 +15,9 @@ router.post('/register', authController.registerUser);
 // User login route
 router.post('/login', authController.loginUser);
 
+// REQUEST FOR NEW OTP
+router.post('/requestotp', authController.requestOTP);
+
 /// verify Otp
 router.post('/verifyotp', authController.verifyOTP);
 

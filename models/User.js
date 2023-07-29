@@ -42,13 +42,18 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    otpCode: {
-      type: String,
-      default: null,
+    dob: {
+      type: Date
+
     },
-    otpCodeExpiresAt: {
-      type: Date,
-      default: null,
+    address: {
+      type: String,  
+    },
+    gender: {
+      type: String,  
+    },
+    allergies: {
+      type: [String ] 
     },
   },
   { timestamps: true }

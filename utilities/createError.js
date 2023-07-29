@@ -1,4 +1,20 @@
 // createError.js
+
+// appError.js
+class AppError extends Error {
+  constructor(statusCode, message) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
+
+module.exports = AppError;
+
+
+
+
+
+/*
 class AppError extends Error {
     constructor(message, statusCode) {
       super(message);
@@ -10,4 +26,4 @@ class AppError extends Error {
   }
   
   module.exports = AppError;
-  
+  */

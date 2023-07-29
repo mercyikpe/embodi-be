@@ -284,6 +284,80 @@ const generateOTPCode = () => {
   };
   
 
+  ////// REQUEST FOR A NEW OTP IF USER DIDNT RECEIVE IT
+
+  const requestOTP = async (req, res) => {
+    const { email } = req.body;
+  
+    // Check if the email is provided
+    if (!email) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Email cannot be blank',
+      });
+    }
+  
+    try {
+      // Check if the user with the provided email exists and is unverified
+      const existingUser = await User.findOne({ email, verified: false });
+  
+      if (!existingUser) {
+        return res.status(400).json({
+          status: 'failed',
+          message: 'User with the provided email not found or already verified.',
+        });
+      }
+  
+      // Regenerate a new OTP for the existing unverified user
+      const otpCode = generateOTPCode();
+      const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+  
+      // Save the new OTP code to the database
+      const newOTPCode = new OTPCode({
+        userId: existingUser._id,
+        code: otpCode,
+        createdAt: Date.now(),
+        expiresAt: expirationTime,
+      });
+      await newOTPCode.save();
+  
+      // Resend the OTP to the user's email
+      const mailOptions = {
+        from: process.env.AUTH_EMAIL,
+        to: existingUser.email,
+        subject: 'Verify Your Email',
+        html: `
+          <h1>Email Verification</h1>
+          <p><strong>${otpCode}</strong></p>
+          <p>Please enter the verification code in your account settings to verify your email.</p>
+        `,
+      };
+  
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log(error);
+          return res.status(500).json({
+            status: 'failed',
+            message: 'An error occurred while resending the verification code.',
+          });
+        } else {
+          console.log('Email sent: ' + info.response);
+          return res.status(200).json({
+            status: 'success',
+            message: 'Verification code has been resent. Please check your email.',
+          });
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        status: 'failed',
+        message: 'An error occurred while resending the verification code.',
+      });
+    }
+  };
+  
+
 
 const verifyOTP = async (req, res) => {
     // Extract the userId and the verification code from the request body
@@ -389,6 +463,7 @@ const loginWithGoogle = async (req, res, next) => {
 const authController = {
   registerUser,
   loginUser,
+  requestOTP,
   verifyOTP,
   //loginWithGoogle,
 };

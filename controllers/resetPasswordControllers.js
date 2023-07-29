@@ -5,6 +5,58 @@ const User = require('../models/User');
 const transporter = require('../utilities/transporter');
 const OTPCode = require('../models/OtpCode'); // Import the OTPCode model
 
+//////// CHANGE PASSWORD STARTS HERE
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user.userId; // This will be available from the authenticateToken middleware
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found. Please log in again.',
+      });
+    }
+
+    // Verify the current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Invalid current password. Please enter the correct password.',
+      });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update the user's password
+    await User.findByIdAndUpdate(userId, { password: hashedPassword });
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Password changed successfully.',
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
+////////// CHANGE PASSWORD ENDS HERE
+
+
+
+////////// RESER PASSWORD WITH OTP STARTS HEERE
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 const generateOTPCode = () => {
   const digits = '0123456789';
   let otpCode = '';
@@ -183,10 +235,11 @@ const resetPassword = async (req, res) => {
   }
 };
 
-
+///////////////////////RESET PASSWORD WITH OTP ENDS HERE
 
 
 module.exports = {
+  changePassword,
   requestPasswordReset,
   verifyOTP,
   resetPassword
