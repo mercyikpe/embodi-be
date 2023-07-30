@@ -12,12 +12,17 @@ const authRoute = require('./routes/auth.js');
 const userRoute = require('./routes/user');
 const doctorRoute = require('./routes/doctor');
 const appointmentRoute = require('./routes/appointment');
+const questionaireRoute = require('./routes/questionaire');
+const diseaseRoute = require('./routes/disease');
 
 // Routes middlewares
 app.use('/api/auth', authRoute);
 app.use('/api/user', userRoute);
 app.use('/api/docter', doctorRoute);
 app.use('/api/appointment', appointmentRoute);
+app.use('/api/questionaire', questionaireRoute);
+app.use('/api/disease', diseaseRoute);
+
 
 
 
