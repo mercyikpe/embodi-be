@@ -11,11 +11,13 @@ app.use(express.json());
 const authRoute = require('./routes/auth.js');
 const userRoute = require('./routes/user');
 const doctorRoute = require('./routes/doctor');
+const appointmentRoute = require('./routes/appointment');
 
 // Routes middlewares
 app.use('/api/auth', authRoute);
 app.use('/api/user', userRoute);
 app.use('/api/docter', doctorRoute);
+app.use('/api/appointment', appointmentRoute);
 
 
 

@@ -13,7 +13,8 @@ router.get('/', (req, res)=>{
 router.put('/:userId/info', doctorController.updateDoctorInfo);
 
 ///update doctor's Account information
-router.put('/account/:userId', doctorController.updateDoctorAccountInfo); 
+router.put('/account/:userId', doctorController.updateDoctorAccountInfo);
+
 
 
 

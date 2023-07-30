@@ -9,6 +9,14 @@ const DoctorInfoSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+
+    timeSlot: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Appointment',
+      required: true,
+      unique: true,
+    },
+
     qualification: {
       type: String,
       required: true,
@@ -43,6 +51,22 @@ const DoctorInfoSchema = new mongoose.Schema(
     accountNumber: {
       type: Number,
     },
+      // Add an array of time slots representing available intervals ///from appointmet
+      availableTimeSlots: {
+        type: [
+          {
+            startTime: {
+              type: String,
+              required: true,
+            },
+            endTime: {
+              type: String,
+              required: true,
+            },
+          },
+        ],
+        default: [], // Initialize with an empty array
+      },
   },
   { timestamps: true }
 );

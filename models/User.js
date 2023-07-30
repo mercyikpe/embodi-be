@@ -35,7 +35,7 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    
+
     // Additional field to reference DoctorInfo model
     doctorInfo: {
       type: mongoose.Schema.Types.ObjectId,
@@ -46,9 +46,17 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    status: {
+      type: String,
+      enum: ['verified', 'unverified'],
+      default: 'unverified',
+    },
     verified: {
       type: Boolean,
       default: false,
+    },
+    image: {
+      type: String,  
     },
     dob: {
       type: Date

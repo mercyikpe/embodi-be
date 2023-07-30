@@ -11,99 +11,81 @@ require('dotenv').config();
 //const { googleAuthConfig, getGoogleProfile } = require('../../utility/googleAuth'); // Import Google Auth utility functions
 
 const generateOTPCode = () => {
-    const digits = '0123456789';
-    let otpCode = '';
-    for (let i = 0; i < 6; i++) {
-      otpCode += digits[Math.floor(Math.random() * 10)];
-    }
-    return otpCode;
-  };
-  
-  const registerUser = async (req, res) => {
+  const digits = '0123456789';
+  let otpCode = '';
+  for (let i = 0; i < 6; i++) {
+    otpCode += digits[Math.floor(Math.random() * 10)];
+  }
+  return otpCode;
+};
 
-    const { firstName, lastName, phoneNumber, email, password } = req.body;
-  
-    // Check if any of the fields are empty
-    if (!firstName || !lastName || !phoneNumber || !email || !password) {
+const registerUser = async (req, res) => {
+  const { firstName, lastName, phoneNumber, email, password } = req.body;
+
+  if (!firstName || !lastName || !phoneNumber || !email || !password) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Fields cannot be blank',
+    });
+  }
+
+  const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*]).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    return res.status(400).json({
+      status: 'failed',
+      message:
+        'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
+    });
+  }
+
+  try {
+    const existingUser = await User.findOne({ $or: [{ phoneNumber }, { email }] });
+
+    if (existingUser && !existingUser.verified) {
+      // Send OTP code to user's email
+      const otpCode = generateOTPCode();
+
+      // Set the expiration time to 10 minutes from now
+      const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+
+      // Save OTP code to database
+      const otpCodeRecord = new OTPCode({
+        userId: existingUser._id,
+        code: otpCode,
+        createdAt: Date.now(),
+        expiresAt: expirationTime,
+      });
+      await otpCodeRecord.save();
+
+      const mailOptions = {
+        from: process.env.AUTH_EMAIL,
+        to: existingUser.email,
+        subject: 'Verify Your Email',
+        html: `
+          <h1>Email Verification</h1>
+          <p><strong>${otpCode}</strong></p>
+          <p>Please enter the verification code in your account settings to verify your email.</p>
+        `,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'OTP sent to your email.',
+      });
+    } else {
       return res.status(400).json({
         status: 'failed',
-        message: 'Fields cannot be blank',
+        message: 'Email or Phone is already in use.',
       });
     }
-  
-    // Password requirements
-    const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*]).{8,}$/;
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({
-        status: 'failed',
-        message:
-          'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
-      });
-    }
-  
-    try {
-      const existingUser = await User.findOne({ $or: [{ phoneNumber }, { email }] });
-  
-      if (existingUser) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'Email or Phone is already in use.',
-        });
-      }
-  
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-  
-      const newUser = new User({
-        firstName,
-        lastName,
-        phoneNumber,
-        email,
-        password: hashedPassword,
-      });
-  
-      const savedUser = await newUser.save();
-  
-      // Send verification OTP
-    const otpCode = generateOTPCode();
-
-    // Set the expiration time to 10 minutes from now
-    const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
-
-    const otpCodeRecord = new OTPCode({
-      userId: savedUser._id,
-      code: otpCode,
-      createdAt: Date.now(),
-      expiresAt: expirationTime, // Set the expiration time here
-    });
-    await otpCodeRecord.save();
-
-    
-  
-    // You can send the OTP to the user's email here if needed
-    const mailOptions = {
-      from: process.env.AUTH_EMAIL,
-      to: savedUser.email, // Use savedUser.email instead of User.email
-      subject: 'Verify Your Email',
-      html: `
-        <h1>Email Verification</h1>
-        <p><strong>${otpCode}</strong></p>
-        <p>Please enter the verification code in your account settings to verify your email.</p>
-      `,
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log('Email sent: ' + info.response);
-      }
-    });
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Signup successful. Please verify your email using the OTP.',
-    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -111,128 +93,9 @@ const generateOTPCode = () => {
       message: 'An error occurred while signing up.',
     });
   }
-
-
-
-  
-  
 };
 
 
-/*
-const generateOTPCode = () => {
-    const digits = '0123456789';
-    let otpCode = '';
-    for (let i = 0; i < 6; i++) {
-      otpCode += digits[Math.floor(Math.random() * 10)];
-    }
-    return otpCode;
-  };
-  
-  
-  const registerUser = async (req, res) => {
-    const { firstName, lastName, phoneNumber, email, password } = req.body;
-  
-    // Check if any of the fields are empty
-    if (!firstName || !lastName || !phoneNumber || !email || !password) {
-      return res.status(400).json({
-        status: 'failed',
-        message: 'Fields cannot be blank',
-      });
-    }
-  
-    // Password requirements
-    const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*]).{8,}$/;
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({
-        status: 'failed',
-        message:
-          'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
-      });
-    }
-  
-    try {
-      // Check if the email or phone number is already in use
-      const existingUser = await User.findOne({ $or: [{ phoneNumber }, { email }] });
-  
-      if (existingUser) {
-        // Check if the existing user is unverified
-        if (!existingUser.verified) {
-          // Regenerate a new OTP for the existing unverified user
-          const otpCode = generateOTPCode();
-          const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
-  
-          // Update the existing OTP code record
-          await OTPCode.updateOne(
-            { userId: existingUser._id },
-            { code: otpCode, createdAt: Date.now(), expiresAt: expirationTime }
-          );
-  
-          // Resend the OTP to the user's email
-          const mailOptions = {
-            from: process.env.AUTH_EMAIL,
-            to: existingUser.email,
-            subject: 'Verify Your Email',
-            html: `
-              <h1>Email Verification</h1>
-              <p><strong>${otpCode}</strong></p>
-              <p>Please enter the verification code in your account settings to verify your email.</p>
-            `,
-          };
-  
-          transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              console.log(error);
-            } else {
-              console.log('Email sent: ' + info.response);
-            }
-          });
-  
-          return res.status(200).json({
-            status: 'success',
-            message: 'Verification code has been resent. Please check your email.',
-          });
-        } else {
-          // User already exists and is verified
-          return res.status(400).json({
-            status: 'failed',
-            message: 'Email or Phone is already in use.',
-          });
-        }
-      }
-  
-      // If the user does not exist, proceed with the normal sign-up process
-  
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-  
-      // Save the new user record
-      const newUser = new User({
-        firstName,
-        lastName,
-        phoneNumber,
-        email,
-        password: hashedPassword,
-      });
-  
-      const savedUser = await newUser.save();
-  
-      // ... (send verification OTP and other actions) ...
-  
-      return res.status(200).json({
-        status: 'success',
-        message: 'Signup successful. Please verify your email using the OTP.',
-      });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({
-        status: 'failed',
-        message: 'An error occurred while signing up.',
-      });
-    }
-  };
-  
-*/
   const loginUser = async (req, res, next) => {
     try {
       const { email, phoneNumber, password } = req.body;

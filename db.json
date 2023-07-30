@@ -1,0 +1,37 @@
+
+{
+    "doctors": [
+      {
+        "id": "64c550a218fc21c9c967b2a0",
+        "name": "Dr. John Doe",
+        "email": "john.doe@example.com",
+        "availableTimeSlots": [
+          {
+            "startTime": "09:00 AM",
+            "endTime": "11:00 AM"
+          },
+          {
+            "startTime": "02:00 PM",
+            "endTime": "04:00 PM"
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "name": "Dr. Jane Smith",
+        "email": "jane.smith@example.com",
+        "availableTimeSlots": [
+          {
+            "startTime": "10:00 AM",
+            "endTime": "12:00 PM"
+          },
+          {
+            "startTime": "03:00 PM",
+            "endTime": "05:00 PM"
+          }
+        ]
+      }
+    ],
+    "appointments": []
+  }
+  
