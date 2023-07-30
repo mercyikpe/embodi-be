@@ -9,7 +9,7 @@ require('dotenv').config();
 
 
 //const { googleAuthConfig, getGoogleProfile } = require('../../utility/googleAuth'); // Import Google Auth utility functions
-/*
+
 const generateOTPCode = () => {
     const digits = '0123456789';
     let otpCode = '';
@@ -117,9 +117,9 @@ const generateOTPCode = () => {
   
   
 };
-*/
 
 
+/*
 const generateOTPCode = () => {
     const digits = '0123456789';
     let otpCode = '';
@@ -128,6 +128,7 @@ const generateOTPCode = () => {
     }
     return otpCode;
   };
+  
   
   const registerUser = async (req, res) => {
     const { firstName, lastName, phoneNumber, email, password } = req.body;
@@ -202,6 +203,8 @@ const generateOTPCode = () => {
   
       // If the user does not exist, proceed with the normal sign-up process
   
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
   
       // Save the new user record
       const newUser = new User({
@@ -229,7 +232,7 @@ const generateOTPCode = () => {
     }
   };
   
-
+*/
   const loginUser = async (req, res, next) => {
     try {
       const { email, phoneNumber, password } = req.body;
