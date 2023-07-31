@@ -105,16 +105,16 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res, next) => {
   try {
-    const { email, phoneNumber, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!email && !phoneNumber) {
+    if (!email) {
       return res.status(400).json({
         status: 'failed',
-        message: 'Phone or email field is required',
+        message: 'Email field is required',
       });
     }
 
-    const user = await User.findOne({ $or: [{ phoneNumber }, { email }] });
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({
         status: 'failed',
