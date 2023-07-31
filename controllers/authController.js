@@ -33,8 +33,7 @@ const registerUser = async (req, res) => {
   if (!passwordRegex.test(password)) {
     return res.status(400).json({
       status: 'failed',
-      message:
-          'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
+      message: 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
     });
   }
 
@@ -86,9 +85,13 @@ const registerUser = async (req, res) => {
       }
     });
 
+    // Remove the password field from the response JSON
+    const { password: removedPassword, ...userWithoutPassword } = savedUser.toObject();
+
     return res.status(200).json({
       status: 'success',
       message: 'OTP sent to your email.',
+      user: userWithoutPassword,
     });
   } catch (error) {
     console.log('Error while saving the user:', error);
@@ -98,6 +101,7 @@ const registerUser = async (req, res) => {
     });
   }
 };
+
 
 const loginUser = async (req, res, next) => {
   try {
