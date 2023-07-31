@@ -5,7 +5,8 @@ dotenv.config();
 //node mailer transporter
 let transporter = nodemailer.createTransport({
     service: "Gmail",
-    secure: true,
+    secureConnection: true,
+    //secure: true,
     port: 465,
     auth: {
         user: process.env.AUTH_EMAIL,
