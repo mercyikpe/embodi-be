@@ -98,7 +98,7 @@ const registerUser = async (req, res) => {
 
   const loginUser = async (req, res, next) => {
     try {
-      const { email, phoneNumber, password } = req.body;
+      const { email,password } = req.body;
   
       if (!email && !phoneNumber) {
         return res.status(400).json({
@@ -107,7 +107,7 @@ const registerUser = async (req, res) => {
         });
       }
   
-      const user = await User.findOne({ $or: [{ phoneNumber }, { email }] });
+      const user = await User.findOne({email});
       if (!user) {
         return res.status(404).json({
           status: 'failed',
@@ -140,7 +140,7 @@ const registerUser = async (req, res) => {
         user: otherDetails,
       });
     } catch (error) {
-      console.log(error); // Log the error for debugging purposes
+      console.log(error); 
       return res.status(500).json({
         status: 'failed',
         message: 'Internal server error',

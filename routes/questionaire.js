@@ -1,25 +1,16 @@
-// src/routes/authRoutes.js
-
 const express = require('express');
 const router = express.Router();
-//const questionaire = require('../controllers/authController');
-const questionaire = require('../models/Questionaire')
+const diseaseController = require('../controllers/questionaireController');
 
-router.get('/', (req, res)=>{
-    res.send('  QUESTIONAIRE IS  here')
-}
-)
+// ... Your other routes ...
 
-// Create a new questionnaire
-router.post('/create', async (req, res) => {
-    const questionaire = new Questionaire({
-      title: req.body.title,
-      options: req.body.options,
-    });
-    await questionaire.save();
-    res.json(questionaire);
-  });
+// Create a new questionnaire for a disease
+router.post('/createQuestionnaire', diseaseController.createQuestionnaire);
 
+// Update a questionnaire for a disease
+router.put('/update/:diseaseId/:questionnaireId', diseaseController.updateQuestionnaire);
 
+// View questionnaire for a disease
+router.get('/view/:diseaseId', diseaseController.viewQuestionnaire);
 
 module.exports = router;

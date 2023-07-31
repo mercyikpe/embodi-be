@@ -9,8 +9,26 @@ router.get('/', (req, res)=>{
 }
 )
 
-// update doctor's user information fields and addtional information
+// CREATE DISEASE 
 router.post('/createdisease', diseaseController.createDisease);
+
+//UPDATE DISEASE 
+router.put('/updatedisease', diseaseController.updateDisease);
+
+// DELETE
+router.delete('/deletedisease', diseaseController.deleteDisease);
+
+// VIEW
+router.get('/viewdisease', diseaseController.viewDisease);
+
+// viewDiseasesByCategory,
+router.get('/categories', diseaseController.viewDiseasesByCategory);
+
+//   setPopularity,
+router.get('/setpopularity', diseaseController.createDisease);
+
+//   viewDiseasesByPopularity
+router.get('/popularity', diseaseController.viewDiseasesByPopularity);
 
 
 
