@@ -6,7 +6,7 @@ const User = require('../models/User');
 const transporter = require('../utilities/transporter')
 const OTPCode = require('../models/OtpCode'); // Add this line to import the OtpCode model
 require('dotenv').config();
-
+const { createTransporter, sendEmail } = require('../utilities/transporter'); // Import the emailUtils module
 
 //const { googleAuthConfig, getGoogleProfile } = require('../../utility/googleAuth'); // Import Google Auth utility functions
 
@@ -19,7 +19,6 @@ const generateOTPCode = () => {
   return otpCode;
 };
 
-const { createTransporter, sendEmail } = require('../utilities/transporter'); // Import the emailUtils module
 
 const registerUser = async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password } = req.body;
