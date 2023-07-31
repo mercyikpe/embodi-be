@@ -26,7 +26,7 @@ router.delete('/:id', verifyUser, verifyAdmin, userController.deleteUser);
 router.get('/:id', userController.getUser);
 
 // Get all users
-router.get('/', userController.getAllUsers);
+router.get('/all', userController.getAllUsers);
 
 // Get active users sorted by moment
 router.get('/active', userController.getActiveUsers);
@@ -48,7 +48,7 @@ router.post('/verifyPasswordOtp', requestNewPassword.verifyOTP);
 
 ////// Update pasword
 router.put('/updatePassword', requestNewPassword.resetPassword);
-
+//
 ///////USER RESET PASSWORD ENDS HERE
 
 

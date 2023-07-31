@@ -63,7 +63,15 @@ const getUser = async (req, res, next) => {
 
 const getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find();
+    const pageSize = 10;
+    const pageNumber = 1;
+    const users = await User.paginate(
+      {},
+      {
+        pageSize,
+        pageNumber
+      }
+    );
     res.json({
       status: 200,
       message: users
@@ -75,7 +83,8 @@ const getAllUsers = async (req, res, next) => {
 
 const getActiveUsers = async (req, res, next) => {
   try {
-    const activeUsers = await User.find({ activity: 'active' }).sort({ updatedAt: -1 });
+    
+    const user = await User.find({ activity: 'active' }).sort({ updatedAt: -1 });
 
     const formattedUsers = activeUsers.map(user => {
       const activityTime = moment(user.updatedAt).fromNow();
