@@ -19,6 +19,8 @@ const generateOTPCode = () => {
   return otpCode;
 };
 
+const { createTransporter, sendEmail } = require('../utilities/transporter'); // Import the emailUtils module
+
 const registerUser = async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password } = req.body;
 
@@ -65,7 +67,8 @@ const registerUser = async (req, res) => {
     });
     await otpCodeRecord.save();
 
-    // Prepare and send the email
+    // Prepare and send the email using the transporter and sendEmail function
+    const transporter = createTransporter();
     const mailOptions = {
       from: process.env.AUTH_EMAIL,
       to: savedUser.email,
@@ -77,13 +80,7 @@ const registerUser = async (req, res) => {
       `,
     };
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log('Error sending email:', error);
-      } else {
-        console.log('Email sent: ' + info.response);
-      }
-    });
+    await sendEmail(transporter, mailOptions);
 
     // Remove the password field from the response JSON
     const { password: removedPassword, ...userWithoutPassword } = savedUser.toObject();
