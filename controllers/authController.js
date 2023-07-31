@@ -19,7 +19,137 @@ const generateOTPCode = () => {
   return otpCode;
 };
 
+// const registerUser = async (req, res) => {
+//   const { firstName, lastName, phoneNumber, email, password } = req.body;
+//
+//   if (!firstName || !lastName || !phoneNumber || !email || !password) {
+//     return res.status(400).json({
+//       status: 'failed',
+//       message: 'Fields cannot be blank',
+//     });
+//   }
+//
+//   const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*]).{8,}$/;
+//   if (!passwordRegex.test(password)) {
+//     return res.status(400).json({
+//       status: 'failed',
+//       message:
+//           'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
+//     });
+//   }
+//
+//   try {
+//     console.log('Creating a new user instance...');
+//     const newUser = new User({
+//       firstName,
+//       lastName,
+//       phoneNumber,
+//       email,
+//       password,
+//     });
+//
+//     console.log('Saving the user to the database...');
+//     const savedUser = await newUser.save();
+//
+//     console.log('New user saved:', savedUser);
+//
+//     // Send OTP code to user's email
+//     const otpCode = generateOTPCode();
+//
+//     // Set the expiration time to 10 minutes from now
+//     const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+//
+//     // Save OTP code to database (you need to define the OTPCode model accordingly)
+//     const otpCodeRecord = new OTPCode({
+//       userId: savedUser._id,
+//       code: otpCode,
+//       createdAt: Date.now(),
+//       expiresAt: expirationTime,
+//     });
+//     await otpCodeRecord.save();
+//
+//     // Prepare and send the email
+//     const mailOptions = {
+//       from: process.env.AUTH_EMAIL,
+//       to: savedUser.email, // Use savedUser.email, not existingUser.email
+//       subject: 'Verify Your Email',
+//       html: `
+//         <h1>Email Verification</h1>
+//         <p><strong>${otpCode}</strong></p>
+//         <p>Please enter the verification code in your account settings to verify your email.</p>
+//       `,
+//     };
+//
+//     transporter.sendMail(mailOptions, (error, info) => {
+//       if (error) {
+//         console.log('Error sending email:', error);
+//       } else {
+//         console.log('Email sent: ' + info.response);
+//       }
+//     });
+//
+//     return res.status(200).json({
+//       status: 'success',
+//       message: 'OTP sent to your email.',
+//     });
+//   } catch (error) {
+//     console.log('Error while saving the user:', error);
+//     return res.status(500).json({
+//       status: 'failed',
+//       message: 'An error occurred while signing up.',
+//     });
+//   }
+// };
+
 const registerUser = async (req, res) => {
+  const { firstName, lastName, phoneNumber, email, password } = req.body;
+
+  if (!firstName || !lastName || !phoneNumber || !email || !password) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Fields cannot be blank',
+    });
+  }
+
+  const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*]).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    return res.status(400).json({
+      status: 'failed',
+      message:
+          'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
+    });
+  }
+
+  try {
+    console.log('Creating a new user instance...');
+    // Hash the password before saving to the database
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
+    const newUser = new User({
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      password: hashedPassword, // Store the hashed password in the database
+    });
+
+    console.log('Saving the user to the database...');
+    const savedUser = await newUser.save();
+
+    console.log('New user saved:', savedUser);
+
+    // ... (rest of the code for sending the OTP and response) ...
+
+  } catch (error) {
+    console.log('Error while saving the user:', error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while signing up.',
+    });
+  }
+};
+
+
+const registerUsers = async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password } = req.body;
 
   if (!firstName || !lastName || !phoneNumber || !email || !password) {
@@ -96,7 +226,63 @@ const registerUser = async (req, res) => {
 };
 
 
-  const loginUser = async (req, res, next) => {
+const loginUser = async (req, res, next) => {
+  try {
+    const { email, phoneNumber, password } = req.body;
+
+    if (!email && !phoneNumber) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Phone or email field is required',
+      });
+    }
+
+    const user = await User.findOne({ $or: [{ phoneNumber }, { email }] });
+    if (!user) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found',
+      });
+    }
+
+    console.log('Comparing password...');
+    console.log('Stored Hashed Password:', user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      console.log('Invalid password provided:', password);
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Invalid password',
+      });
+    }
+
+    if (!user.verified) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Please verify your email before signing in',
+      });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, { expiresIn: '1h' });
+    const { isAdmin, ...otherDetails } = user._doc;
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Successfully signed in',
+      token,
+      user: otherDetails,
+    });
+  } catch (error) {
+    console.log(error); // Log the error for debugging purposes
+    return res.status(500).json({
+      status: 'failed',
+      message: 'Internal server error',
+    });
+  }
+};
+
+  const loginUserr = async (req, res, next) => {
     try {
       const { email, phoneNumber, password } = req.body;
   
@@ -116,6 +302,7 @@ const registerUser = async (req, res) => {
       }
   
       const isPasswordValid = await bcrypt.compare(password, user.password);
+
       if (!isPasswordValid) {
         return res.status(400).json({
           status: 'failed',
