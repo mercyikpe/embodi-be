@@ -3,11 +3,11 @@ const mongoose = require('mongoose');
 const QuestionnaireSchema = new mongoose.Schema({
   question: {
     type: String,
-    required: true,
+    //required: true,
   },
   answer: {
     type: String,
-    required: true,
+    //required: true,
   },
   diseaseId: {
     type: mongoose.Schema.Types.ObjectId,

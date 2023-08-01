@@ -6,7 +6,7 @@ const User = require('../models/User');
 const transporter = require('../utilities/transporter')
 const OTPCode = require('../models/OtpCode'); // Add this line to import the OtpCode model
 require('dotenv').config();
-
+const { createTransporter, sendEmail } = require('../utilities/transporter'); // Import the emailUtils module
 
 //const { googleAuthConfig, getGoogleProfile } = require('../../utility/googleAuth'); // Import Google Auth utility functions
 
@@ -18,6 +18,7 @@ const generateOTPCode = () => {
   }
   return otpCode;
 };
+
 
 const registerUser = async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password } = req.body;
@@ -33,61 +34,63 @@ const registerUser = async (req, res) => {
   if (!passwordRegex.test(password)) {
     return res.status(400).json({
       status: 'failed',
-      message:
-        'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
+      message: 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
     });
   }
 
   try {
-    const existingUser = await User.findOne({ $or: [{ phoneNumber }, { email }] });
+    // Hash the password before saving to the database
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
+    const newUser = new User({
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      password: hashedPassword, // Store the hashed password in the database
+    });
 
-    if (existingUser && !existingUser.verified) {
-      // Send OTP code to user's email
-      const otpCode = generateOTPCode();
+    const savedUser = await newUser.save();
 
-      // Set the expiration time to 10 minutes from now
-      const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+    // Send OTP code to user's email
+    const otpCode = generateOTPCode();
 
-      // Save OTP code to database
-      const otpCodeRecord = new OTPCode({
-        userId: existingUser._id,
-        code: otpCode,
-        createdAt: Date.now(),
-        expiresAt: expirationTime,
-      });
-      await otpCodeRecord.save();
+    // Set the expiration time to 10 minutes from now
+    const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
 
-      const mailOptions = {
-        from: process.env.AUTH_EMAIL,
-        to: existingUser.email,
-        subject: 'Verify Your Email',
-        html: `
-          <h1>Email Verification</h1>
-          <p><strong>${otpCode}</strong></p>
-          <p>Please enter the verification code in your account settings to verify your email.</p>
-        `,
-      };
+    // Save OTP code to database
+    const otpCodeRecord = new OTPCode({
+      userId: savedUser._id,
+      code: otpCode,
+      createdAt: Date.now(),
+      expiresAt: expirationTime,
+    });
+    await otpCodeRecord.save();
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log('Email sent: ' + info.response);//// 
-        }
-      });
+    // Prepare and send the email using the transporter and sendEmail function
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: savedUser.email,
+      subject: 'Verify Your Email',
+      html: `
+        <h1>Email Verification</h1>
+        <p><strong>${otpCode}</strong></p>
+        <p>Please enter the verification code in your account settings to verify your email.</p>
+      `,
+    };
 
-      return res.status(200).json({
-        status: 'success',
-        message: 'OTP sent to your email.',
-      });
-    } else {
-      return res.status(400).json({
-        status: 'failed',
-        message: 'Email or Phone is already in use.',
-      });
-    }
+    await sendEmail(transporter, mailOptions);
+
+    // Remove the password field from the response JSON
+    const { password: removedPassword, ...userWithoutPassword } = savedUser.toObject();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'OTP sent to your email.',
+      user: userWithoutPassword,
+    });
   } catch (error) {
-    console.log(error);
+    console.log('Error while saving the user:', error);
     return res.status(500).json({
       status: 'failed',
       message: 'An error occurred while signing up. kindly try again',
@@ -96,67 +99,61 @@ const registerUser = async (req, res) => {
 };
 
 
-  const loginUser = async (req, res, next) => {
-    try {
+const loginUser = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
 
-      const { email,password } = req.body;
-  
-      if (!email) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'email field is required',
-        });
-      }
-  
-      const user = await User.findOne({email});
-      if (!user) {
-        return res.status(404).json({
-          status: 'failed',
-          message: 'Sorry! User is not registered',
-        });
-      }
-  
-      const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
-      if (!isPasswordValid) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'wrong password. Kindly try again',
-        });
-      }
-  
-      if (!user.verified) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'kindly verify your email before trying signing in for the first time',
-        });
-      }
-      
-      
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, { expiresIn: '1h' });
-      const { isAdmin,    ...otherDetails } = user._doc;
-      delete otherDetails.password
-      delete otherDetails.active
-      
-  
-      return res.status(200).json({
-        status: 'success',
-        message: 'You are Sign-In',
-        token,
-        user: otherDetails,
-      });
-    } catch (error) {
-      console.log(error); 
-      return res.status(500).json({
+    if (!email) {
+      return res.status(400).json({
         status: 'failed',
-        message: 'Internal server error',
+        message: 'Email field is required',
       });
     }
-  };
-  
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found',
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Invalid password',
+      });
+    }
+
+    if (!user.verified) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Please verify your email before signing in',
+      });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, { expiresIn: '1h' });
+    const { isAdmin, ...otherDetails } = user._doc;
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Successfully signed in',
+      token,
+      user: otherDetails,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: 'failed',
+      message: 'Internal server error',
+    });
+  }
+};
+
 
   ////// REQUEST FOR A NEW OTP IF USER DIDNT RECEIVE IT
-
-  const requestOTP = async (req, res) => {
+ const requestOTP = async (req, res) => {
     const { email } = req.body;
   
     // Check if the email is provided
@@ -277,7 +274,6 @@ const verifyOTP = async (req, res) => {
         message: 'Account verification successful.',
       });
     } catch (error) {
-      console.log(error);
       return res.status(500).json({
         status: 'failed',
         message: 'An error occurred while verifying the account.',

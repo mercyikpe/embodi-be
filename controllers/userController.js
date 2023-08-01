@@ -64,24 +64,30 @@ const getUser = async (req, res, next) => {
 };
 
 const getAllUsers = async (req, res, next) => {
-  try {
-    const pageSize = 10;
-    const pageNumber = 1;
-    const users = await User.paginate(
-      {},
-      {
-        pageSize,
-        pageNumber
-      }
-    );
-    res.json({
-      status: 200,
-      message: users
-    });
-  } catch (error) {
-    next(error);
+  const pageSize = 10;
+  const pageNumber = 1;
+
+  if (req.query.pageSize) {
+    pageSize = parseInt(req.query.pageSize, 10);
   }
-};
+
+  if (req.query.pageNumber) {
+    pageNumber = parseInt(req.query.pageNumber, 10);
+  }
+
+  const users = await User.paginate(
+    {},
+    {
+      pageSize,
+      pageNumber
+    }
+  );
+
+  res.json({
+    status: 200,
+    message: users,
+  });
+}
 
 const getActiveUsers = async (req, res, next) => {
   try {

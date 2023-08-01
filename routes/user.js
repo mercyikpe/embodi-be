@@ -15,7 +15,7 @@ router.get('/', (req, res)=>{
 router.post('/create',  userController.createUser);
 
 // Update a user
-router.put('/:id', userController.updateUser);
+router.put('/update/:id', userController.updateUser);
 
 // Delete a user
 router.delete('/:id', verifyUser, verifyAdmin, userController.deleteUser);
@@ -24,7 +24,7 @@ router.delete('/:id', verifyUser, verifyAdmin, userController.deleteUser);
 router.get('/:id', userController.getUser);
 
 // Get all users
-router.get('/all', userController.getAllUsers);
+router.get('/allusers', userController.getAllUsers);
 
 // Get active users sorted by moment
 router.get('/active', userController.getActiveUsers);

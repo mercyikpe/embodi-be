@@ -1,5 +1,11 @@
 .env
 /.env
+.idea
+
 
 node_modules
 /node_modules
+
+
+/utilities\transporter.js
+utilities\transporter.js

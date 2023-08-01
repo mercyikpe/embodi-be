@@ -24,6 +24,10 @@ router.delete('/delete/:diseaseId', diseaseController.deleteDisease);
 // VIEW
 router.get('/view/:diseaseId', diseaseController.viewDisease);
 
+
+// VIEW ALL DISEASE
+router.get('/viewall', diseaseController.viewDisease);
+
 //   viewDiseasesByPopularity
 router.get('/popularity/:diseaseId', diseaseController.makeDiseasePopular);
 
