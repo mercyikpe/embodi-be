@@ -189,6 +189,8 @@ const updateDoctorAccountInfo = async (req, res, next) => {
     });
   };
 
+
+  /////// fetch all users the are doctors
   const getAllDoctors = async (req, res) => {
     // Get all users that are doctors
     const doctors = await User.find({ isDoctor: true });
@@ -220,8 +222,29 @@ const updateDoctorAccountInfo = async (req, res, next) => {
     });
   };
 
- 
+  const searchDoctors = async (req, res) => {
+
+    // Get the search term from the request
+    const searchTerm = req.query.searchTerm;
+  
+    // Get the doctors that match the search term
+    const doctors = await User.find({
+      isDoctor: true,
+      $text: { $search: searchTerm },
+    });
+  
+    // Return the doctors
+    return res.status(200).json({
+      status: 'success',
+      message: 'Doctors retrieved successfully.',
+      data: doctors,
+    });
+  };
+
+
+
 module.exports = {
+  searchDoctors,
   getAllDoctorsPaginated,
   getAllDoctors,
   viewDoctorsBySpecialty,

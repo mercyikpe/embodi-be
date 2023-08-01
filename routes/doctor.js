@@ -28,6 +28,10 @@ router.get('/view', doctorController.getAllDoctorsPaginated);
 ///////view all the doctors getAllDoctors
 router.get('/viewalldoctors', doctorController.getAllDoctors);
 
+////seach for doctors searchDoctors
+router.get('/searchdoctors', doctorController.searchDoctors);
+
+
 
 
 
