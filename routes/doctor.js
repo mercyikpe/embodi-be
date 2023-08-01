@@ -19,7 +19,16 @@ router.put('/account/:userId', doctorController.updateDoctorAccountInfo);
 router.get('/view/:userId', doctorController.viewDoctor);
 
 //// VIEW DOCTOR BY SECIALTY
-router.get('/specialty/:specialty', doctorController.viewDoctorsBySpecialty);
+
+////view doctor on paginated
+router.get('/view', doctorController.getAllDoctorsPaginated);
+
+
+
+///////view all the doctors getAllDoctors
+router.get('/viewalldoctors', doctorController.getAllDoctors);
+
+
 
 
 

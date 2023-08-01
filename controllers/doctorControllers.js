@@ -201,9 +201,28 @@ const updateDoctorAccountInfo = async (req, res, next) => {
     });
   }
   
+  const getAllDoctorsPaginated = async (req, res) => {
+    // Get the page number from the request
+    const pageNumber = req.query.pageNumber || 1;
+  
+    // Get the doctors for the page
+    const doctors = await User.find({ isDoctor: true })
+      .skip((pageNumber - 1) * 10)
+      .limit(10);
+  
+    // Return the doctors
+    return res.status(200).json({
+      status: 'success',
+      message: 'Doctors retrieved successfully.',
+      data: doctors,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(doctors.length / 10),
+    });
+  };
 
  
 module.exports = {
+  getAllDoctorsPaginated,
   getAllDoctors,
   viewDoctorsBySpecialty,
   viewDoctor,
