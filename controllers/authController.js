@@ -72,7 +72,7 @@ const registerUser = async (req, res) => {
         if (error) {
           console.log(error);
         } else {
-          console.log('Email sent: ' + info.response);
+          console.log('Email sent: ' + info.response);//// 
         }
       });
 
@@ -90,7 +90,7 @@ const registerUser = async (req, res) => {
     console.log(error);
     return res.status(500).json({
       status: 'failed',
-      message: 'An error occurred while signing up.',
+      message: 'An error occurred while signing up. kindly try again',
     });
   }
 };
@@ -98,12 +98,13 @@ const registerUser = async (req, res) => {
 
   const loginUser = async (req, res, next) => {
     try {
+
       const { email,password } = req.body;
   
-      if (!email && !phoneNumber) {
+      if (!email) {
         return res.status(400).json({
           status: 'failed',
-          message: 'Phone or email field is required',
+          message: 'email field is required',
         });
       }
   
@@ -111,31 +112,35 @@ const registerUser = async (req, res) => {
       if (!user) {
         return res.status(404).json({
           status: 'failed',
-          message: 'User not found',
+          message: 'Sorry! User is not registered',
         });
       }
   
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
       if (!isPasswordValid) {
         return res.status(400).json({
           status: 'failed',
-          message: 'Invalid password',
+          message: 'wrong password. Kindly try again',
         });
       }
   
       if (!user.verified) {
         return res.status(400).json({
           status: 'failed',
-          message: 'Please verify your email before signing in',
+          message: 'kindly verify your email before trying signing in for the first time',
         });
       }
-  
+      
+      
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, { expiresIn: '1h' });
-      const { isAdmin, ...otherDetails } = user._doc;
+      const { isAdmin,    ...otherDetails } = user._doc;
+      delete otherDetails.password
+      delete otherDetails.active
+      
   
       return res.status(200).json({
         status: 'success',
-        message: 'Successfully signed in',
+        message: 'You are Sign-In',
         token,
         user: otherDetails,
       });

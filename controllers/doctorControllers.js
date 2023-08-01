@@ -125,7 +125,88 @@ const updateDoctorAccountInfo = async (req, res, next) => {
   };
 
 
+
+  ////// VIEW DOCTOR
+  const viewDoctor = async (req, res, next) => {
+    const { userId } = req.params;
+  
+    try {
+      // Check if the user exists and is a doctor
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({
+          status: 'failed',
+          message: 'User not found. Please enter a valid userId.',
+        });
+      }
+  
+      if (!user.isDoctor) {
+        return res.status(400).json({
+          status: 'failed',
+          message: 'User is not a doctor. Cannot view DoctorInfo.',
+        });
+      }
+  
+      // Get the DoctorInfo for the user
+      const doctorInfo = await DoctorInfo.findOne({ user: userId });
+  
+      // Combine the DoctorInfo and User data
+      const doctorData = {
+        ...doctorInfo,
+        ...user,
+      };
+  
+      // Add the available time slots to the doctor data
+      doctorData.availableTimeSlots = doctorInfo.availableTimeSlots;
+  
+      return res.status(200).json({
+        status: 'success',
+        message: 'Doctor information retrieved successfully.',
+        data: doctorData,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        status: 'failed',
+        message: 'An error occurred while processing your request.',
+      });
+    }
+  };
+
+  /////// GET DOCTOR BY SPECILTY
+  const viewDoctorsBySpecialty = async (req, res) => {
+    // Get the specialty from the request
+    const specialty = req.params.specialty;
+  
+    // Get the doctors for the specialty
+    const doctors = await DoctorInfo.find({ specialty });
+  
+    // Return the doctors
+    return res.status(200).json({
+      status: 'success',
+      message: 'Doctors retrieved successfully.',
+      data: doctors,
+    });
+  };
+
+  const getAllDoctors = async (req, res) => {
+    // Get all users that are doctors
+    const doctors = await User.find({ isDoctor: true });
+  
+    // Return the doctors
+    return res.status(200).json({
+      status: 'success',
+      message: 'Doctors retrieved successfully.',
+      data: doctors,
+    });
+  }
+  
+
+ 
 module.exports = {
+  getAllDoctors,
+  viewDoctorsBySpecialty,
+  viewDoctor,
   updateDoctorInfo,
   updateDoctorAccountInfo
 };

@@ -15,6 +15,15 @@ router.put('/:userId/info', doctorController.updateDoctorInfo);
 ///update doctor's Account information
 router.put('/account/:userId', doctorController.updateDoctorAccountInfo);
 
+/// VIEW DOCTOR WITH ID
+router.get('/view/:userId', doctorController.viewDoctor);
+
+//// VIEW DOCTOR BY SECIALTY
+router.get('/specialty/:specialty', doctorController.viewDoctorsBySpecialty);
+
+
+
+
 
 
 

@@ -6,12 +6,10 @@ const requestNewPassword = require('../controllers/resetPasswordController');
 const userController = require('../controllers/userController')
 const { verifyToken, verifyUser, verifyAdmin, verifyDoctor } = require('../middleware/authMiddleware');
 
-
+////// ROUTE FOR TESTING
 router.get('/', (req, res)=>{
     res.send(' USER SIDE')
-}
-)
-
+})
 
 // Create a new user
 router.post('/create',  userController.createUser);

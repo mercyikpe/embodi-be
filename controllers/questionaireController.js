@@ -1,6 +1,58 @@
 const Disease = require('../models/Disease');
+const Questionnaire = require('../models/Questionnaire.js'); // Make sure the filename is correct
+const mongoose = require('mongoose');
 
 
+
+async function createQuestionnaireForDisease(req, res) {
+  try {
+    const { diseaseId, question, answer } = req.body;
+
+    console.log('Disease ID:', diseaseId);
+    console.log('Question:', question);
+    console.log('Answer:', answer);
+
+    // First, create a new questionnaire instance
+    const questionnaire = new Questionnaire({
+      question,
+      answer,
+      diseaseId,
+    });
+
+  
+    // Save the questionnaire to the database
+    await questionnaire.save();
+
+    // Find the disease by its ID
+    const disease = await Disease.findById(diseaseId);
+
+    // Add the newly created questionnaire's ObjectId to the disease's questionnaire array
+    disease.questionnaire.push(questionnaire._id);
+
+    // Save the updated disease to the database
+    await disease.save();
+
+    // Return the `data` object
+    const data = {
+      _id: questionnaire._id,
+      questionnaire: [],
+      "__v": 0
+    };
+
+    return res.status(201).json(data);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while creating the questionnaire.',
+    });
+  }
+}
+
+module.exports = createQuestionnaireForDisease;
+
+
+/*
 // Create a new questionnaire for a disease
 async function createQuestionnaire(req, res) {
   try {
@@ -90,9 +142,22 @@ async function viewQuestionnaire(req, res) {
     });
   }
 }
-
+*/
 module.exports = {
+  createQuestionnaireForDisease
+  /*
+  addQuestionsToQuestionnaire,
+  updateQuestionsInQuestionnaire,
+  viewQuestionsForDisease,
+  viewQuestionnaire,
+  deleteQuestionnaire,
+  createQuestionnaire,
+  updateQuestionnaire
+*/
+  /*
+  
   createQuestionnaire,
   updateQuestionnaire,
   viewQuestionnaire,
+  */
 };

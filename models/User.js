@@ -72,6 +72,37 @@ const UserSchema = new mongoose.Schema(
       type: [String ] 
     },
 
+    ownedDiseases: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Disease',
+      },
+    ],
+
+    //////////USER OWN DISEASE AND QUESTION THEY ANSWER
+    diseaseData: [
+      {
+        disease: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Disease',
+        },
+        data: {
+          // Fields to store data specific to the disease
+          // For example: symptoms, treatment, notes, etc.
+        },
+      },
+    ],
+
+    
+    disease: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Disease',
+    },
+
+    questionaire: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Questionaire',
+    },
 
   },
   { timestamps: true }

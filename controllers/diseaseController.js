@@ -1,7 +1,80 @@
 const Disease = require('../models/Disease');
 
+
 // Create a new disease
-async function createDisease(req, res) {
+async function createDisease(documentData) {
+  // Validate the document data
+  const errors = validateDocumentData(documentData);
+  if (errors.length) {
+    throw new Error(errors.join(', '));
+  }
+
+  // Create a new Disease document
+  const disease = new Disease({
+    title: documentData.title,
+    category: documentData.category,
+    photo: documentData.photo,
+    detailTitle: documentData.detailTitle,
+    detail: documentData.detail,
+  });
+
+  // Save the new Disease document to the database
+  try {
+    await disease.save();
+  } catch (error) {
+    console.error('Error creating disease:', error);
+    throw new Error('An error occurred while creating the disease.');
+  }
+
+  return disease;
+}
+
+function validateDocumentData(documentData) {
+  const errors = [];
+
+  if (!documentData.title) {
+    errors.push('Title is required.');
+  }
+
+  if (!documentData.category) {
+    errors.push('Category is required.');
+  }
+
+  return errors;
+}
+  
+  // Update a disease
+  function updateDisease(diseaseId, diseaseData) {
+    const disease = Disease.findById(diseaseId);
+    disease.update(diseaseData);
+    disease.save();
+    return disease;
+  }
+  
+  // Delete a disease
+  function deleteDisease(diseaseId) {
+    Disease.deleteOne({ _id: diseaseId });
+  }
+  
+  // View a disease
+  function viewDisease(diseaseId) {
+    const disease = Disease.findById(diseaseId);
+    return disease;
+  }
+  
+  // Make a disease popular
+  function makeDiseasePopular(diseaseId) {
+    const disease = Disease.findById(diseaseId);
+    disease.popular = true;
+    disease.save();
+    return disease;
+  }
+  
+
+
+
+// Create a new disease
+async function createDiseases(req, res) {
   try {
     const diseaseData = req.body;
     const disease = new Disease(diseaseData);
@@ -19,6 +92,8 @@ async function createDisease(req, res) {
     });
   }
 }
+
+
 
 // Update a disease
 async function updateDisease(req, res) {
@@ -41,6 +116,8 @@ async function updateDisease(req, res) {
     });
   }
 }
+
+/*
 
 // Delete a disease
 async function deleteDisease(req, res) {
@@ -134,8 +211,16 @@ async function viewDiseasesByPopularity(req, res) {
   }
 }
 
+*/
 
 module.exports = {
+createDiseases,
+createDisease,
+updateDisease,
+deleteDisease,
+viewDisease,
+makeDiseasePopular
+    /*
   createDisease,
   updateDisease,
   deleteDisease,
@@ -143,5 +228,5 @@ module.exports = {
   viewDiseasesByCategory,
   setPopularity,
   viewDiseasesByPopularity,
-  
+  */
 };

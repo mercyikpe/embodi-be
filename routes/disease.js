@@ -1,34 +1,38 @@
-// src/routes/authRoutes.js
 
 const express = require('express');
 const router = express.Router();
+const questionnaire = require('../controllers/questionaireController');
 const diseaseController = require('../controllers/diseaseController');
+const { createDisease } = require('../controllers/diseaseController')
 
 router.get('/', (req, res)=>{
     res.send('  DISEASES IS SHOWS UP HERE')
 }
 )
 
+
+
 // CREATE DISEASE 
-router.post('/createdisease', diseaseController.createDisease);
+router.post('/createdisease', diseaseController.createDiseases);
 
 //UPDATE DISEASE 
-router.put('/updatedisease', diseaseController.updateDisease);
+router.put('/update/:diseaseId', diseaseController.updateDisease);
 
 // DELETE
-router.delete('/deletedisease', diseaseController.deleteDisease);
+router.delete('/delete/:diseaseId', diseaseController.deleteDisease);
 
 // VIEW
-router.get('/viewdisease', diseaseController.viewDisease);
-
-// viewDiseasesByCategory,
-router.get('/categories', diseaseController.viewDiseasesByCategory);
-
-//   setPopularity,
-router.get('/setpopularity', diseaseController.createDisease);
+router.get('/view/:diseaseId', diseaseController.viewDisease);
 
 //   viewDiseasesByPopularity
-router.get('/popularity', diseaseController.viewDiseasesByPopularity);
+router.get('/popularity/:diseaseId', diseaseController.makeDiseasePopular);
+
+
+// viewDiseasesByCategory,
+//router.get('/categories', diseaseController.viewDiseasesByCategory);
+
+//   setPopularity,
+//router.get('/setpopularity', diseaseController.createDisease);
 
 
 

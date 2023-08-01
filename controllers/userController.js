@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const moment = require('moment');
 const createError = require ('../utilities/createError');
 const User = require ('../models/User');
+const Disease = require('../models/Disease')
+
 
 
 const createUser = async (req, res, next) => {
@@ -104,7 +106,68 @@ const getActiveUsers = async (req, res, next) => {
   }
 };
 
+
+/////////USER OWN DISEASE THEY AND QUESTIONAIRE
+async function addDiseaseToUser(userId, diseaseId) {
+  try {
+    const user = await User.findById(userId);
+    const disease = await Disease.findById(diseaseId);
+
+    if (!user || !disease) {
+      throw new Error('User or Disease not found.');
+    }
+
+    // Add the disease to the user's ownedDiseases array
+    user.ownedDiseases.push(disease._id);
+    await user.save();
+
+    return user;
+  } catch (error) {
+    throw new Error('Failed to add disease to user.');
+  }
+}
+
+
+// controller function to view a user with al information
+async function viewUser(req, res) {
+  const userId = req.params.userId;
+
+  try {
+    // Find the user by ID and populate the 'disease' and 'questionnaire' fields
+    const user = await User.findById(userId).populate('disease questionnaire');
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found.',
+      });
+    }
+
+ ///// choose what to keep open when resturning response 
+    const userData = {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+     //// other fields to show. 
+    };
+
+    // Return the user data in the response
+    return res.status(200).json({
+      status: 'success',
+      data: userData,
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+}
+
 const userController = {
+  viewUser, //// route not created for this
+  addDiseaseToUser, /////// route not created for this
   createUser,
   updateUser,
   deleteUser,
@@ -114,6 +177,7 @@ const userController = {
 };
 
 module.exports = {
+  addDiseaseToUser,
   createUser,
   updateUser,
   deleteUser,
