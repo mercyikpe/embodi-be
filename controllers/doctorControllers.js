@@ -1,6 +1,191 @@
 const User = require('../models/User');
 const DoctorInfo = require('../models/DoctorInfo');
+const transporter = require('../utilities/transporter');
+//const DoctorInfo = require('../models/DoctorInfo');
 
+
+/*
+// Function to sign up a user as a doctor
+const signUpAsDoctor = async (req, res) => {
+  const { email, adminUserId } = req.body;
+
+  try {
+    // Check if the user making the request is an admin
+    const adminUser = await User.findById(adminUserId);
+
+    if (!adminUser || !adminUser.isAdmin) {
+      return res.status(403).json({
+        status: 'failed',
+        message: 'You do not have permission to sign up doctors.',
+      });
+    }
+
+    // Check if the user with the given email already exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // If the user exists, update their isDoctor field to true and save the user
+      user.isDoctor = true;
+      await user.save();
+
+      // Send an email notifying the user that they are now a doctor
+      const mailOptions = {
+        from: 'Your Email <youremail@gmail.com>',
+        to: email,
+        subject: 'Congratulations! You are now a doctor',
+        html: '<p>You have been verified as a doctor.</p>',
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log('Error sending verification email:', error);
+        } else {
+          console.log('Verification email sent:', info.response);
+        }
+      });
+
+      return res.json({
+        status: 200,
+        message: 'Doctor created successfully.',
+      });
+    } else {
+      // If the user does not exist, create a new user and set their isDoctor field to true
+      const doctor = new User({
+        email,
+        isDoctor: true,
+      });
+
+      await doctor.save();
+
+      // Generate a verification token and send it via email
+      const verificationToken = jwt.sign(
+        { email },
+        'your_secret_verification_key', // Replace with your own secret key
+        { expiresIn: '1h' }
+      );
+
+      const verificationLink = `http://yourdomain.com/verify-doctor?token=${verificationToken}`;
+
+      const mailOptions = {
+        from: 'Your Email <youremail@gmail.com>',
+        to: email,
+        subject: 'Verify Your Doctor Account',
+        html: `<p>Please click the link below to verify your doctor account:</p><a href="${verificationLink}">${verificationLink}</a>`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log('Error sending verification email:', error);
+        } else {
+          console.log('Verification email sent:', info.response);
+        }
+      });
+
+      return res.json({
+        status: 200,
+        message: 'Verification email sent. Please verify your doctor account.',
+      });
+    }
+  } catch (error) {
+    console.log('Error signing up as doctor:', error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
+*/
+
+const signUpAsDoctor = async (req, res) => {
+  const { email, firstName, lastName, adminUserId } = req.body;
+
+  try {
+    // Check if the user making the request is an admin
+    const adminUser = await User.findById(adminUserId);
+
+    if (!adminUser || !adminUser.isAdmin) {
+      return res.status(403).json({
+        status: 'failed',
+        message: 'You do not have permission to sign up doctors.',
+      });
+    }
+
+    // Check if the user with the given email already exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // If the user exists, update their isDoctor field to true and save the user
+      user.isDoctor = true;
+      await user.save();
+
+      // Send an email notifying the user that they are now a doctor
+      const mailOptions = {
+        from: 'Your Email <youremail@gmail.com>',
+        to: email,
+        subject: 'Congratulations! You are now a doctor',
+        html: '<p>You have been verified as a doctor. kindly login your account to update your information</p>',
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log('Error sending verification email:', error);
+        } else {
+          console.log('Verification email sent:', info.response);
+        }
+      });
+
+      return res.json({
+        status: 200,
+        message: 'Doctor created successfully.',
+      });
+    } else {
+      // If the user does not exist, create a new user and set their isDoctor field to true
+      const doctor = new User({
+        email,
+        firstName,
+        lastName,
+        isDoctor: true,
+      });
+
+      await doctor.save();
+
+      // Generate a verification token and send it via email
+      const verificationToken = jwt.sign(
+        { email },
+        proccess.env.JWT_SEC_KE, // Replace with  secret key
+        { expiresIn: '1h' }
+      );
+
+      const verificationLink = `http://yourdomain.com/verify-doctor?token=${verificationToken}`;
+
+      const mailOptions = {
+        from: 'Your Email <youremail@gmail.com>',
+        to: email,
+        subject: 'Verify Your Doctor Account',
+        html: `<p>Please click the link below to verify your doctor account:</p><a href="${verificationLink}">${verificationLink}</a>`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log('Error sending verification email:', error);
+        } else {
+          console.log('Verification email sent:', info.response);
+        }
+      });
+
+      return res.json({
+        status: 200,
+        message: 'Verification email sent. Please verify your doctor account.',
+      });
+    }
+  } catch (error) {
+    console.log('Error signing up as doctor:', error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
 
 
 
@@ -244,6 +429,7 @@ const updateDoctorAccountInfo = async (req, res, next) => {
 
 
 module.exports = {
+  signUpAsDoctor,
   searchDoctors,
   getAllDoctorsPaginated,
   getAllDoctors,

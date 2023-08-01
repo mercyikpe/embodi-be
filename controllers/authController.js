@@ -19,7 +19,7 @@ const generateOTPCode = () => {
   return otpCode;
 };
 
-
+/*
 const registerUser = async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password } = req.body;
 
@@ -97,6 +97,143 @@ const registerUser = async (req, res) => {
     });
   }
 };
+*/
+
+
+const registerUser = async (req, res) => {
+  const { firstName, lastName, phoneNumber, email, password } = req.body;
+
+  if (!firstName || !lastName || !phoneNumber || !email || !password) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Fields cannot be blank',
+    });
+  }
+
+  const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*]).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
+    });
+  }
+
+  try {
+    // Check if the user with the given email already exists
+    let user = await User.findOne({ email });
+
+    if (user && !user.verified) {
+      // If the user exists and is not verified, update their data and resend verification email
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.phoneNumber = phoneNumber;
+      user.password = await bcrypt.hash(password, 10); // Hash the new password
+      await user.save();
+
+      // Send OTP code to user's email
+      const otpCode = generateOTPCode();
+
+      // Set the expiration time to 10 minutes from now
+      const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+
+      // Save OTP code to database
+      const otpCodeRecord = new OTPCode({
+        userId: user._id,
+        code: otpCode,
+        createdAt: Date.now(),
+        expiresAt: expirationTime,
+      });
+      await otpCodeRecord.save();
+
+      // Prepare and send the email using the transporter and sendEmail function
+      const mailOptions = {
+        from: process.env.AUTH_EMAIL,
+        to: user.email,
+        subject: 'Verify Your Email',
+        html: `
+          <h1>Email Verification</h1>
+          <p><strong>${otpCode}</strong></p>
+          <p>Please enter the verification code in your account settings to verify your email.</p>
+        `,
+      };
+
+      await transporter.sendMail(mailOptions);
+
+      // Remove the password field from the response JSON
+      const { password: removedPassword, ...userWithoutPassword } = user.toObject();
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'OTP sent to your email for verification.',
+        user: userWithoutPassword,
+      });
+    } else if (user) {
+      // If the user exists and is already verified, return an error message
+      return res.status(400).json({
+        status: 'failed',
+        message: 'User already exists and is verified.',
+      });
+    }
+
+    // If the user does not exist, create a new user and set their verified status to false
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
+    const newUser = new User({
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      password: hashedPassword,
+      verified: false,
+    });
+
+    const savedUser = await newUser.save();
+
+    // Send OTP code to user's email
+    const otpCode = generateOTPCode();
+
+    // Set the expiration time to 10 minutes from now
+    const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Save OTP code to database
+    const otpCodeRecord = new OTPCode({
+      userId: savedUser._id,
+      code: otpCode,
+      createdAt: Date.now(),
+      expiresAt: expirationTime,
+    });
+    await otpCodeRecord.save();
+
+    // Prepare and send the email using the transporter and sendEmail function
+    const mailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: savedUser.email,
+      subject: 'Verify Your Email',
+      html: `
+        <h1>Email Verification</h1>
+        <p><strong>${otpCode}</strong></p>
+        <p>Please enter the verification code in your account settings to verify your email.</p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    // Remove the password field from the response JSON
+    const { password: removedPassword, ...userWithoutPassword } = savedUser.toObject();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'OTP sent to your email for verification.',
+      user: userWithoutPassword,
+    });
+  } catch (error) {
+    console.log('Error while saving the user:', error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while signing up. Kindly try again.',
+    });
+  }
+};
+
 
 
 const loginUser = async (req, res, next) => {
