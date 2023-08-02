@@ -407,6 +407,8 @@ const updateDoctorAccountInfo = async (req, res, next) => {
     });
   };
 
+
+  /////// search for doctors
   const searchDoctors = async (req, res) => {
 
     // Get the search term from the request

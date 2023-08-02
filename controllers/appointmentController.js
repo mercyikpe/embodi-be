@@ -10,6 +10,8 @@ const createAppointment = async (req, res) => {
     const { doctorId, startTime, endTime, date } = req.body;
 
     try {
+
+
       // Validate the input data
       if (!doctorId) {
         return res.status(400).json({
