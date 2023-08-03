@@ -121,7 +121,7 @@ const signUpAsDoctor = async (req, res) => {
 
       // Send an email notifying the user that they are now a doctor
       const mailOptions = {
-        from: 'Your Email <youremail@gmail.com>',
+        from: process.env.AUTH_EMAIL,
         to: email,
         subject: 'Congratulations! You are now a doctor',
         html: '<p>You have been verified as a doctor. kindly login your account to update your information</p>',
@@ -156,14 +156,14 @@ const signUpAsDoctor = async (req, res) => {
       // Generate a verification token and send it via email
       const verificationToken = jwt.sign(
         { email },
-        proccess.env.JWT_SEC_KE, // Replace with  secret key
+        proccess.env.JWT_SEC_KEY, // Replace with  secret key
         { expiresIn: '1h' }
       );
 
       const verificationLink = `http://yourdomain.com/verify-doctor?token=${verificationToken}`;
 
       const mailOptions = {
-        from: 'Your Email <youremail@gmail.com>',
+        from: process.env.AUTH_EMAIL,
         to: email,
         subject: 'Verify Your Doctor Account',
         html: `<p>Please click the link below to verify your doctor account:</p><a href="${verificationLink}">${verificationLink}</a>`,

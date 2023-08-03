@@ -3,22 +3,26 @@ const app = express();
 const dotenv = require('dotenv');
 const mongoose  = require('mongoose');
 dotenv.config();
-const PORT = process.env.PORT || 5000
+const PORT = /*process.env.PORT ||*/ 5000
 
 app.use(express.json());
 
 // Import routes
+const adminRoute = require('./routes/adminRoutes');
+const test = require('./routes/test');
 const authRoute = require('./routes/auth.js');
 const userRoute = require('./routes/user');
-const doctorRoute = require('./routes/doctor');
+const doctorRoute = require('./routes/doctorRoute');
 const appointmentRoute = require('./routes/appointment');
 const questionaireRoute = require('./routes/questionaire');
 const diseaseRoute = require('./routes/disease');
 
 // Routes middlewares
+app.use('/api/test', test);
+app.use('/api/admin', adminRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/user', userRoute);
-app.use('/api/docter', doctorRoute);
+app.use('/api/doctor', doctorRoute);
 app.use('/api/appointment', appointmentRoute);
 app.use('/api/questionaire', questionaireRoute);
 app.use('/api/disease', diseaseRoute);
@@ -27,12 +31,12 @@ app.use('/api/disease', diseaseRoute);
 
 
 ////// URL FOR THE PROJECT
-const prodUrl = `http://127.0.0.1:${PORT}`
+const prodUrl = `http://127.0.0.1:${PORT}` ;
 const liveUrl =  `${process.env.currentUrl}:${PORT}`
-const currentUrl = liveUrl ||  prodUrl  
+const currentUrl = liveUrl ||  prodUrl  ;
 
 //// DATABSE URL local: process.env.MONGODB_URI ||| cloud:process.env.databaseUrl 
-const dbUrl = process.env.databaseUrl ||  process.env.MONGODB_URI ;
+const dbUrl = process.env.databaseUrl ||  process.env.MONGODB_URI;
 
 
 // Database connection

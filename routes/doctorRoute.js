@@ -1,13 +1,10 @@
-// src/routes/authRoutes.js
-
 const express = require('express');
 const router = express.Router();
-const doctorController = require('../controllers/doctorControllers');
+const doctorController = require('../controllers/doctorController');
 
 router.get('/', (req, res)=>{
     res.send(' DOCTORS SIDE')
-}
-)
+});
 
 
 ////// sign uo doctor 
@@ -34,16 +31,6 @@ router.get('/viewalldoctors', doctorController.getAllDoctors);
 
 ////seach for doctors searchDoctors
 router.get('/searchdoctors', doctorController.searchDoctors);
-
-
-
-
-
-
-
-
-
-
 
 
 module.exports = router;
