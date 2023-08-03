@@ -97,7 +97,8 @@ const signUpAsDoctor = async (req, res) => {
 */
 
 const signUpAsDoctor = async (req, res) => {
-  const { email, firstName, lastName, adminUserId } = req.body;
+  /// THIS COMMENT US ADDED FOR FUTURE USE INCASE THIS FIELDS WILL BE REQUIRED TO CREATE A DOCTOR
+  const { email, /*firstName, lastName,*/ adminUserId } = req.body;
 
   try {
     // Check if the user making the request is an admin
@@ -142,8 +143,11 @@ const signUpAsDoctor = async (req, res) => {
       // If the user does not exist, create a new user and set their isDoctor field to true
       const doctor = new User({
         email,
+        ///// THIS COMMENT IS ADDED FOR FUTURE ADJUSTMENT
+        /*
         firstName,
         lastName,
+        */
         isDoctor: true,
       });
 

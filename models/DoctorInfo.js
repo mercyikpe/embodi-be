@@ -51,6 +51,14 @@ const DoctorInfoSchema = new mongoose.Schema(
     accountNumber: {
       type: Number,
     },
+
+    StarRating:{
+      type: Number,
+      default: 0,
+      min:1,
+      max:5
+
+  },
       // Add an array of time slots representing available intervals ///from appointmet
       availableTimeSlots: {
         type: [

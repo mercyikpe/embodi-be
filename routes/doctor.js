@@ -13,13 +13,6 @@ router.get('/', (req, res)=>{
 ////// sign uo doctor 
 router.post('/signupdoctor', doctorController.signUpAsDoctor);
 
-
-///////////// verify doctor
-
-
-
-
-
 // update doctor's user information fields and addtional information
 router.put('/:userId/info', doctorController.updateDoctorInfo);
 
