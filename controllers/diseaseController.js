@@ -1,4 +1,5 @@
 const Disease = require('../models/Disease');
+const Questionnaire = require('../models/Questionnaire')
 
 
 
@@ -63,7 +64,7 @@ const getDiseases = async (req, res) => {
   }
 };
 
-// controllers/diseaseController.js
+
 
 // Function to find diseases with at least 100 views per week
 const getPopularDiseases = async (req, res) => {
@@ -108,11 +109,84 @@ const getDiseaseWithHighestEngagement = async (req, res) => {
   }
 };
 
+// controllers/diseaseController.js
+
+const updateDisease = async (req, res) => {
+  try {
+    const { diseaseId } = req.params;
+    const { title, category, detailTitle, detail } = req.body;
+
+    // Find the disease by ID
+    const disease = await Disease.findById(diseaseId);
+
+    // Check if the disease exists
+    if (!disease) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'Disease not found. Please enter a valid diseaseId.',
+      });
+    }
+
+    // Update the disease properties with new data
+    disease.title = title;
+    disease.category = category;
+    disease.detailTitle = detailTitle;
+    disease.detail = detail;
+
+    // Save the updated disease to the database
+    const updatedDisease = await disease.save();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Disease updated successfully.',
+      data: updatedDisease,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while updating the disease.',
+    });
+  }
+};
+
+
+/////GET ALL DISEASE ALONGSIDE QUESTINNAIRE
+const mongoose = require('mongoose');
+const ObjectId = mongoose.Types.ObjectId;
+
+// Correct usage of ObjectId with 'new' keyword
+//const objectId = new ObjectId();
+//console.log(objectId); // Should print a new ObjectId
+
+
+const viewQuestionnaireWithDisease = async (req, res) => {
+  try {
+    const { diseaseId } = req.body;
+
+    // Convert the diseaseId to a valid ObjectId
+    const validDiseaseId = new mongoose.Types.ObjectId(diseaseId);
+
+    // Query the Questionnaire model with the valid ObjectId
+    const questionnaires = await Questionnaire.find({ diseaseId: validDiseaseId });
+
+    // Rest of the code...
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while fetching questionnaires for the disease.',
+    });
+  }
+};
+
 
 module.exports = {
   createDiseases,
+  updateDisease,
   getDiseases,
   getPopularDiseases,
-  getDiseaseWithHighestEngagement
+  getDiseaseWithHighestEngagement,
+  viewQuestionnaireWithDisease
     
 };

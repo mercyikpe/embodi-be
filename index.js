@@ -24,7 +24,7 @@ app.use('/api/auth', authRoute);
 app.use('/api/user', userRoute);
 app.use('/api/doctor', doctorRoute);
 app.use('/api/appointment', appointmentRoute);
-app.use('/api/questionaire', questionaireRoute);
+app.use('/api/questionnaire', questionaireRoute);
 app.use('/api/disease', diseaseRoute);
 
 

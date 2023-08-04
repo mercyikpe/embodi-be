@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const DoctorInfo = require('../models/DoctorInfo');
 const transporter = require('../utilities/transporter');
+const jwt = require('jsonwebtoken');
 //const DoctorInfo = require('../models/DoctorInfo');
 
 
@@ -99,11 +100,20 @@ const signUpAsDoctor = async (req, res) => {
 const signUpAsDoctor = async (req, res) => {
   const { email, adminUserId } = req.body;
 
+  // Check if the request body contains the required fields
+  if (!email || !adminUserId) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Please provide the email and adminUserId in the request body.',
+    });
+  }
+
   try {
     // Check if the user making the request is an admin
     const adminUser = await User.findById(adminUserId);
 
-    if (!adminUser || !adminUser.isAdmin) {
+    // Check if the user exists and is an admin
+    if (!adminUser || !adminUser.role.includes('isAdmin')) {
       return res.status(403).json({
         status: 'failed',
         message: 'You do not have permission to sign up doctors.',
@@ -114,35 +124,43 @@ const signUpAsDoctor = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
-      // If the user exists, update their role field to 'isDoctor' and save the user
-      user.role = 'isDoctor';
-      await user.save();
+      // If the user exists, check if they are already a doctor
+      if (user.role.includes('isDoctor')) {
+        return res.json({
+          status: 200,
+          message: 'The user is already registered as a doctor.',
+        });
+      } else {
+        // If the user exists but is not a doctor, update their role to 'isDoctor' and save the user
+        user.role.push('isDoctor');
+        await user.save();
 
-      // Send an email notifying the user that they are now a doctor
-      const mailOptions = {
-        from: process.env.AUTH_EMAIL,
-        to: email,
-        subject: 'Congratulations! You are now a doctor',
-        html: '<p>You have been verified as a doctor. kindly login your account to update your information</p>',
-      };
+        // Send an email notifying the user that they are now a doctor
+        const mailOptions = {
+          from: process.env.AUTH_EMAIL,
+          to: email,
+          subject: 'Congratulations! You are now a doctor',
+          html: '<p>You have been verified as a doctor. Kindly login to your account to update your information.</p>',
+        };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log('Error sending verification email:', error);
-        } else {
-          console.log('Verification email sent:', info.response);
-        }
-      });
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.log('Error sending verification email:', error);
+          } else {
+            console.log('Verification email sent:', info.response);
+          }
+        });
 
-      return res.json({
-        status: 200,
-        message: 'Doctor created successfully.',
-      });
+        return res.json({
+          status: 200,
+          message: 'Doctor created successfully.',
+        });
+      }
     } else {
-      // If the user does not exist, create a new user and set their role field to 'isDoctor'
+      // If the user does not exist, create a new user and set their role to 'isDoctor'
       const doctor = new User({
         email,
-        role: 'isDoctor',
+        role: ['isDoctor'],
       });
 
       await doctor.save();
@@ -150,7 +168,7 @@ const signUpAsDoctor = async (req, res) => {
       // Generate a verification token and send it via email
       const verificationToken = jwt.sign(
         { email },
-        proccess.env.JWT_SEC_KEY, // Replace with  secret key
+        process.env.JWT_SEC_KEY, // Replace with secret key
         { expiresIn: '1h' }
       );
 
@@ -185,6 +203,151 @@ const signUpAsDoctor = async (req, res) => {
   }
 };
 
+
+const updateDoctorInfo = async (req, res, next) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user || !user.role.includes('isDoctor')) {
+      return res.status(403).json({
+        status: 'failed',
+        message: 'User not found or is not authorized as a doctor.',
+      });
+    }
+
+    const userUpdateData = {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      phoneNumber: req.body.phoneNumber,
+      dob: req.body.dob,
+      address: req.body.address,
+      gender: req.body.gender,
+      allergies: req.body.allergies,
+    };
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      userUpdateData,
+      { new: true }
+    );
+
+    const doctorUpdateData = {
+      qualification: req.body.qualification,
+      placeOfWork: req.body.placeOfWork,
+      specialty: req.body.specialty,
+      yearOfExperience: req.body.yearOfExperience,
+      rate: req.body.rate,
+      bio: req.body.bio,
+    };
+
+    const updatedDoctorInfo = await DoctorInfo.findOneAndUpdate(
+      { user: userId },
+      doctorUpdateData,
+      { upsert: true }
+    );
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'DoctorInfo and User updated successfully.',
+      data: { doctorInfo: updatedDoctorInfo, user: updatedUser },
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
+
+////// update doctors account information
+const updateDoctorAccountInfo = async (req, res, next) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user || !user.role.includes('isDoctor')) {
+      return res.status(403).json({
+        status: 'failed',
+        message: 'User not found or is not authorized as a doctor.',
+      });
+    }
+
+    const updateData = {
+      bankName: req.body.bankName,
+      accountName: req.body.accountName,
+      accountNumber: req.body.accountNumber,
+    };
+
+    const updatedDoctorAccountInfo = await DoctorInfo.findOneAndUpdate(
+      { user: userId },
+      updateData,
+      { upsert: true }
+    );
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Doctor Account information updated successfully.',
+      data: updatedDoctorAccountInfo,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
+
+///// view doctorinfo only using userId
+const viewDoctor = async (req, res, next) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user || !user.role.includes('isDoctor')) {
+      return res.status(403).json({
+        status: 'failed',
+        message: 'User not found or is not authorized as a doctor.',
+      });
+    }
+
+    const doctorInfo = await DoctorInfo.findOne({ user: userId });
+
+    if (!doctorInfo) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'Doctor information not found.',
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Doctor information found.',
+      data: doctorInfo,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+///////odl codes below
+/*
 
 const updateDoctorInfo = async (req, res, next) => {
   const { userId } = req.params;
@@ -326,6 +489,7 @@ const updateDoctorInfo = async (req, res, next) => {
   };
 */
 
+/*
   /////// update doctor's bnks account
 const updateDoctorAccountInfo = async (req, res, next) => {
     const { userId } = req.params;
@@ -468,7 +632,7 @@ const updateDoctorAccountInfo = async (req, res, next) => {
     }
   };
 */
-
+/*
   /////// GET DOCTOR BY SPECILTY
   const viewDoctorsBySpecialty = async (req, res) => {
     // Get the specialty from the request
@@ -518,7 +682,7 @@ const updateDoctorAccountInfo = async (req, res, next) => {
     });
   };
 */
-
+/*
 const getAllDoctorsPaginated = async (req, res) => {
   // Get the page number from the request
   const pageNumber = req.query.pageNumber || 1;
@@ -559,14 +723,10 @@ const getAllDoctorsPaginated = async (req, res) => {
     });
   };
 
-
+*/
 
 module.exports = {
   signUpAsDoctor,
-  searchDoctors,
-  getAllDoctorsPaginated,
-  getAllDoctors,
-  viewDoctorsBySpecialty,
   viewDoctor,
   updateDoctorInfo,
   updateDoctorAccountInfo

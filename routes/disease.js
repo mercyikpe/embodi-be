@@ -15,6 +15,8 @@ router.get('/', (req, res)=>{
 // CREATE DISEASE 
 router.post('/createdisease', diseaseController.createDiseases);
 
+//UPDATE DISEASE   ///// put disease ID
+router.put('/update/:diseaseId', diseaseController.updateDisease);
 
 //// VIEW ALL DISEASES
 router.get('/viewAll', diseaseController.getDiseases);
@@ -26,12 +28,14 @@ router.get('/viewPopular', diseaseController.getPopularDiseases);
 /////// view diseas  with hifgest enagement
 router.get('/mostengaged', diseaseController.getDiseaseWithHighestEngagement);
 
+///// get questionaire with questionnaire id viewQuestionnaireWithDisease
+router.get('/viewqandd', diseaseController.viewQuestionnaireWithDisease);
+
+
+
 
 
 /*
-//UPDATE DISEASE 
-router.put('/update/:diseaseId', diseaseController.updateDisease);
-
 // DELETE
 router.delete('/delete/:diseaseId', diseaseController.deleteDisease);
 

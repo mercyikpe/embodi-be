@@ -19,18 +19,8 @@ router.put('/account/:userId', doctorController.updateDoctorAccountInfo);
 /// VIEW DOCTOR WITH ID
 router.get('/view/:userId', doctorController.viewDoctor);
 
-//// VIEW DOCTOR BY SECIALTY
+///////VIEW ALL DOCTOR
 
-////view doctor on paginated
-router.get('/view', doctorController.getAllDoctorsPaginated);
-
-
-
-///////view all the doctors getAllDoctors
-router.get('/viewalldoctors', doctorController.getAllDoctors);
-
-////seach for doctors searchDoctors
-router.get('/searchdoctors', doctorController.searchDoctors);
 
 
 module.exports = router;

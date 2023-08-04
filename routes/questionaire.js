@@ -2,10 +2,22 @@ const express = require('express');
 const router = express.Router();
 const diseaseController = require('../controllers/questionaireController');
 
-
+router.get('/', (req, res)=>{
+    res.send('questionnaire');
+})
 
 // // Add questions to a questionnaire using disease id
 router.post('/add/:diseaseId', diseaseController.createQuestionnaireForDisease);
+
+
+/////// view for full information for disease and questionaire using questionre id
+router.get('/:questionnaireId', diseaseController.viewQuestionnaireWithDisease);
+
+
+/// viewall
+router.get('/viewAll', diseaseController.viewAllDiseasesWithQuestionnaires)
+
+
 
 
 /*
