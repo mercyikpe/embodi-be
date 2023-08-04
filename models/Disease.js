@@ -29,6 +29,8 @@ const DiseaseSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Doctor',
   },
+
+  // Array of questionnaires related to the disease
   questionnaire: [{
     _id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -44,18 +46,20 @@ const DiseaseSchema = new mongoose.Schema({
     },
   }],
 
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    //required: true,
-    unique: true,
+  // Reference to the User who has this disease
+   user: {
+     type: mongoose.Schema.Types.ObjectId,
+     ref: 'User',
+     //required: true,
+    
   },
 
+  // Reference to the Appointment related to this disease
   appointment: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Appointment',
     //required: true,
-    unique: true,
+ 
   },
 }, { timestamps: true });
 

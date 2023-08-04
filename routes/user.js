@@ -28,6 +28,7 @@ router.get('/allusers', userController.getAllUsers);
 
 // Get active users sorted by moment
 router.get('/active', userController.getActiveUsers);
+router.get('/viewsome', userController.viewUser);
 
 
 

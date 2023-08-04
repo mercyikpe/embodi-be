@@ -97,8 +97,7 @@ const signUpAsDoctor = async (req, res) => {
 */
 
 const signUpAsDoctor = async (req, res) => {
-  /// THIS COMMENT US ADDED FOR FUTURE USE INCASE THIS FIELDS WILL BE REQUIRED TO CREATE A DOCTOR
-  const { email, /*firstName, lastName,*/ adminUserId } = req.body;
+  const { email, adminUserId } = req.body;
 
   try {
     // Check if the user making the request is an admin
@@ -115,8 +114,8 @@ const signUpAsDoctor = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
-      // If the user exists, update their isDoctor field to true and save the user
-      user.isDoctor = true;
+      // If the user exists, update their role field to 'isDoctor' and save the user
+      user.role = 'isDoctor';
       await user.save();
 
       // Send an email notifying the user that they are now a doctor
@@ -140,15 +139,10 @@ const signUpAsDoctor = async (req, res) => {
         message: 'Doctor created successfully.',
       });
     } else {
-      // If the user does not exist, create a new user and set their isDoctor field to true
+      // If the user does not exist, create a new user and set their role field to 'isDoctor'
       const doctor = new User({
         email,
-        ///// THIS COMMENT IS ADDED FOR FUTURE ADJUSTMENT
-        /*
-        firstName,
-        lastName,
-        */
-        isDoctor: true,
+        role: 'isDoctor',
       });
 
       await doctor.save();
@@ -192,7 +186,75 @@ const signUpAsDoctor = async (req, res) => {
 };
 
 
+const updateDoctorInfo = async (req, res, next) => {
+  const { userId } = req.params;
 
+  try {
+    // Check if the user exists and is a doctor
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found. Please enter a valid userId.',
+      });
+    }
+
+    // Update the User model using the userId
+    const userUpdateData = {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      phoneNumber: req.body.phoneNumber,
+      dob: req.body.dob,
+      address: req.body.address,
+      gender: req.body.gender,
+      allergies: req.body.allergies,
+    };
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      userUpdateData,
+      { new: true }
+    );
+
+    if (!user.isDoctor) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'User updated successfully.',
+        data: updatedUser,
+      });
+    }
+
+    // Update the DoctorInfo using the userId
+    const doctorUpdateData = {
+      qualification: req.body.qualification,
+      placeOfWork: req.body.placeOfWork,
+      specialty: req.body.specialty,
+      yearOfExperience: req.body.yearOfExperience,
+      rate: req.body.rate,
+      bio: req.body.bio,
+    };
+
+    const updatedDoctorInfo = await DoctorInfo.findOneAndUpdate(
+      { user: userId },
+      doctorUpdateData,
+      { new: true, upsert: true }
+    );
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'DoctorInfo and User updated successfully.',
+      data: { doctorInfo: updatedDoctorInfo, user: updatedUser },
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
+/*
 ///// update user and doctor information
 const updateDoctorInfo = async (req, res, next) => {
     const { userId } = req.params;
@@ -262,7 +324,7 @@ const updateDoctorInfo = async (req, res, next) => {
       });
     }
   };
-
+*/
 
   /////// update doctor's bnks account
 const updateDoctorAccountInfo = async (req, res, next) => {
@@ -313,8 +375,52 @@ const updateDoctorAccountInfo = async (req, res, next) => {
     }
   };
 
+  const viewDoctor = async (req, res, next) => {
+    const { userId } = req.params;
+  
+    try {
+      // Check if the user exists and is a doctor
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({
+          status: 'failed',
+          message: 'User not found. Please enter a valid userId.',
+        });
+      }
+  
+      if (!user.isDoctor) {
+        // The user is not a doctor, so we cannot view their DoctorInfo
+        return res.status(400).json({
+          status: 'failed',
+          message: 'User is not a doctor. Cannot view DoctorInfo.',
+        });
+      }
+  
+      // Get the doctor information
+      const doctorInfo = await DoctorInfo.findOne({ user: userId });
+  
+      if (!doctorInfo) {
+        return res.status(404).json({
+          status: 'failed',
+          message: 'Doctor information not found.',
+        });
+      }
+  
+      return res.status(200).json({
+        status: 'success',
+        message: 'Doctor information found.',
+        data: doctorInfo,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        status: 'failed',
+        message: 'An error occurred while processing your request.',
+      });
+    }
+  };
 
-
+/*
   ////// VIEW DOCTOR
   const viewDoctor = async (req, res, next) => {
     const { userId } = req.params;
@@ -361,6 +467,7 @@ const updateDoctorAccountInfo = async (req, res, next) => {
       });
     }
   };
+*/
 
   /////// GET DOCTOR BY SPECILTY
   const viewDoctorsBySpecialty = async (req, res) => {
@@ -391,7 +498,7 @@ const updateDoctorAccountInfo = async (req, res, next) => {
       data: doctors,
     });
   }
-  
+  /*
   const getAllDoctorsPaginated = async (req, res) => {
     // Get the page number from the request
     const pageNumber = req.query.pageNumber || 1;
@@ -410,8 +517,28 @@ const updateDoctorAccountInfo = async (req, res, next) => {
       totalPages: Math.ceil(doctors.length / 10),
     });
   };
+*/
 
+const getAllDoctorsPaginated = async (req, res) => {
+  // Get the page number from the request
+  const pageNumber = req.query.pageNumber || 1;
 
+  // Get the doctors for the page
+  const doctors = await User.find({
+    isDoctor: true,
+  })
+    .skip((pageNumber - 1) * 10)
+    .limit(10);
+
+  // Return the doctors
+  return res.status(200).json({
+    status: 'success',
+    message: 'Doctors retrieved successfully.',
+    data: doctors,
+    currentPage: pageNumber,
+    totalPages: Math.ceil(doctors.length / 10),
+  });
+};
   /////// search for doctors
   const searchDoctors = async (req, res) => {
 

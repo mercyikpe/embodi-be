@@ -2,19 +2,20 @@ const mongoose = require('mongoose');
 
 const DoctorInfoSchema = new mongoose.Schema(
   {
-    // Additional fields for doctor information
+    // Reference to the User model for the doctor's user information
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      unique: true,
+     
     },
 
+    // Reference to the Appointment model for the doctor's time slots
     timeSlot: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Appointment',
       required: true,
-      unique: true,
+     
     },
 
     qualification: {
@@ -41,6 +42,7 @@ const DoctorInfoSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
     // Bank information fields for doctors
     bankName: {
       type: String,
@@ -52,29 +54,30 @@ const DoctorInfoSchema = new mongoose.Schema(
       type: Number,
     },
 
-    StarRating:{
+    // Star rating for the doctor
+    StarRating: {
       type: Number,
       default: 0,
-      min:1,
-      max:5
+      min: 1,
+      max: 5,
+    },
 
-  },
-      // Add an array of time slots representing available intervals ///from appointmet
-      availableTimeSlots: {
-        type: [
-          {
-            startTime: {
-              type: String,
-              required: true,
-            },
-            endTime: {
-              type: String,
-              required: true,
-            },
+    // Array of time slots representing available intervals
+    availableTimeSlots: {
+      type: [
+        {
+          startTime: {
+            type: String,
+            required: true,
           },
-        ],
-        default: [], // Initialize with an empty array
-      },
+          endTime: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
+      default: [], // Initialize with an empty array
+    },
   },
   { timestamps: true }
 );

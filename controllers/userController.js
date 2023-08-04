@@ -183,6 +183,7 @@ const userController = {
 };
 
 module.exports = {
+  viewUser,
   addDiseaseToUser,
   createUser,
   updateUser,
