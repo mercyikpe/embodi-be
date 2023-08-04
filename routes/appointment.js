@@ -8,7 +8,7 @@ const appointmentController = require('../controllers/appointmentController');
 router.post('/appointment', appointmentController.createAppointment);
 
 ///bookAppointment
-//router.post('/bookAppointment', appointmentController.bookAppointment);
+//router.post('bookAppointment/:userId', appointmentController.bookAppointment);
 
 
 

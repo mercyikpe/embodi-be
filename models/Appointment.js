@@ -7,10 +7,11 @@ const AppointmentSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      //required: true,
     },
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
@@ -32,7 +33,7 @@ const AppointmentSchema = new mongoose.Schema(
       enum: ['scheduled', 'completed', 'cancelled'],
       default: 'scheduled',
     },
-    // Add more fields as needed for your appointment data
+   
   },
   { timestamps: true }
 );

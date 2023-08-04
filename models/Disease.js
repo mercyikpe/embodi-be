@@ -24,6 +24,11 @@ const DiseaseSchema = new mongoose.Schema({
     type: String,
     //required: true,
   },
+  
+  doctor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Doctor',
+  },
   questionnaire: [{
     _id: {
       type: mongoose.Schema.Types.ObjectId,
