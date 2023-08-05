@@ -19,7 +19,11 @@ router.put('/account/:userId', doctorController.updateDoctorAccountInfo);
 /// VIEW DOCTOR WITH ID
 router.get('/view/:userId', doctorController.viewDoctor);
 
-///////VIEW ALL DOCTOR
+///////VIEW ALL DOCTOR viewDoctorInfo
+router.get('/viewone/:userId', doctorController.viewDoctorInfo);
+
+////fetchDoctorsWithFullInfo
+router.get('/doctors', doctorController.fetchDoctorsWithFullInfo);
 
 
 

@@ -337,6 +337,168 @@ const viewDoctor = async (req, res, next) => {
   }
 };
 
+//////// view full doctor;'s info for one doctor
+const viewDoctorInfo = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Check if the user exists and is a doctor
+    const user = await User.findById(userId);
+    if (!user || !user.isDoctor) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'Doctor not found. Please enter a valid doctor userId.',
+      });
+    }
+
+    // Use the aggregate method to perform a lookup and merge data from both collections
+    const doctorInfo = await User.aggregate([
+      // Match the user with the specified userId
+      { $match: { _id: mongoose.Types.ObjectId(userId) } },
+
+      // Perform a left outer join with the DoctorInfo collection
+      {
+        $lookup: {
+          from: 'doctorinfos',
+          localField: '_id',
+          foreignField: 'user',
+          as: 'doctorInfo',
+        },
+      },
+
+      // Unwind the doctorInfo array to get a single object
+      { $unwind: { path: '$doctorInfo', preserveNullAndEmptyArrays: true } },
+    ]);
+
+    if (!doctorInfo || doctorInfo.length === 0 || !doctorInfo[0].doctorInfo) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'Doctor information not found.',
+      });
+    }
+
+    // Return the merged data
+    return res.status(200).json({
+      status: 'success',
+      message: 'Doctor information found.',
+      data: doctorInfo[0], // doctorInfo is an array, but we know there's only one element
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
+
+
+
+    const fetchDoctorsWithFullInfo = async (req, res) => {
+      try {
+        // Use the aggregate pipeline to perform a lookup between User and DoctorInfo models
+        const doctors = await User.aggregate([
+          {
+            // Match only users with the role 'isDoctor'
+            $match: { role: 'isDoctor' }
+          },
+          {
+            // Perform a left outer join with DoctorInfo model using the 'user' field
+            $lookup: {
+              from: 'doctorinfos', // The collection name for DoctorInfo model
+              localField: '_id',
+              foreignField: 'user',
+              as: 'doctorInfo'
+            }
+          },
+          {
+            // Unwind the 'doctorInfo' array to get individual doctor information
+            $unwind: {
+              path: '$doctorInfo',
+              preserveNullAndEmptyArrays: true // Handle the case where a doctor may not have DoctorInfo
+            }
+          },
+          {
+            // Project only the fields you need from both User and DoctorInfo models
+            $project: {
+              _id: 1,
+              firstName: 1,
+              lastName: 1,
+              email: 1,
+              phoneNumber: 1,
+              qualification: { $ifNull: ['$doctorInfo.qualification', null] },
+              placeOfWork: { $ifNull: ['$doctorInfo.placeOfWork', null] },
+              specialty: { $ifNull: ['$doctorInfo.specialty', null] },
+              yearOfExperience: { $ifNull: ['$doctorInfo.yearOfExperience', null] },
+              rate: { $ifNull: ['$doctorInfo.rate', null] },
+              bio: { $ifNull: ['$doctorInfo.bio', null] }
+              // Add more fields as needed from both User and DoctorInfo models
+            }
+          }
+        ]);
+    
+        return res.status(200).json({
+          status: 'success',
+          message: 'Doctors information fetched successfully.',
+          data: doctors,
+        });
+      } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+          status: 'failed',
+          message: 'An error occurred while fetching doctors information.',
+        });
+      }
+    };
+  
+
+    /*
+    // Otherwise, map through the doctors array to fetch full information from both models
+    const doctorsWithFullInfo = await Promise.all(
+      doctors.map(async (doctor) => {
+        // Find the doctor's information from the DoctorInfo model
+        const doctorInfo = await DoctorInfo.findOne({ user: doctor._id });
+
+        // Return the full information of the doctor
+        return {
+          user: {
+            _id: doctor._id,
+            firstName: doctor.firstName,
+            lastName: doctor.lastName,
+            email: doctor.email,
+            phoneNumber: doctor.phoneNumber,
+            // Add other user fields as needed
+          },
+
+          doctorInfo: {
+            qualification: doctorInfo.qualification,
+            placeOfWork: doctorInfo.placeOfWork,
+            specialty: doctorInfo.specialty,
+            yearOfExperience: doctorInfo.yearOfExperience,
+            rate: doctorInfo.rate,
+            bio: doctorInfo.bio,
+            // Add other doctorInfo fields as needed
+          },
+        };
+      })
+    );
+
+    // Return the list of doctors with full information
+    return res.status(200).json({
+      status: 'success',
+      message: 'Doctors with full information fetched successfully.',
+      data: doctorsWithFullInfo,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while fetching doctors with full information.',
+    });
+  }
+};
+*/
+
 
 
 
@@ -726,8 +888,10 @@ const getAllDoctorsPaginated = async (req, res) => {
 */
 
 module.exports = {
+  fetchDoctorsWithFullInfo,
   signUpAsDoctor,
   viewDoctor,
   updateDoctorInfo,
-  updateDoctorAccountInfo
+  updateDoctorAccountInfo,
+  viewDoctorInfo
 };
