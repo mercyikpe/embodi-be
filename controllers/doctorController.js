@@ -451,441 +451,49 @@ const viewDoctorInfo = async (req, res) => {
       }
     };
   
+   
 
-    /*
-    // Otherwise, map through the doctors array to fetch full information from both models
-    const doctorsWithFullInfo = await Promise.all(
-      doctors.map(async (doctor) => {
-        // Find the doctor's information from the DoctorInfo model
-        const doctorInfo = await DoctorInfo.findOne({ user: doctor._id });
-
-        // Return the full information of the doctor
-        return {
-          user: {
-            _id: doctor._id,
-            firstName: doctor.firstName,
-            lastName: doctor.lastName,
-            email: doctor.email,
-            phoneNumber: doctor.phoneNumber,
-            // Add other user fields as needed
-          },
-
-          doctorInfo: {
-            qualification: doctorInfo.qualification,
-            placeOfWork: doctorInfo.placeOfWork,
-            specialty: doctorInfo.specialty,
-            yearOfExperience: doctorInfo.yearOfExperience,
-            rate: doctorInfo.rate,
-            bio: doctorInfo.bio,
-            // Add other doctorInfo fields as needed
-          },
-        };
-      })
-    );
-
-    // Return the list of doctors with full information
-    return res.status(200).json({
-      status: 'success',
-      message: 'Doctors with full information fetched successfully.',
-      data: doctorsWithFullInfo,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while fetching doctors with full information.',
-    });
-  }
-};
-*/
-
-
-
-
-
-
-
-
-
-
-///////odl codes below
-/*
-
-const updateDoctorInfo = async (req, res, next) => {
-  const { userId } = req.params;
-
-  try {
-    // Check if the user exists and is a doctor
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        status: 'failed',
-        message: 'User not found. Please enter a valid userId.',
-      });
-    }
-
-    // Update the User model using the userId
-    const userUpdateData = {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      email: req.body.email,
-      phoneNumber: req.body.phoneNumber,
-      dob: req.body.dob,
-      address: req.body.address,
-      gender: req.body.gender,
-      allergies: req.body.allergies,
+    const removeDoctorRole = async (req, res) => {
+      const { userId } = req.params;
+    
+      try {
+        // Find the user with the provided user ID
+        const user = await User.findById(userId);
+    
+        if (!user) {
+          return res.status(404).json({
+            status: 'failed',
+            message: 'User not found. Please enter a valid user ID.',
+          });
+        }
+    
+        // Check if the user has the role 'isDoctor'
+        if (user.role.includes('isDoctor')) {
+          // Remove the 'isDoctor' role from the user and update their role to 'isUser'
+          user.role = user.role.filter((role) => role !== 'isDoctor');
+          user.role.push('isUser');
+          await user.save();
+    
+          return res.status(200).json({
+            status: 'success',
+            message: 'Doctor role removed successfully.',
+            data: user,
+          });
+        } else {
+          return res.status(400).json({
+            status: 'failed',
+            message: 'The user is not a doctor.',
+          });
+        }
+      } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+          status: 'failed',
+          message: 'An error occurred while processing your request.',
+        });
+      }
     };
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      userUpdateData,
-      { new: true }
-    );
-
-    if (!user.isDoctor) {
-      return res.status(200).json({
-        status: 'success',
-        message: 'User updated successfully.',
-        data: updatedUser,
-      });
-    }
-
-    // Update the DoctorInfo using the userId
-    const doctorUpdateData = {
-      qualification: req.body.qualification,
-      placeOfWork: req.body.placeOfWork,
-      specialty: req.body.specialty,
-      yearOfExperience: req.body.yearOfExperience,
-      rate: req.body.rate,
-      bio: req.body.bio,
-    };
-
-    const updatedDoctorInfo = await DoctorInfo.findOneAndUpdate(
-      { user: userId },
-      doctorUpdateData,
-      { new: true, upsert: true }
-    );
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'DoctorInfo and User updated successfully.',
-      data: { doctorInfo: updatedDoctorInfo, user: updatedUser },
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while processing your request.',
-    });
-  }
-};
-/*
-///// update user and doctor information
-const updateDoctorInfo = async (req, res, next) => {
-    const { userId } = req.params;
-  
-    try {
-      // Check if the user exists and is a doctor
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({
-          status: 'failed',
-          message: 'User not found. Please enter a valid userId.',
-        });
-      }
-  
-      // Update the User model using the userId
-      const userUpdateData = {
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        email: req.body.email,
-        phoneNumber: req.body.phoneNumber,
-        dob: req.body.dob,
-        address: req.body.address,
-        gender: req.body.gender,
-        allergies: req.body.allergies,
-      };
-  
-      const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        userUpdateData,
-        { new: true }
-      );
-  
-      if (!user.isDoctor) {
-        return res.status(200).json({
-          status: 'success',
-          message: 'User updated successfully.',
-          data: updatedUser,
-        });
-      }
-  
-      // Update the DoctorInfo using the userId
-      const doctorUpdateData = {
-        qualification: req.body.qualification,
-        placeOfWork: req.body.placeOfWork,
-        specialty: req.body.specialty,
-        yearOfExperience: req.body.yearOfExperience,
-        rate: req.body.rate,
-        bio: req.body.bio,
-      };
-  
-      const updatedDoctorInfo = await DoctorInfo.findOneAndUpdate(
-        { user: userId },
-        doctorUpdateData,
-        { new: true, upsert: true }
-      );
-  
-      return res.status(200).json({
-        status: 'success',
-        message: 'DoctorInfo and User updated successfully.',
-        data: { doctorInfo: updatedDoctorInfo, user: updatedUser },
-      });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({
-        status: 'failed',
-        message: 'An error occurred while processing your request.',
-      });
-    }
-  };
-*/
-
-/*
-  /////// update doctor's bnks account
-const updateDoctorAccountInfo = async (req, res, next) => {
-    const { userId } = req.params;
-  
-    try {
-      // Check if the user exists and is a doctor
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({
-          status: 'failed',
-          message: 'User not found. Please enter a valid userId.',
-        });
-      }
-  
-      if (!user.isDoctor) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'User is not a doctor. Cannot update DoctorInfo.',
-        });
-      }
-  
-      // Update the DoctorInfo using the userId
-      const updateData = {
-       
-        bankName: req.body.bankName,
-        accountName: req.body.accountName,
-        accountNumber: req.body.accountNumber,
-      };
-  
-      const updatedDoctorAccountInfo = await DoctorInfo.findOneAndUpdate(
-        { user: userId },
-        updateData,
-        { new: true, upsert: true }
-      );
-  
-      return res.status(200).json({
-        status: 'success',
-        message: 'Doctor Account information updated successfully.',
-        data: updatedDoctorAccountInfo,
-      });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({
-        status: 'failed',
-        message: 'An error occurred while processing your request.',
-      });
-    }
-  };
-
-  const viewDoctor = async (req, res, next) => {
-    const { userId } = req.params;
-  
-    try {
-      // Check if the user exists and is a doctor
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({
-          status: 'failed',
-          message: 'User not found. Please enter a valid userId.',
-        });
-      }
-  
-      if (!user.isDoctor) {
-        // The user is not a doctor, so we cannot view their DoctorInfo
-        return res.status(400).json({
-          status: 'failed',
-          message: 'User is not a doctor. Cannot view DoctorInfo.',
-        });
-      }
-  
-      // Get the doctor information
-      const doctorInfo = await DoctorInfo.findOne({ user: userId });
-  
-      if (!doctorInfo) {
-        return res.status(404).json({
-          status: 'failed',
-          message: 'Doctor information not found.',
-        });
-      }
-  
-      return res.status(200).json({
-        status: 'success',
-        message: 'Doctor information found.',
-        data: doctorInfo,
-      });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({
-        status: 'failed',
-        message: 'An error occurred while processing your request.',
-      });
-    }
-  };
-
-/*
-  ////// VIEW DOCTOR
-  const viewDoctor = async (req, res, next) => {
-    const { userId } = req.params;
-  
-    try {
-      // Check if the user exists and is a doctor
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({
-          status: 'failed',
-          message: 'User not found. Please enter a valid userId.',
-        });
-      }
-  
-      if (!user.isDoctor) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'User is not a doctor. Cannot view DoctorInfo.',
-        });
-      }
-  
-      // Get the DoctorInfo for the user
-      const doctorInfo = await DoctorInfo.findOne({ user: userId });
-  
-      // Combine the DoctorInfo and User data
-      const doctorData = {
-        ...doctorInfo,
-        ...user,
-      };
-  
-      // Add the available time slots to the doctor data
-      doctorData.availableTimeSlots = doctorInfo.availableTimeSlots;
-  
-      return res.status(200).json({
-        status: 'success',
-        message: 'Doctor information retrieved successfully.',
-        data: doctorData,
-      });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({
-        status: 'failed',
-        message: 'An error occurred while processing your request.',
-      });
-    }
-  };
-*/
-/*
-  /////// GET DOCTOR BY SPECILTY
-  const viewDoctorsBySpecialty = async (req, res) => {
-    // Get the specialty from the request
-    const specialty = req.params.specialty;
-  
-    // Get the doctors for the specialty
-    const doctors = await DoctorInfo.find({ specialty });
-  
-    // Return the doctors
-    return res.status(200).json({
-      status: 'success',
-      message: 'Doctors retrieved successfully.',
-      data: doctors,
-    });
-  };
-
-
-  /////// fetch all users the are doctors
-  const getAllDoctors = async (req, res) => {
-    // Get all users that are doctors
-    const doctors = await User.find({ isDoctor: true });
-  
-    // Return the doctors
-    return res.status(200).json({
-      status: 'success',
-      message: 'Doctors retrieved successfully.',
-      data: doctors,
-    });
-  }
-  /*
-  const getAllDoctorsPaginated = async (req, res) => {
-    // Get the page number from the request
-    const pageNumber = req.query.pageNumber || 1;
-  
-    // Get the doctors for the page
-    const doctors = await User.find({ isDoctor: true })
-      .skip((pageNumber - 1) * 10)
-      .limit(10);
-  
-    // Return the doctors
-    return res.status(200).json({
-      status: 'success',
-      message: 'Doctors retrieved successfully.',
-      data: doctors,
-      currentPage: pageNumber,
-      totalPages: Math.ceil(doctors.length / 10),
-    });
-  };
-*/
-/*
-const getAllDoctorsPaginated = async (req, res) => {
-  // Get the page number from the request
-  const pageNumber = req.query.pageNumber || 1;
-
-  // Get the doctors for the page
-  const doctors = await User.find({
-    isDoctor: true,
-  })
-    .skip((pageNumber - 1) * 10)
-    .limit(10);
-
-  // Return the doctors
-  return res.status(200).json({
-    status: 'success',
-    message: 'Doctors retrieved successfully.',
-    data: doctors,
-    currentPage: pageNumber,
-    totalPages: Math.ceil(doctors.length / 10),
-  });
-};
-  /////// search for doctors
-  const searchDoctors = async (req, res) => {
-
-    // Get the search term from the request
-    const searchTerm = req.query.searchTerm;
-  
-    // Get the doctors that match the search term
-    const doctors = await User.find({
-      isDoctor: true,
-      $text: { $search: searchTerm },
-    });
-  
-    // Return the doctors
-    return res.status(200).json({
-      status: 'success',
-      message: 'Doctors retrieved successfully.',
-      data: doctors,
-    });
-  };
-
-*/
+    
 
 module.exports = {
   fetchDoctorsWithFullInfo,
@@ -893,5 +501,6 @@ module.exports = {
   viewDoctor,
   updateDoctorInfo,
   updateDoctorAccountInfo,
-  viewDoctorInfo
+  viewDoctorInfo,
+  removeDoctorRole
 };

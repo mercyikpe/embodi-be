@@ -25,6 +25,10 @@ router.get('/viewone/:userId', doctorController.viewDoctorInfo);
 ////fetchDoctorsWithFullInfo
 router.get('/doctors', doctorController.fetchDoctorsWithFullInfo);
 
+//// remove doctor and keep as user removeDoctorRole
+router.get('/removedoctor/:userId', doctorController.removeDoctorRole);
+
+
 
 
 module.exports = router;
