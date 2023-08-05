@@ -306,6 +306,7 @@ const viewDoctor = async (req, res, next) => {
   const { userId } = req.params;
 
   try {
+    // Find the user by ID and check if they have the 'isDoctor' role
     const user = await User.findById(userId);
     if (!user || !user.role.includes('isDoctor')) {
       return res.status(403).json({
@@ -314,6 +315,7 @@ const viewDoctor = async (req, res, next) => {
       });
     }
 
+    // Find the doctor information using the user ID
     const doctorInfo = await DoctorInfo.findOne({ user: userId });
 
     if (!doctorInfo) {
@@ -326,7 +328,10 @@ const viewDoctor = async (req, res, next) => {
     return res.status(200).json({
       status: 'success',
       message: 'Doctor information found.',
-      data: doctorInfo,
+      data: {
+        user,
+        doctorInfo,
+      },
     });
   } catch (error) {
     console.log(error);
@@ -336,6 +341,7 @@ const viewDoctor = async (req, res, next) => {
     });
   }
 };
+
 
 //////// view full doctor;'s info for one doctor
 const viewDoctorInfo = async (req, res) => {

@@ -7,27 +7,86 @@ const Disease = require('../models/Disease')
 
 
 const createUser = async (req, res, next) => {
-  const newUser = new User(req.body);
+  const { firstName, lastName, email, phoneNumber } = req.body;
 
   try {
+    // Check if the user making the request is an admin
+    const isAdmin = req.user && req.user.role.includes('isAdmin');
+
+    // If the user is not an admin, remove the 'role' and 'status' fields from the req.body
+    if (!isAdmin) {
+      delete req.body.role;
+      delete req.body.status;
+    }
+
+    // Create a new user instance with the provided data
+    const newUser = new User(req.body);
+
+    // Validate the user data based on the isAdmin status
+    if (isAdmin) {
+      // Admin user - validate all required fields
+      newUser.firstName = firstName;
+      newUser.lastName = lastName;
+      newUser.email = email;
+      newUser.phoneNumber = phoneNumber;
+
+      // Additional validation for admin user can be done here if needed
+    } else {
+      // Non-admin user - no specific validation for firstName, lastName, email, and phoneNumber
+    }
+
+    // Save the user to the database
     const savedUser = await newUser.save();
-    res.json({
+
+    return res.json({
       status: 200,
-      message: "Successfully created a new user",
-      data: savedUser
+      message: 'Successfully created a new user.',
+      data: savedUser,
     });
   } catch (error) {
-    next(error);
+    console.log('Error creating user:', error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
   }
 };
 
 const updateUser = async (req, res, next) => {
+  const { firstName, lastName, email, phoneNumber, image, dob, address, gender, allergies } = req.body;
+  const updateData = {};
+
+  // Validate and add fields to updateData if provided in req.body
+  if (firstName) {
+    updateData.firstName = firstName;
+  }
+  if (lastName) {
+    updateData.lastName = lastName;
+  }
+  if (email) {
+    updateData.email = email;
+  }
+  if (phoneNumber) {
+    updateData.phoneNumber = phoneNumber;
+  }
+  if (image) {
+    updateData.image = image;
+  }
+  if (dob) {
+    updateData.dob = dob;
+  }
+  if (address) {
+    updateData.address = address;
+  }
+  if (gender) {
+    updateData.gender = gender;
+  }
+  if (allergies) {
+    updateData.allergies = allergies;
+  }
+
   try {
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true }
-    );
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, { $set: updateData }, { new: true });
     res.json({
       status: 200,
       message: `User with ID ${req.params.id} updated`,
@@ -40,10 +99,35 @@ const updateUser = async (req, res, next) => {
 
 const deleteUser = async (req, res, next) => {
   try {
+    // Check if the user making the request is an admin
+    const adminUser = await User.findById(req.user.id);
+    if (!adminUser || !adminUser.role.includes('isAdmin')) {
+      return res.status(403).json({
+        status: 'failed',
+        message: 'You do not have permission to delete users.',
+      });
+    }
+
+    // Check if the user to be deleted exists and is not an admin
+    const userToDelete = await User.findById(req.params.id);
+    if (!userToDelete) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found. Please enter a valid userId.',
+      });
+    }
+
+    if (userToDelete.role.includes('isAdmin')) {
+      return res.status(403).json({
+        status: 'failed',
+        message: 'You cannot delete an admin user.',
+      });
+    }
+
     await User.findByIdAndDelete(req.params.id);
     res.json({
       status: 200,
-      message: `User with ID ${req.params.id} deleted successfully`
+      message: `User with ID ${req.params.id} deleted successfully`,
     });
   } catch (error) {
     next(error);
@@ -52,20 +136,30 @@ const deleteUser = async (req, res, next) => {
 
 const getUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findOne({ _id: req.params.id, role: 'isUser' });
+    
+    if (!user) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found or does not have the user role.',
+      });
+    }
+
     res.json({
       status: 200,
       message: `User with ID ${req.params.id} found`,
-      data: user
+      data: user,
     });
   } catch (error) {
     next(error);
   }
 };
 
+
+/////// get all users with pagination
 const getAllUsers = async (req, res, next) => {
-  const pageSize = 10;
-  const pageNumber = 1;
+  let pageSize = 10;
+  let pageNumber = 1;
 
   if (req.query.pageSize) {
     pageSize = parseInt(req.query.pageSize, 10);
@@ -75,24 +169,45 @@ const getAllUsers = async (req, res, next) => {
     pageNumber = parseInt(req.query.pageNumber, 10);
   }
 
-  const users = await User.paginate(
-    {},
-    {
-      pageSize,
-      pageNumber
-    }
-  );
+  try {
+    const users = await User.paginate({}, { page: pageNumber, limit: pageSize });
 
-  res.json({
-    status: 200,
-    message: users,
-  });
-}
+    res.json({
+      status: 200,
+      message: 'All users retrieved successfully',
+      data: users.docs,
+      totalPages: users.totalPages,
+      currentPage: users.page,
+      totalUsers: users.totalDocs,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
+//// get all the user without paginaztion
+
+
+const getAllTheAppUsers = async (req, res, next) => {
+  try {
+    const appUsers = await User.find({ role: 'isUser' });
+
+    res.json({
+      status: 200,
+      message: 'All app users with role isUser retrieved successfully',
+      data: appUsers,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+//// get all active users
 const getActiveUsers = async (req, res, next) => {
   try {
-    
-    const user = await User.find({ activity: 'active' }).sort({ updatedAt: -1 });
+    const activeUsers = await User.find({ status: 'isActive' }).sort({ updatedAt: -1 });
 
     const formattedUsers = activeUsers.map(user => {
       const activityTime = moment(user.updatedAt).fromNow();
@@ -114,7 +229,7 @@ const getActiveUsers = async (req, res, next) => {
 
 
 /////////USER OWN DISEASE THEY AND QUESTIONAIRE
-async function addDiseaseToUser(userId, diseaseId) {
+const addDiseaseToUser = async (userId, diseaseId) => {
   try {
     const user = await User.findById(userId);
     const disease = await Disease.findById(diseaseId);
@@ -131,11 +246,12 @@ async function addDiseaseToUser(userId, diseaseId) {
   } catch (error) {
     throw new Error('Failed to add disease to user.');
   }
-}
+};
+
 
 
 // controller function to view a user with al information
-async function viewUser(req, res) {
+const viewUser = async (req, res) => {
   const userId = req.params.userId;
 
   try {
@@ -149,12 +265,13 @@ async function viewUser(req, res) {
       });
     }
 
- ///// choose what to keep open when resturning response 
+    // Choose the fields you want to include in the response
     const userData = {
       _id: user._id,
       username: user.username,
       email: user.email,
-     //// other fields to show. 
+      // Add other fields you want to show in the response
+      // For example: firstName, lastName, phoneNumber, etc.
     };
 
     // Return the user data in the response
@@ -169,7 +286,8 @@ async function viewUser(req, res) {
       message: 'An error occurred while processing your request.',
     });
   }
-}
+};
+
 
 const userController = {
   viewUser, //// route not created for this
@@ -178,6 +296,7 @@ const userController = {
   updateUser,
   deleteUser,
   getUser,
+  getAllTheAppUsers,
   getAllUsers,
   getActiveUsers
 };
@@ -189,6 +308,7 @@ module.exports = {
   updateUser,
   deleteUser,
   getUser,
+  getAllTheAppUsers,
   getAllUsers,
   getActiveUsers
 };

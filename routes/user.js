@@ -23,11 +23,15 @@ router.delete('/:id', verifyUser, verifyAdmin, userController.deleteUser);
 // Get a user by ID
 router.get('/:id', userController.getUser);
 
-// Get all users
+// Get all users with pagination
 router.get('/allusers', userController.getAllUsers);
+
+// Get all users without pagination
+router.get('/alluserson', userController.getAllTheAppUsers);
 
 // Get active users sorted by moment
 router.get('/active', userController.getActiveUsers);
+
 router.get('/viewsome', userController.viewUser);
 
 
