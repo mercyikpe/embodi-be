@@ -120,10 +120,11 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+
 const getUser = async (req, res, next) => {
   try {
     const user = await User.findOne({ _id: req.params.id, role: 'isUser' });
-    
+
     if (!user) {
       return res.status(404).json({
         status: 'failed',
@@ -140,6 +141,7 @@ const getUser = async (req, res, next) => {
     next(error);
   }
 };
+
 
 
 /////// get all users with pagination

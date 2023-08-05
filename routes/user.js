@@ -18,10 +18,10 @@ router.post('/create',  userController.createUser);
 router.put('/update/:id', userController.updateUser);
 
 // Delete a user
-router.delete('/:id',  userController.deleteUser);
+router.delete('/delete/:id',  userController.deleteUser);
 
 // Get a user by ID
-router.get('/:id', userController.getUser);
+router.get('/user/:id', userController.getUser);
 
 // Get all users with pagination
 router.get('/allusers', userController.getAllUsers);
