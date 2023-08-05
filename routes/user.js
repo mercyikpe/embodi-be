@@ -18,7 +18,7 @@ router.post('/create',  userController.createUser);
 router.put('/update/:id', userController.updateUser);
 
 // Delete a user
-router.delete('/:id', verifyUser, verifyAdmin, userController.deleteUser);
+router.delete('/:id',  userController.deleteUser);
 
 // Get a user by ID
 router.get('/:id', userController.getUser);

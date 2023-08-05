@@ -5,7 +5,7 @@ const User = require ('../models/User');
 const Disease = require('../models/Disease')
 
 
-
+/////// admin can create user//////
 const createUser = async (req, res, next) => {
   const { firstName, lastName, email, phoneNumber } = req.body;
 
@@ -51,6 +51,8 @@ const createUser = async (req, res, next) => {
     });
   }
 };
+
+
 
 const updateUser = async (req, res, next) => {
   const { firstName, lastName, email, phoneNumber, image, dob, address, gender, allergies } = req.body;
