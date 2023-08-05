@@ -56,39 +56,20 @@ const createUser = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
   const { firstName, lastName, email, phoneNumber, image, dob, address, gender, allergies } = req.body;
-  const updateData = {};
-
-  // Validate and add fields to updateData if provided in req.body
-  if (firstName) {
-    updateData.firstName = firstName;
-  }
-  if (lastName) {
-    updateData.lastName = lastName;
-  }
-  if (email) {
-    updateData.email = email;
-  }
-  if (phoneNumber) {
-    updateData.phoneNumber = phoneNumber;
-  }
-  if (image) {
-    updateData.image = image;
-  }
-  if (dob) {
-    updateData.dob = dob;
-  }
-  if (address) {
-    updateData.address = address;
-  }
-  if (gender) {
-    updateData.gender = gender;
-  }
-  if (allergies) {
-    updateData.allergies = allergies;
-  }
+  const updateData = {
+    firstName,
+    lastName,
+    email,
+    phoneNumber,
+    image,
+    dob,
+    address,
+    gender,
+    allergies,
+  };
 
   try {
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, { $set: updateData }, { new: true });
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.json({
       status: 200,
       message: `User with ID ${req.params.id} updated`,
@@ -98,6 +79,9 @@ const updateUser = async (req, res, next) => {
     next(error);
   }
 };
+
+
+///// delete user
 
 const deleteUser = async (req, res, next) => {
   try {
