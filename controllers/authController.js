@@ -130,6 +130,8 @@ const registerUser = async (req, res) => {
       user.password = await bcrypt.hash(password, 10); // Hash the new password
       await user.save();
 
+    
+
       // Send OTP code to user's email
       const otpCode = generateOTPCode();
 
@@ -152,20 +154,17 @@ const registerUser = async (req, res) => {
         subject: 'Verify Your Email',
         html: `
           <h1>Email Verification</h1>
-          <p><strong>${otpCode}</strong></p>
-          <p>Please enter the verification code in your account settings to verify your email.</p>
+          <h3>Welcome ${lastName}, </h3>
+          <p>Please enter the verification code to continue.</p>
+          <h2><strong>${otpCode}</strong></h2>
         `,
       };
 
       await transporter.sendMail(mailOptions);
 
-      // Remove the password field from the response JSON
-      const { password: removedPassword, ...userWithoutPassword } = user.toObject();
-
       return res.status(200).json({
         status: 'success',
-        message: 'OTP sent to your email for verification.',
-        user: userWithoutPassword,
+        message: 'Already registered with Phone number or email. New data captured and OTP resent to your email for verification.',
       });
     } else if (user) {
       // If the user exists and is already verified, return an error message
@@ -174,6 +173,8 @@ const registerUser = async (req, res) => {
         message: 'User already exists and is verified.',
       });
     }
+
+  
 
     // If the user does not exist, create a new user and set their verified status to false
     const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
@@ -209,21 +210,17 @@ const registerUser = async (req, res) => {
       to: savedUser.email,
       subject: 'Verify Your Email',
       html: `
-        <h1>Email Verification</h1>
-        <p><strong>${otpCode}</strong></p>
-        <p>Please enter the verification code in your account settings to verify your email.</p>
+      <h1>Email Verification</h1>
+      <p> Welcome ${lastName}, Please enter the verification code to continue.</p>
+      <h3><strong>${otpCode}</strong></h3>
       `,
     };
 
     await transporter.sendMail(mailOptions);
 
-    // Remove the password field from the response JSON
-    const { password: removedPassword, ...userWithoutPassword } = savedUser.toObject();
-
     return res.status(200).json({
       status: 'success',
       message: 'OTP sent to your email for verification.',
-      user: userWithoutPassword,
     });
   } catch (error) {
     console.log('Error while saving the user:', error);
@@ -233,6 +230,7 @@ const registerUser = async (req, res) => {
     });
   }
 };
+
 
 
 

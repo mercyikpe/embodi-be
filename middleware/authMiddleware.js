@@ -15,7 +15,7 @@ dotenv.config();
 
 
 const verifyToken = (req, res, next) => {
-  const token = req.cookies.access_token;  //////// stores cookie in browser
+  const token = req.cookies.Token;  //////// stores cookie in browser
   //const token = req.headers.authorization; /////// Incase of third party request
 
   if (!token) {

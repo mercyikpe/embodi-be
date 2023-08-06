@@ -6,115 +6,88 @@ const transporter = require('../utilities/transporter');
 
 
 
+
 const createAppointment = async (req, res) => {
-    const { doctorId, startTime, endTime, date } = req.body;
+  const { doctorId, startTime, endTime, date } = req.body;
 
-    try {
-
-
-      // Validate the input data
-      if (!doctorId) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'DoctorId is required.',
-        });
-      }
-      if (!startTime) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'StartTime is required.',
-        });
-      }
-      if (!endTime) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'EndTime is required.',
-        });
-      }
-      if (!date) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'Date is required.',
-        });
-      }
-      if (startTime > endTime) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'StartTime must be before EndTime.',
-        });
-      }
-
-      // Check if the doctor exists
-      const doctor = await Doctor.findById(doctorId);
-      if (!doctor) {
-        return res.status(404).json({
-          status: 'failed',
-          message: 'Doctor not found. Please enter a valid doctorId.',
-        });
-      }
-
-      // Check if the appointment time slot is available
-    
-      
-      
-      const availableTimeSlots = doctor.availableTimeSlots;
-      const startTime24Hours = moment(startTime).format('HH:mm');
-      const endTime24Hours = moment(endTime).format('HH:mm');
-      if (!availableTimeSlots.some(
-        (slot) => slot.startTime === startTime24Hours && slot.endTime === endTime24Hours
-      )) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'The requested time slot is not available for this doctor.',
-        });
-      }
-
-      // Create the new appointment without specifying the patient
-      const newAppointment = new Appointment({
-        doctor: doctorId,
-        startTime,
-        endTime,
-        date, // The raw date provided in the request
-        formattedDate: moment(date).format('dddd, DD MMMM, YYYY'), // Formatted date using moment.js
-      });
-
-      const savedAppointment = await newAppointment.save();
-      // Access the appointment ID after saving
-      const appointmentId = savedAppointment._id;
-
-      // Send email to doctor to confirm appointment creation
-      const doctorMailOptions = {
-        from: process.env.AUTH_EMAIL,
-        to: doctor.email,
-        subject: 'Appointment Created',
-        html: `
-          <h1>Appointment Created</h1>
-          <p>An appointment has been created for you on ${date} from ${startTime} to ${endTime}.</p>
-        `,
-      };
-
-      transporter.sendMail(doctorMailOptions, (error, info) => {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log('Doctor email sent: ' + info.response);
-        }
-      });
-
-      return res.status(200).json({
-        status: 'success',
-        message: 'Appointment created successfully.',
-        data: savedAppointment,
-        appointmentId: appointmentId, // Return the appointment ID in the response
-      });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({
+  try {
+    // Validate the input data
+    if (!doctorId || !startTime || !endTime || !date || startTime >= endTime) {
+      return res.status(400).json({
         status: 'failed',
-        message: 'An error occurred while creating the appointment.',
+        message: 'Invalid input data. Please provide valid doctorId, startTime, endTime, and date.',
       });
     }
-  };
+
+    // Check if the doctor exists
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'Doctor not found. Please enter a valid doctorId.',
+      });
+    }
+
+    // Check if the appointment time slot is available
+    const availableTimeSlots = doctor.availableTimeSlots;
+    const startTime24Hours = moment(startTime).format('HH:mm');
+    const endTime24Hours = moment(endTime).format('HH:mm');
+    if (!availableTimeSlots.some(
+      (slot) => slot.startTime === startTime24Hours && slot.endTime === endTime24Hours
+    )) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'The requested time slot is not available for this doctor.',
+      });
+    }
+
+    // Create the new appointment without specifying the patient
+    const newAppointment = new Appointment({
+      doctor: doctorId,
+      startTime,
+      endTime,
+      date, // The raw date provided in the request
+      formattedDate: moment(date).format('dddd, DD MMMM, YYYY'), // Formatted date using moment.js
+    });
+
+    const savedAppointment = await newAppointment.save();
+    // Access the appointment ID after saving
+    const appointmentId = savedAppointment._id;
+
+    // Send email to doctor to confirm appointment creation
+    const doctorMailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: doctor.email,
+      subject: 'Appointment Created',
+      html: `
+        <h1>Appointment Created</h1>
+        <p>An appointment has been created for you on ${date} from ${startTime} to ${endTime}.</p>
+      `,
+    };
+
+    transporter.sendMail(doctorMailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Doctor email sent: ' + info.response);
+      }
+    });
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Appointment created successfully.',
+      data: savedAppointment,
+      appointmentId: appointmentId, // Return the appointment ID in the response
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while creating the appointment.',
+    });
+  }
+};
+
 
 
   const bookAppointment = async (req, res) => {

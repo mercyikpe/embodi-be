@@ -307,21 +307,11 @@ const viewDoctor = async (req, res, next) => {
 
   try {
     // Find the user by ID and check if they have the 'isDoctor' role
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).populate('doctorInfo');
     if (!user || !user.role.includes('isDoctor')) {
       return res.status(403).json({
         status: 'failed',
         message: 'User not found or is not authorized as a doctor.',
-      });
-    }
-
-    // Find the doctor information using the user ID
-    const doctorInfo = await DoctorInfo.findOne({ user: userId });
-
-    if (!doctorInfo) {
-      return res.status(404).json({
-        status: 'failed',
-        message: 'Doctor information not found.',
       });
     }
 
@@ -330,7 +320,7 @@ const viewDoctor = async (req, res, next) => {
       message: 'Doctor information found.',
       data: {
         user,
-        doctorInfo,
+        doctorInfo: user.doctorInfo || null,
       },
     });
   } catch (error) {
@@ -341,6 +331,8 @@ const viewDoctor = async (req, res, next) => {
     });
   }
 };
+
+
 
 
 //////// view full doctor;'s info for one doctor
