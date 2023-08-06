@@ -39,7 +39,7 @@ const UserSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['isActive', 'isInactive', 'isBlocked', 'isSuspended', 'isLimited'],
-      default: ['isActive'], // Default to 'isActive' if no status is provided during user creation
+      default: 'isActive', // Default to 'isActive' if no status is provided during user creation
     },
 
     // ... Other fields ...
