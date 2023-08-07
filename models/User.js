@@ -23,8 +23,9 @@ const UserSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: String,
-      //required: true,
-      //unique: true,
+      unique: true,
+      sparse: true,
+     
     },
     password: {
       type: String,
@@ -33,7 +34,7 @@ const UserSchema = new mongoose.Schema(
     role: {
       type: [String],
       enum: ['isUser', 'isAdmin', 'isDoctor', 'isOthers'],
-      default: ['isDoctor'], // Default to 'isUser' if no role is provided during user creation
+      default: ['isAdmin'], // Default to 'isUser' if no role is provided during user creation
     },
 
     status: {

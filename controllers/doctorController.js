@@ -5,16 +5,16 @@ const jwt = require('jsonwebtoken');
 //const DoctorInfo = require('../models/DoctorInfo');
 
 
-/*
+
 // Function to sign up a user as a doctor
-const signUpAsDoctor = async (req, res) => {
+const signUpAsDoctors = async (req, res) => {
   const { email, adminUserId } = req.body;
 
   try {
     // Check if the user making the request is an admin
     const adminUser = await User.findById(adminUserId);
 
-    if (!adminUser || !adminUser.isAdmin) {
+    if (!adminUser || !adminUser.role.includes('isAdmin')) {
       return res.status(403).json({
         status: 'failed',
         message: 'You do not have permission to sign up doctors.',
@@ -26,7 +26,7 @@ const signUpAsDoctor = async (req, res) => {
 
     if (user) {
       // If the user exists, update their isDoctor field to true and save the user
-      user.isDoctor = true;
+      role: ['isDoctor']
       await user.save();
 
       // Send an email notifying the user that they are now a doctor
@@ -53,7 +53,7 @@ const signUpAsDoctor = async (req, res) => {
       // If the user does not exist, create a new user and set their isDoctor field to true
       const doctor = new User({
         email,
-        isDoctor: true,
+        role: ['isDoctor'],
       });
 
       await doctor.save();
@@ -61,7 +61,7 @@ const signUpAsDoctor = async (req, res) => {
       // Generate a verification token and send it via email
       const verificationToken = jwt.sign(
         { email },
-        'your_secret_verification_key', // Replace with your own secret key
+        process.env.JWT_SEC_KEY, // mine is stored in env
         { expiresIn: '1h' }
       );
 
@@ -95,8 +95,8 @@ const signUpAsDoctor = async (req, res) => {
     });
   }
 };
-*/
 
+/////////SIGN UP DOCTOR. This is not in use
 const signUpAsDoctor = async (req, res) => {
   const { email, adminUserId } = req.body;
 
@@ -168,7 +168,7 @@ const signUpAsDoctor = async (req, res) => {
       // Generate a verification token and send it via email
       const verificationToken = jwt.sign(
         { email },
-        process.env.JWT_SEC_KEY, // Replace with secret key
+        process.env.JWT_SEC_KEY, // Replace with secret key// mine is stored in .env
         { expiresIn: '1h' }
       );
 
@@ -496,6 +496,7 @@ const viewDoctorInfo = async (req, res) => {
 module.exports = {
   fetchDoctorsWithFullInfo,
   signUpAsDoctor,
+  signUpAsDoctors,
   viewDoctor,
   updateDoctorInfo,
   updateDoctorAccountInfo,

@@ -8,7 +8,7 @@ router.get('/', (req, res)=>{
 
 
 ////// sign uo doctor 
-router.post('/signupdoctor', doctorController.signUpAsDoctor);
+router.post('/signupdoctor', doctorController.signUpAsDoctors);
 
 // update doctor's user information fields and addtional information
 router.put('/:userId/info', doctorController.updateDoctorInfo);
