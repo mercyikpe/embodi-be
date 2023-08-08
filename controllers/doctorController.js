@@ -172,7 +172,7 @@ const signUpAsDoctor = async (req, res) => {
         { expiresIn: '1h' }
       );
 
-      const verificationLink = `http://yourdomain.com/verify-doctor?token=${verificationToken}`;
+      const verificationLink = `http://https://embodie.vercel.app//verifyDoctor?token=${verificationToken}`;
 
       const mailOptions = {
         from: process.env.AUTH_EMAIL,
