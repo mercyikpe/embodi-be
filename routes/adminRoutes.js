@@ -15,7 +15,7 @@ router.get('/', (req, res)=>{
 router.put('/update', admin.updateAdmin )
 
 //// view all admins
-router.get('/viewall', admin.updateAdmin )
+router.get('/viewall', admin.viewAllAdmins )
 
 
 // Other user routes
