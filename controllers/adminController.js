@@ -58,7 +58,22 @@ const updateAdmin = async (req, res) => {
 
 
 
+const viewAllAdmins = async () => {
+  try {
+    const admins = await User.find({ role: 'isAdmin' });
+
+    return { success: true, message: 'Admin users retrieved successfully.', admins };
+  } catch (error) {
+    console.log(error);
+    return { success: false, message: 'An error occurred while retrieving admin users.' };
+  }
+};
+
+
+
+
 module.exports = {
-   
+    updateAdmin,
+    viewAllAdmins
   };
   
