@@ -45,7 +45,7 @@ const UserSchema = new mongoose.Schema(
 
     // ... Other fields ...
 
-    doctorInfo: {
+     doctorInfo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'DoctorInfo',
     },
