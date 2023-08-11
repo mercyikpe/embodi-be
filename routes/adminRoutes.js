@@ -4,17 +4,57 @@ const express = require('express');
 const router = express.Router();
 const admin = require('../controllers/adminController');
 const userController = require('../controllers/adminController');
+const { verifyToken,verifyDoctor, verifyUser, verifyAdmin } = require('../middleware/authMiddleware');
+
 
 
 
 // Route for a protected admin-only endpoint
-router.get('/', (req, res)=>{
+router.get('/', verifyToken, (req, res)=>{
     res.send('admin MICROPHONE')
 } );
 
+// Update admin profile
+router.patch('/updateAdmin/:userId',  async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const updateData = req.body;
+  
+      const updatedAdmin = await userController.updateAdminProfile(userId, updateData);
+  
+      return res.status(200).json({
+        status: 'success',
+        message: 'Admin profile updated successfully.',
+        updatedAdmin,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        status: 'failed',
+        message: 'An error occurred while processing the request.',
+      });
+    }
+  });
 
-///// update admin
-router.put('/update/:id', admin.updateAdmin )
+// Update user information by admin
+router.put('/updateUser/:userId', async (req, res) => {
+    const { userId } = req.params;
+    const { phoneNumber, firstName, lastName } = req.body;
+  
+    const result = await userController.updateUserByAdmin(userId, phoneNumber, firstName, lastName);
+  
+    if (result.success) {
+      return res.status(200).json({
+        status: 'success',
+        message: result.message,
+        data: result.user,
+      });
+    } else {
+      return res.status(500).json({
+        status: 'failed',
+        message: result.message,
+      });
+    }
+  });
 
 // View all admin users
 router.get('/admins', async (req, res) => {
@@ -34,12 +74,6 @@ router.get('/admins', async (req, res) => {
   }
 });
 
-module.exports = router;
 
-
-
-
-
-// Other user routes
 
 module.exports = router;

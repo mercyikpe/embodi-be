@@ -9,3 +9,6 @@ node_modules
 
 /utilities\transporter.js
 utilities\transporter.js
+
+middleware\authMiddleware.js
+/middleware\authMiddleware.js

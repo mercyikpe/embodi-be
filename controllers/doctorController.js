@@ -62,7 +62,7 @@ const signUpAsDoctors = async (req, res) => {
       const verificationToken = jwt.sign(
         { email },
         process.env.JWT_SEC_KEY, // mine is stored in env
-        { expiresIn: '1h' }
+        { expiresIn: '10h' }
       );
 
       const verificationLink = `http://yourdomain.com/verify-doctor?token=${verificationToken}`;

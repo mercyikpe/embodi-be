@@ -178,7 +178,7 @@ const createAppointment = async (req, res) => {
 
 module.exports = {
   createAppointment,
-  //bookAppointment,
+  bookAppointment,
   //updateAppointment,
   //deleteAppointment,
   //viewAppointments,

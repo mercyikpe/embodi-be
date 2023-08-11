@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const doctorController = require('../controllers/doctorController');
+const { verifyToken,verifyDoctor, verifyUser, verifyAdmin } = require('../middleware/authMiddleware');
 
 router.get('/', (req, res)=>{
     res.send(' DOCTORS SIDE')
@@ -8,7 +9,7 @@ router.get('/', (req, res)=>{
 
 
 ////// sign uo doctor 
-router.post('/signupdoctor', doctorController.signUpAsDoctors);
+router.post('/signupdoctor', verifyToken, verifyAdmin,  doctorController.signUpAsDoctors);
 
 // update doctor's user information fields and addtional information
 router.put('/:userId/info', doctorController.updateDoctorInfo);
