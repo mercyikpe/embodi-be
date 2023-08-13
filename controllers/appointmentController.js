@@ -290,6 +290,123 @@ const getBookedAppointmentsForDoctors = async (req, res) => {
 };
 
 ////// fetch all the appointment for each Doctor
+const getBookedAppointmentsForDoctor = async (req, res) => {
+  const doctorId = req.params.doctorId; // Extract doctorId from the request parameters
+
+  try {
+    // Fetch all booked appointments for the specified doctor
+    const bookedAppointments = await Appointment.find({ doctor: doctorId, status: 'Booked' })
+      .populate({
+        path: 'doctor',
+        model: 'DoctorInfo',
+        populate: {
+          path: 'user',
+          model: 'User',
+        },
+      })
+      .populate('patient') // Populate patient information
+      .sort({ date: 1 }); // Sort appointments by date in ascending order
+
+    // Map appointments and format the data
+    const formattedAppointments = bookedAppointments.map(appointment => ({
+      doctor: {
+        name: `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`,
+        email: appointment.doctor.user.email,
+        specialty: appointment.doctor.specialty, // Include doctor's specialty
+        rate: appointment.doctor.rate, // Include doctor's rate
+        // Other doctor's information from DoctorInfo model
+        // ...
+      },
+      patient: {
+        name: `${appointment.patient.firstName} ${appointment.patient.lastName}`,
+        email: appointment.patient.email,
+        address: appointment.patient.address,
+        phoneNumber: appointment.patient.phoneNumber,
+        allergies: appointment.patient.allergies,
+      },
+      // Other appointment information
+      date: appointment.date,
+      startTime: appointment.timeSlot.startTime,
+      endTime: appointment.timeSlot.endTime,
+      // ...
+    }));
+
+    // Return the formatted data
+    return res.status(200).json({
+      status: 'success',
+      message: 'Fetched booked appointments for the doctor successfully.',
+      data: formattedAppointments,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while fetching booked appointments for the doctor.',
+    });
+  }
+};
+
+
+////// update appoinment status
+const updateAppointmentStatus = async (req, res) => {
+  const { doctorId, status, startTime, endTime, date } = req.body;
+
+  try {
+    const appointmentId = req.params.appointmentId;
+
+    // Check if the doctor has created the appointment
+    const appointment = await Appointment.findOne({ _id: appointmentId, doctor: doctorId });
+
+    if (!appointment) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'Appointment not found for this doctor.',
+      });
+    }
+
+    // Update the appointment status if provided
+    if (status) {
+      appointment.status = status;
+    }
+
+    // Update the appointment time slot if provided
+    if (startTime || endTime) {
+      if (startTime) {
+        appointment.timeSlot.startTime = startTime;
+      }
+      if (endTime) {
+        appointment.timeSlot.endTime = endTime;
+      }
+    }
+
+    // Update the appointment date if provided
+    if (date) {
+      appointment.date = date;
+    }
+
+    const updatedAppointment = await appointment.save();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Appointment updated successfully.',
+      data: updatedAppointment,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while updating the appointment.',
+    });
+  }
+};
+
+
+
+
+
+
+
+
 
 
 
@@ -306,6 +423,8 @@ module.exports = {
   createAppointment,
   bookAppointment,
   getBookedAppointmentsForDoctors,
+  getBookedAppointmentsForDoctor,
+  updateAppointmentStatus,
   //updateAppointment,
   //deleteAppointment,
   //viewAppointments,

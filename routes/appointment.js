@@ -40,7 +40,10 @@ router.post('/book/:userId', appointmentController.bookAppointment);
 router.get('/bookedAppointment', appointmentController.getBookedAppointmentsForDoctors);
 
 ///// FETCH APPOINTMENT FOR INDIVIDUAL DOCTOR
-router.get('/bookedAppointment/doctorId', appointmentController.getBookedAppointmentsForDoctors);
+router.get('/bookedAppointment/:doctorId/view', appointmentController.getBookedAppointmentsForDoctor);
+
+//// CHANGE APPOINTMENT STATUS
+router.put('/updatestatus/:appointmentId', verifyToken, appointmentController.updateAppointmentStatus);
 
 
 
