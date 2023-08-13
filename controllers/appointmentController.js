@@ -1,16 +1,25 @@
 const moment = require('moment');
 const Appointment = require('../models/Appointment');
-const Doctor = require('../models/DoctorInfo');
+const DoctorInfo  = require('../models/DoctorInfo');
 const User = require('../models/User');
 const transporter = require('../utilities/transporter');
 
 
 
 
+///// CREATE APPOINTMEN FOR DOCTOR
 const createAppointment = async (req, res) => {
   const { doctorId, startTime, endTime, date } = req.body;
 
   try {
+    // Check if the user is authenticated
+    if (!req.user) {
+      return res.status(401).json({
+        status: 'failed',
+        message: 'Unauthorized.',
+      });
+    }
+
     // Validate the input data
     if (!doctorId || !startTime || !endTime || !date || startTime >= endTime) {
       return res.status(400).json({
@@ -20,44 +29,77 @@ const createAppointment = async (req, res) => {
     }
 
     // Check if the doctor exists
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) {
+    const doctorInfo = await DoctorInfo.findById(doctorId).populate('user'); // Populate the user field
+    if (!doctorInfo) {
       return res.status(404).json({
         status: 'failed',
         message: 'Doctor not found. Please enter a valid doctorId.',
       });
     }
 
+    // Get the doctor's email address from the User model
+    const doctorEmail = doctorInfo.user.email;
+
+    // Convert provided startTime and endTime to ISO format
+    const startTimeFormatted = moment(startTime, 'hh:mm A').toISOString();
+    const endTimeFormatted = moment(endTime, 'hh:mm A').toISOString();
+
     // Check if the appointment time slot is available
-    const availableTimeSlots = doctor.availableTimeSlots;
-    const startTime24Hours = moment(startTime).format('HH:mm');
-    const endTime24Hours = moment(endTime).format('HH:mm');
-    if (!availableTimeSlots.some(
-      (slot) => slot.startTime === startTime24Hours && slot.endTime === endTime24Hours
-    )) {
+    const existingAppointments = await Appointment.find({
+      doctor: doctorId,
+      date,
+      $or: [
+        {
+          'timeSlot.startTime': { $lte: startTimeFormatted },
+          'timeSlot.endTime': { $gte: startTimeFormatted },
+        },
+        {
+          'timeSlot.startTime': { $lte: endTimeFormatted },
+          'timeSlot.endTime': { $gte: endTimeFormatted },
+        },
+        {
+          'timeSlot.startTime': { $gte: startTimeFormatted, $lte: endTimeFormatted },
+          'timeSlot.endTime': { $gte: startTimeFormatted, $lte: endTimeFormatted },
+        },
+      ],
+    });
+
+    if (existingAppointments.length > 0) {
       return res.status(400).json({
         status: 'failed',
         message: 'The requested time slot is not available for this doctor.',
       });
     }
 
-    // Create the new appointment without specifying the patient
-    const newAppointment = new Appointment({
+    // Create the new appointment
+    const appointment = new Appointment({
+      date,
+      patient: req.user.id,
       doctor: doctorId,
-      startTime,
-      endTime,
-      date, // The raw date provided in the request
-      formattedDate: moment(date).format('dddd, DD MMMM, YYYY'), // Formatted date using moment.js
+      timeSlot: {
+        startTime: startTimeFormatted,
+        endTime: endTimeFormatted,
+      },
+      status: 'scheduled',
     });
 
-    const savedAppointment = await newAppointment.save();
-    // Access the appointment ID after saving
+    const savedAppointment = await appointment.save();
     const appointmentId = savedAppointment._id;
+
+    // Update the doctor's available time slots
+    const updatedAvailableTimeSlots = doctorInfo.availableTimeSlots.concat({
+      startTime: startTimeFormatted,
+      endTime: endTimeFormatted,
+    });
+
+    // Update the doctor's availableTimeSlots field
+    doctorInfo.availableTimeSlots = updatedAvailableTimeSlots;
+    await doctorInfo.save();
 
     // Send email to doctor to confirm appointment creation
     const doctorMailOptions = {
       from: process.env.AUTH_EMAIL,
-      to: doctor.email,
+      to: doctorEmail,
       subject: 'Appointment Created',
       html: `
         <h1>Appointment Created</h1>
@@ -77,7 +119,7 @@ const createAppointment = async (req, res) => {
       status: 'success',
       message: 'Appointment created successfully.',
       data: savedAppointment,
-      appointmentId: appointmentId, // Return the appointment ID in the response
+      appointmentId: appointmentId,
     });
   } catch (error) {
     console.log(error);
@@ -86,7 +128,13 @@ const createAppointment = async (req, res) => {
       message: 'An error occurred while creating the appointment.',
     });
   }
-};
+}
+
+
+
+
+
+
 
 
 

@@ -103,7 +103,8 @@ const UserSchema = new mongoose.Schema(
       ref: 'Appointment',
       default: null,
     },
-  },
+ },
+  
   { timestamps: true }
 );
 

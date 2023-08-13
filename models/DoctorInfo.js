@@ -14,7 +14,7 @@ const DoctorInfoSchema = new mongoose.Schema(
     timeSlot: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Appointment',
-      required: true,
+      //required: true,
      
     },
 
@@ -58,29 +58,28 @@ const DoctorInfoSchema = new mongoose.Schema(
     StarRating: {
       type: Number,
       default: 0,
-      min: 1,
-      max: 5,
+      min: 0, // Adjust the min value based on your requirements
     },
-
-    // Array of time slots representing available intervals
-    availableTimeSlots: {
-      type: [
-        {
-          startTime: {
-            type: String,
-            required: true,
-          },
-          endTime: {
-            type: String,
-            required: true,
-          },
-        },
-      ],
-      default: [], // Initialize with an empty array
+    
+/////////// AAVILABE TIM SLOT
+availableTimeSlots: {
+  type: [
+    {
+      startTime: {
+        type: String,
+        required: true,
+      },
+      endTime: {
+        type: String,
+        required: true,
+      },
     },
+  ],
+  default: [], // Initialize with an empty array
+},
   },
   { timestamps: true }
-);
+)
 
 const DoctorInfo = mongoose.model('DoctorInfo', DoctorInfoSchema);
 

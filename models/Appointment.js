@@ -15,7 +15,7 @@ const AppointmentSchema = new mongoose.Schema(
     },
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'DoctorInfo',
       required: true,
     },
     timeSlot: {
