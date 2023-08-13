@@ -45,6 +45,13 @@ router.get('/bookedAppointment/:doctorId/view', appointmentController.getBookedA
 //// CHANGE APPOINTMENT STATUS
 router.put('/updatestatus/:appointmentId', verifyToken, appointmentController.updateAppointmentStatus);
 
+//// get complete appointment for each doctor getCompletedAppointments
+router.get('/getAppointmentById/:appointmentId',  appointmentController.getCompletedAppointments);
+
+////get completed appointment for all the doctors getAllCompletedAppointments
+router.get('/getAllTheAppointment',  appointmentController.getAllCompletedAppointments);
+
+
 
 
 

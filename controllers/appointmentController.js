@@ -400,6 +400,78 @@ const updateAppointmentStatus = async (req, res) => {
   }
 };
 
+//// fetch completed appointment for single single
+const getCompletedAppointments = async (req, res) => {
+  const doctorId = req.params.doctorId;
+
+  try {
+    // Find the doctor's completed appointments
+    const completedAppointments = await Appointment.find({
+      doctor: doctorId,
+      status: 'completed',
+    })
+      .populate('patient', 'firstName lastName email address phoneNumber allergies')
+      .populate({
+        path: 'doctor',
+        model: 'DoctorInfo',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name email phoneNumber specialty rate',
+        },
+      })
+      .sort({ date: 'asc' });
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Completed appointments fetched successfully.',
+      data: completedAppointments,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while fetching completed appointments.',
+    });
+  }
+};
+
+
+//////GET COMPLETED PPOINMENT FOR ALL THE DOCTORS
+const getAllCompletedAppointments = async (req, res) => {
+  try {
+    // Find all completed appointments with doctor and patient details
+    const completedAppointments = await Appointment.find({
+      status: 'completed',
+    })
+      .populate('patient', 'firstName lastName email address phoneNumber allergies')
+      .populate({
+        path: 'doctor',
+        model: 'DoctorInfo',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name email phoneNumber specialty rate',
+        },
+      })
+      .sort({ doctor: 'asc', date: 'asc' });
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Completed appointments fetched successfully.',
+      data: completedAppointments,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while fetching completed appointments.',
+    });
+  }
+};
+
+
+
 
 
 
@@ -425,6 +497,8 @@ module.exports = {
   getBookedAppointmentsForDoctors,
   getBookedAppointmentsForDoctor,
   updateAppointmentStatus,
+  getCompletedAppointments,
+  getAllCompletedAppointments
   //updateAppointment,
   //deleteAppointment,
   //viewAppointments,
