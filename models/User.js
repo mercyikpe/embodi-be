@@ -98,11 +98,12 @@ const UserSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Questionaire',
     },
-    bookedAppointment: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Appointment',
-      default: null,
-    },
+    bookedAppointments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Appointment',
+      },
+    ],
  },
   
   { timestamps: true }

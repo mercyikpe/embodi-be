@@ -34,6 +34,6 @@ router.post('/create/:userId', verifyToken, appointmentController.createAppointm
 
 
 // Corrected route path with a leading slash
-router.post('/bookAppointment/:userId', appointmentController.bookAppointment);
+router.post('/book/:userId', appointmentController.bookAppointment);
 
 module.exports = router;
