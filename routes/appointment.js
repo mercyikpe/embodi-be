@@ -33,7 +33,18 @@ router.post('/create/:userId', verifyToken, appointmentController.createAppointm
     });
 
 
-// Corrected route path with a leading slash
+// Corrected route path with a leading slash ////USER TO BOOK APPOINTMENT ROUTE
 router.post('/book/:userId', appointmentController.bookAppointment);
+
+//FETCH ALL THE BOOKED APPOINTMENT FOR ALL THE DOCTORS
+router.get('/bookedAppointment', appointmentController.getBookedAppointmentsForDoctors);
+
+///// FETCH APPOINTMENT FOR INDIVIDUAL DOCTOR
+router.get('/bookedAppointment/doctorId', appointmentController.getBookedAppointmentsForDoctors);
+
+
+
+
+
 
 module.exports = router;

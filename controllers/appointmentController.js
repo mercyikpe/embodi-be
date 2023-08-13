@@ -224,6 +224,74 @@ const bookAppointment = async (req, res) => {
   }
 };
 
+//// view doctor and list of appointment. doctor's profile from user profile, and from doctor's information and times slots
+// Controller function to fetch booked appointments for each doctor
+const getBookedAppointmentsForDoctors = async (req, res) => {
+  try {
+    // Fetch all booked appointments
+    const bookedAppointments = await Appointment.find({ status: 'Booked' })
+      .populate({
+        path: 'doctor',
+        model: 'DoctorInfo',
+        populate: {
+          path: 'user',
+          model: 'User',
+        },
+      })
+      .populate('patient') // Populate patient information
+      .sort({ date: 1 }); // Sort appointments by date in ascending order
+
+    // Map appointments and format the data
+    const formattedAppointments = bookedAppointments.map(appointment => ({
+      doctor: {
+        DoctorId: appointment.doctor._id,
+        name: `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`,
+        email: appointment.doctor.user.email,
+        Phone: appointment.doctor.user.phoneNumber,
+        specialty: appointment.doctor.specialty, // Include doctor's specialty
+        rate: appointment.doctor.rate, // Include doctor's rate
+        // Other doctor's information from DoctorInfo model
+        // ...
+       
+      },
+
+      /////// fetch patient informtion
+      patient: {
+        patientId: appointment.patient._id,
+        name: `${appointment.patient.firstName} ${appointment.patient.lastName}`,
+        email: appointment.patient.email,
+        address: appointment.patient.address,
+        phoneNumber: appointment.patient.phoneNumber,
+        allergies: appointment.patient.allergies,
+       
+      },
+      // Other appointment information
+      AppointmentId: appointment._id,
+      date: appointment.date,
+      startTime: appointment.timeSlot.startTime,
+      endTime: appointment.timeSlot.endTime,
+      status: appointment.status,
+      // ...
+    }));
+
+    // Return the formatted data
+    return res.status(200).json({
+      status: 'success',
+      message: 'Fetched booked appointments successfully.',
+      data: formattedAppointments,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while fetching booked appointments.',
+    });
+  }
+};
+
+////// fetch all the appointment for each Doctor
+
+
 
 
 
@@ -237,6 +305,7 @@ const bookAppointment = async (req, res) => {
 module.exports = {
   createAppointment,
   bookAppointment,
+  getBookedAppointmentsForDoctors,
   //updateAppointment,
   //deleteAppointment,
   //viewAppointments,
