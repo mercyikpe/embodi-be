@@ -9,7 +9,7 @@ router.get('/', (req, res) => {
 
 // Route to create a new appointment
 //router.post('/create/:userId', verifyToken, verifyDoctor, verifyUser, appointmentController.createAppointment);
-router.post('/create/:userId', verifyToken, appointmentController.createAppointment, (req, res) => {
+router.post('/create/:userId',  appointmentController.createAppointment, (req, res) => {
     // Get the user data from the request
     const user = req.user;
     
@@ -43,7 +43,7 @@ router.get('/bookedAppointment', appointmentController.getBookedAppointmentsForD
 router.get('/bookedAppointment/:doctorId/view', appointmentController.getBookedAppointmentsForDoctor);
 
 //// CHANGE APPOINTMENT STATUS
-router.put('/updatestatus/:appointmentId', verifyToken, appointmentController.updateAppointmentStatus);
+router.put('/updatestatus/:appointmentId',  appointmentController.updateAppointmentStatus);
 
 //// get complete appointment for each doctor getCompletedAppointments
 router.get('/getAppointmentById/:appointmentId',  appointmentController.getCompletedAppointments);
