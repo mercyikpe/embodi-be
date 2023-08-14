@@ -359,7 +359,15 @@ const loginUser = async (req, res, next) => {
     if (user.role.includes('isDoctor')) {
       // Only doctors should have their doctorInfo returned
       const doctorInfo = await DoctorInfo.findOne({ user: user._id });
-      userDetails.doctorInfoId = doctorInfo._id;
+      userDetails.doctorId = doctorInfo._id;
+      userDetails.qualifiction = doctorInfo.qualification;
+      userDetails.specialty = doctorInfo.specialty;
+      userDetails.yearOfExperience = doctorInfo.yearOfExperience;
+      userDetails.rate = doctorInfo.rate;
+      userDetails.bio = doctorInfo.bio;
+      userDetails.bankName = doctorInfo.bankName;
+      userDetails.accountName = doctorInfo.accountName;
+      userDetails.accountNumber = doctorInfo.accountNumber;
     }
 
     return res.status(200).json({
