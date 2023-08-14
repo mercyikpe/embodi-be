@@ -356,18 +356,9 @@ const loginUser = async (req, res, next) => {
       updatedAt: user.updatedAt,
     };
 
-    const doctorInfo = await DoctorInfo.findOne({ user: user._id });
-
-    if (!doctorInfo) {
-      // Create a new doctorInfo document if it does not exist
-      const newDoctorInfo = await DoctorInfo.create({
-        user: user._id,
-      });
-
-      // Set the doctorInfoId property in the response to the new document's ID
-      userDetails.doctorInfoId = newDoctorInfo._id;
-    } else {
-      // Set the doctorInfoId property in the response to the existing document's ID
+    if (user.role.includes('isDoctor')) {
+      // Only doctors should have their doctorInfo returned
+      const doctorInfo = await DoctorInfo.findOne({ user: user._id });
       userDetails.doctorInfoId = doctorInfo._id;
     }
 
