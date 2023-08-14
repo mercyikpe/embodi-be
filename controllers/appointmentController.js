@@ -177,7 +177,7 @@ const bookAppointment = async (req, res) => {
       subject: 'Appointment Booked',
       html: `
         <h1>Appointment Booked</h1>
-        <p>Patient ${patient.firstName} ${patient.lastName} has booked an appointment with you, Dr. ${doctorName}, on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
+        <p> Hi, Dr. ${doctorName}, A Patient ${patient.firstName} ${patient.lastName} has booked an appointment with you  on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
       `,
     };
 
@@ -194,8 +194,8 @@ const bookAppointment = async (req, res) => {
       to: patient.email,
       subject: 'Appointment Booked',
       html: `
-        <h1>Appointment Booked</h1>
-        <p>You have successfully booked an appointment with Dr. ${doctorName} on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
+        <h1> Appointment Succesfully Booked</h1>
+        <p> Hi, ${patient.lastName} You have successfully booked an appointment with Dr. ${doctorName} on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
       `,
     };
 
@@ -288,6 +288,89 @@ const getBookedAppointmentsForDoctors = async (req, res) => {
     });
   }
 };
+
+
+
+///////// FET COMPLETED APPOINTENT FOR EACH DOCTOR (ASIN ONE DOCTOR SEEING ALL HIS COMLETED APPOINTMENT)
+const getCompletedAppointmentsForDoctor = async (req, res) => {
+  const doctorId = req.params.doctorId;
+
+  try {
+    // Fetch all completed appointments for the specific doctor
+    const completedAppointments = await Appointment.find({ doctor: doctorId, status: 'completed' })
+      .populate({
+        path: 'doctor',
+        model: 'DoctorInfo',
+        populate: {
+          path: 'user',
+          model: 'User',
+        },
+      })
+      .populate('patient')
+      .sort({ date: 1 });
+
+    // Map appointments and format the data
+    const formattedAppointments = completedAppointments.map(appointment => {
+      if (!appointment.doctor || !appointment.patient) {
+        return null;
+      }
+
+      const doctor = appointment.doctor;
+      const patient = appointment.patient;
+
+      return {
+        doctor: {
+          DoctorId: doctor._id,
+          name: `${doctor.user.firstName} ${doctor.user.lastName}`,
+          email: doctor.user.email,
+          Phone: doctor.user.phoneNumber,
+          specialty: doctor.specialty,
+          rate: doctor.rate,
+          // Other doctor's information from DoctorInfo model
+          // ...
+        },
+        patient: {
+          patientId: patient._id,
+          name: `${patient.firstName} ${patient.lastName}`,
+          email: patient.email,
+          address: patient.address,
+          phoneNumber: patient.phoneNumber,
+          allergies: patient.allergies,
+          // ...
+        },
+        AppointmentId: appointment._id,
+        date: appointment.date,
+        startTime: appointment.timeSlot.startTime,
+        endTime: appointment.timeSlot.endTime,
+        status: appointment.status,
+        // ...
+      };
+    });
+
+    // Remove any null entries
+    const validAppointments = formattedAppointments.filter(appointment => appointment !== null);
+
+    // Return the formatted data
+    return res.status(200).json({
+      status: 'success',
+      message: 'Fetched completed appointments for the specific doctor successfully.',
+      data: validAppointments,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while fetching completed appointments for the specific doctor.',
+    });
+  }
+};
+
+
+
+
+
+
+
 
 ////// fetch all the appointment for each Doctor
 const getBookedAppointmentsForDoctor = async (req, res) => {
@@ -471,22 +554,197 @@ const getAllCompletedAppointments = async (req, res) => {
 };
 
 
+//////DELTE APPOITMENT
+const deleteAppointment = async (req, res) => {
+  const appointmentId = req.params.appointmentId;
+  const userId = req.user._id; // Assuming the authenticated user ID is available
+
+  try {
+    // Find the appointment to delete
+    const appointment = await Appointment.findById(appointmentId);
+
+    // Check if the appointment exists
+    if (!appointment) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'Appointment not found. Please enter a valid appointmentId.',
+      });
+    }
+
+    // Populate the doctorInfo field from the User model
+    await req.user.populate('doctorInfo').execPopulate();
+
+    // Check if the authenticated user is a doctor and is the creator of the appointment
+    if (req.user.role.includes('isDoctor') && appointment.doctor.toString() !== req.user.doctorInfo._id.toString()) {
+      return res.status(403).json({
+        status: 'failed',
+        message: 'You are not authorized to delete this appointment.',
+      });
+    }
+
+    // Delete the appointment
+    await Appointment.findByIdAndDelete(appointmentId);
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Appointment deleted successfully.',
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while deleting the appointment.',
+    });
+  }
+};
 
 
 
+////FETCG EVERYTHING APPOINTMENT
+const viewAllAppointments = async (req, res) => {
+  try {
+    // Fetch all appointments
+    const appointments = await Appointment.find()
+      .populate({
+        path: 'doctor',
+        model: 'DoctorInfo',
+        populate: {
+          path: 'user',
+          model: 'User',
+        },
+      })
+      .populate('patient') // Populate patient information
+      .sort({ date: 1 }); // Sort appointments by date in ascending order
 
+    // Map appointments and format the data
+    const formattedAppointments = appointments.map(appointment => {
+      if (!appointment.doctor || !appointment.patient) {
+        return null;
+      }
 
+      const doctor = appointment.doctor;
+      const patient = appointment.patient;
 
+      return {
+        doctor: {
+          DoctorId: doctor._id,
+          name: `${doctor.user.firstName} ${doctor.user.lastName}`,
+          email: doctor.user.email,
+          Phone: doctor.user.phoneNumber,
+          specialty: doctor.specialty,
+          rate: doctor.rate,
+          // Other doctor's information from DoctorInfo model
+          // ...
+        },
+        patient: {
+          patientId: patient._id,
+          name: `${patient.firstName} ${patient.lastName}`,
+          email: patient.email,
+          address: patient.address,
+          phoneNumber: patient.phoneNumber,
+          allergies: patient.allergies,
+          // ...
+        },
+        AppointmentId: appointment._id,
+        date: appointment.date,
+        startTime: appointment.timeSlot.startTime,
+        endTime: appointment.timeSlot.endTime,
+        status: appointment.status,
+        // ...
+      };
+    });
 
+    // Remove any null entries
+    const validAppointments = formattedAppointments.filter(appointment => appointment !== null);
 
+    // Return the formatted data
+    return res.status(200).json({
+      status: 'success',
+      message: 'Fetched all appointments successfully.',
+      data: validAppointments,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while fetching appointments.',
+    });
+  }
+};
 
+//////// SORT ALL APPOINTMENT FOR INDIVIDUAL DOCTOR BY DATE
+const sortByDates = async (req, res) => {
+  try {
+    const doctorId = req.params.doctorId;
 
+    // Fetch all appointments for the specific doctor
+    const appointments = await Appointment.find({ doctor: doctorId })
+      .populate({
+        path: 'doctor',
+        model: 'DoctorInfo',
+        populate: {
+          path: 'user',
+          model: 'User',
+        },
+      })
+      .populate('patient')
+      .sort({ date: 1 });
 
+    const formattedAppointments = appointments.map(appointment => {
+      if (!appointment.doctor || !appointment.patient) {
+        return null;
+      }
 
+      const doctor = appointment.doctor;
+      const patient = appointment.patient;
 
+      return {
+        doctor: {
+          DoctorId: doctor._id,
+          name: `${doctor.user.firstName} ${doctor.user.lastName}`,
+          email: doctor.user.email,
+          Phone: doctor.user.phoneNumber,
+          specialty: doctor.specialty,
+          rate: doctor.rate,
+          // Other doctor's information from DoctorInfo model
+          // ...
+        },
+        patient: {
+          patientId: patient._id,
+          name: `${patient.firstName} ${patient.lastName}`,
+          email: patient.email,
+          address: patient.address,
+          phoneNumber: patient.phoneNumber,
+          allergies: patient.allergies,
+          // ...
+        },
+        AppointmentId: appointment._id,
+        date: appointment.date,
+        startTime: appointment.timeSlot.startTime,
+        endTime: appointment.timeSlot.endTime,
+        status: appointment.status,
+        // ...
+      };
+    });
 
+    // Remove any null entries
+    const validAppointments = formattedAppointments.filter(appointment => appointment !== null);
 
-  
+    // Return the formatted data
+    return res.status(200).json({
+      status: 'success',
+      message: 'Fetched appointments for the specific doctor successfully.',
+      data: validAppointments,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while fetching appointments for the specific doctor.',
+    });
+  }
+};
+
 
 
 
@@ -498,8 +756,11 @@ module.exports = {
   getBookedAppointmentsForDoctor,
   updateAppointmentStatus,
   getCompletedAppointments,
-  getAllCompletedAppointments
-  //updateAppointment,
+  getAllCompletedAppointments,
+  deleteAppointment,
+  viewAllAppointments,
+  sortByDates,
+  getCompletedAppointmentsForDoctor
   //deleteAppointment,
   //viewAppointments,
 };

@@ -72,13 +72,8 @@ const UserSchema = new mongoose.Schema(
     allergies: {
       type: [String],
     },
-    ownedDiseases: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Disease',
-      },
-    ],
-    diseaseData: [
+   
+    disease: [
       {
         disease: {
           type: mongoose.Schema.Types.ObjectId,
@@ -90,14 +85,12 @@ const UserSchema = new mongoose.Schema(
         },
       },
     ],
-    disease: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Disease',
-    },
+   
     questionaire: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Questionaire',
     },
+    
     bookedAppointments: [
       {
         type: mongoose.Schema.Types.ObjectId,

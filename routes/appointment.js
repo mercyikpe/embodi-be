@@ -52,6 +52,19 @@ router.get('/getAppointmentById/:appointmentId',  appointmentController.getCompl
 router.get('/getAllTheAppointment',  appointmentController.getAllCompletedAppointments);
 
 
+///DELELTE APPOINTM
+router.delete('/delete/:appointmentId', verifyToken,  appointmentController.deleteAppointment);
+
+//FETCH ALL THE  APPOINTMENT FOR ALL THE DOCTORS
+router.get('/viewAll', appointmentController.viewAllAppointments);
+
+///// SORT APPOINTMENT BY DATE FOR INDIVIDUAL DOCTOR 
+router.get('/sortbydate/:doctorId', appointmentController.sortByDates);
+
+////// getCompletedAppointmentsForDoctor GET ALL COMPLETED APPOINTMENT FOR EACH DOCTOR (ASIN ONE DOTOR SEEING ALL HIS APPOINTMENT)
+router.get('/viewCompleted/:doctorId', appointmentController.getCompletedAppointmentsForDoctor);
+
+
 
 
 
