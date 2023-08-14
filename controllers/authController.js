@@ -2,8 +2,9 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const createError = require('../utilities/createError');
+const DoctorInfo = require('../models/DoctorInfo');
 const User = require('../models/User');
-const transporter = require('../utilities/transporter')
+const transporter = require('../utilities/transporter');
 const OTPCode = require('../models/OtpCode'); // Add this line to import the OtpCode model
 require('dotenv').config();
 const { createTransporter, sendEmail } = require('../utilities/transporter'); // Import the emailUtils module
@@ -233,7 +234,7 @@ const registerUser = async (req, res) => {
 
 
 
-
+/*
 const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -285,6 +286,110 @@ const loginUser = async (req, res, next) => {
     });
   }
 };
+*/
+
+const loginUser = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Email field is required',
+      });
+    }
+
+    const user = await User.findOne({ email })
+      .populate({
+        path: 'doctorInfo',
+        model: 'DoctorInfo',
+        populate: {
+          path: 'user',
+          model: 'User',
+        },
+      });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found',
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Invalid password',
+      });
+    }
+
+    if (!user.verified) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Please verify your email before signing in',
+      });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, { expiresIn: '24h' });
+
+    let userDetails = {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      status: user.status,
+      verifyBadge: user.verifyBadge,
+      verified: user.verified,
+      image: user.image,
+      dob: user.dob,
+      address: user.address,
+      gender: user.gender,
+      allergies: user.allergies,
+      disease: user.disease,
+      questionaire: user.questionaire,
+      bookedAppointments: user.bookedAppointments,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+
+    const doctorInfo = await DoctorInfo.findOne({ user: user._id });
+
+    if (!doctorInfo) {
+      // Create a new doctorInfo document if it does not exist
+      const newDoctorInfo = await DoctorInfo.create({
+        user: user._id,
+      });
+
+      // Set the doctorInfoId property in the response to the new document's ID
+      userDetails.doctorInfoId = newDoctorInfo._id;
+    } else {
+      // Set the doctorInfoId property in the response to the existing document's ID
+      userDetails.doctorInfoId = doctorInfo._id;
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Successfully signed in',
+      token,
+      user: userDetails,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'Internal server error',
+    });
+  }
+};
+
+
+
+
+
 
 
   ////// REQUEST FOR A NEW OTP IF USER DIDNT RECEIVE IT
