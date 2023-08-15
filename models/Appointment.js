@@ -5,19 +5,19 @@ const AppointmentSchema = new mongoose.Schema(
   {
     date: {
       type: Date,
-      required: true,
+      //required: true,
     },
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      //required: true,
     },
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+      ref: 'Doctor',
+     // required: true,
     },
-    timeSlot: {
+    appointments: [{
       startTime: {
         type: String,
         required: true,
@@ -26,13 +26,24 @@ const AppointmentSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
-    },
-    status: {
-      type: String,
-      enum: ['scheduled', 'completed', 'cancelled'],
-      default: 'scheduled',
-    },
-    // Add more fields as needed for your appointment data
+      status: {
+        type: String,
+        enum: ['Scheduled', 'Booked', 'Completed', 'Cancelled'],
+        default: 'Scheduled',
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now(),
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now(),
+      },
+      appointmentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        auto: true,
+      },
+    }],
   },
   { timestamps: true }
 );
