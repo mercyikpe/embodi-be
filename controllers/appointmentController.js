@@ -271,6 +271,8 @@ const getBookedAppointmentsForDoctors = async (req, res) => {
       startTime: appointment.timeSlot.startTime,
       endTime: appointment.timeSlot.endTime,
       status: appointment.status,
+      Created: appointment.createdAt,
+      Updated: appointment.updatedAt
       // ...
     }));
 
@@ -343,6 +345,8 @@ const getCompletedAppointmentsForDoctor = async (req, res) => {
         startTime: appointment.timeSlot.startTime,
         endTime: appointment.timeSlot.endTime,
         status: appointment.status,
+        Created: appointment.createdAt,
+        Updated: appointment.updatedAt
         // ...
       };
     });
@@ -408,9 +412,14 @@ const getBookedAppointmentsForDoctor = async (req, res) => {
         allergies: appointment.patient.allergies,
       },
       // Other appointment information
+
+      appointmentId: appointment._id,
       date: appointment.date,
       startTime: appointment.timeSlot.startTime,
       endTime: appointment.timeSlot.endTime,
+      Status: appointment.status,
+      Created: appointment.createdAt,
+      Updated: appointment.updatedAt
       // ...
     }));
 
@@ -723,6 +732,8 @@ const sortByDates = async (req, res) => {
         startTime: appointment.timeSlot.startTime,
         endTime: appointment.timeSlot.endTime,
         status: appointment.status,
+        Created: appointment.createdAt,
+        Updated: appointment.updatedAt
         // ...
       };
     });

@@ -51,27 +51,6 @@ const verifyToken = (req, res, next) => {
 };
 
 
-
-const verifyUser = (req, res, next) => {
-  verifyToken(req, res, (err) => {
-    if (req.user.id === req.params.id || req.user.role === 'isUser') {
-      next();
-    } else {
-      return next(createError(401, 'You are not authorized'));
-    }
-  });
-};
-
-const verifyAdmin = (req, res, next) => {
-  verifyToken(req, res, (err) => {
-    if (req.user.role === 'isAdmin') {
-      next();
-    } else {
-      return next(new createError(401, 'You are not an ADMIN'));
-    }
-  });
-};
-
 const verifyDoctor = (req, res, next) => {
   verifyToken(req, res, async (err) => {
     if (err) {
@@ -80,14 +59,52 @@ const verifyDoctor = (req, res, next) => {
 
     const user = await User.findById(req.user.id);
 
-    if (user && user.role === 'isDoctor') {
+    if (user && user.roles) {
+
+      const doctorInfo = await DoctorInfo.findOne({ user: user._id });
+      if (doctorInfo) {
+        user.roles = ['isDoctor'];
+      } else {
+        user.roles = ['isUser'];
+      }
       next();
     } else {
-      return next(new AppError('You are not a verified DOCTOR', 401));
+      return next(new AppError('You are not a verified DOCTOR or ADMIN', 401));
     }
   });
-};
-
+}
+  
+  const verifyAdmin = (req, res, next) => {
+  verifyToken(req, res, async (err) => {
+  if (err) {
+  return next(err);
+  }
+  
+  const user = await User.findById(req.user.id);
+  
+  if (user && (user.roles.includes('isAdmin') || user.roles.includes('isUser'))) {
+    next();
+  } else {
+    return next(new AppError('You are not an ADMIN or USER', 401));
+  }
+  });
+  };
+  
+  const verifyUser = (req, res, next) => {
+  verifyToken(req, res, async (err) => {
+  if (err) {
+  return next(err);
+  }
+  
+  const user = await User.findById(req.user.id);
+  
+  if (user && user.roles.includes('isUser')) {
+    next();
+  } else {
+    return next(new AppError('You are not a verified USER', 401));
+  }
+  });
+  };
 
 
 

@@ -3,7 +3,7 @@ const router = express.Router();
 const doctorController = require('../controllers/doctorController');
 const { verifyToken,verifyDoctor, verifyUser, verifyAdmin } = require('../middleware/authMiddleware');
 
-router.get('/', (req, res)=>{
+router.get('/', verifyDoctor, (req, res)=>{
     res.send(' DOCTORS SIDE')
 });
 
