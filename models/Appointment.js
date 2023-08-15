@@ -1,4 +1,3 @@
-// models/Appointment.js
 const mongoose = require('mongoose');
 
 const AppointmentSchema = new mongoose.Schema(
@@ -18,7 +17,7 @@ const AppointmentSchema = new mongoose.Schema(
       ref: 'DoctorInfo',
       required: true,
     },
-    timeSlot: {
+    appointments: [{
       startTime: {
         type: String,
         required: true,
@@ -27,14 +26,25 @@ const AppointmentSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
-    },
+      status: {
+        type: String,
+        enum: ['Scheduled', 'Booked', 'Completed', 'Cancelled'],
+        default: 'Scheduled',
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now(),
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now(),
+      },
+      appointmentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        auto: true,
+      },
+    }],
     
-    status: {
-      type: String,
-      enum: ['scheduled', 'Booked', 'completed', 'cancelled'],
-      default: 'scheduled',
-    },
-   
   },
   { timestamps: true }
 );
