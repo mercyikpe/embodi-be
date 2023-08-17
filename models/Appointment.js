@@ -7,11 +7,7 @@ const AppointmentSchema = new mongoose.Schema(
       type: Date,
       //required: true,
     },
-    patient: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      //required: true,
-    },
+    
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Doctor',
@@ -39,10 +35,18 @@ const AppointmentSchema = new mongoose.Schema(
         type: Date,
         default: Date.now(),
       },
+      patient: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        //required: true,
+      },
+      /*
       appointmentId: {
         type: mongoose.Schema.Types.ObjectId,
         auto: true,
-      },
+       
+      }, 
+       */
     }],
   },
   { timestamps: true }

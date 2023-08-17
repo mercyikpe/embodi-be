@@ -1,15 +1,19 @@
-
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+      //required: true,
+    },
+
     firstName: {
       type: String,
-      required: true,
+      //required: true,
     },
     lastName: {
       type: String,
-      required: true,
+      //required: true,
     },
     email: {
       type: String,
@@ -19,61 +23,82 @@ const UserSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true,
+     
     },
     password: {
       type: String,
-      required: true,
+      //required: true,
+    },
+    role: {
+      type: [String],
+      enum: ['isUser', 'isAdmin', 'isDoctor', 'isOthers'],
+      default: ['isAdmin'], // Default to 'isUser' if no role is provided during user creation
     },
 
-    isAdmin: {
-      type: Boolean,
-      default: false,
-    },
-    isDoctor: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum: ['isActive', 'isInactive', 'isBlocked', 'isSuspended', 'isLimited'],
+      default: 'isActive', // Default to 'isActive' if no status is provided during user creation
     },
 
-    // Additional field to reference DoctorInfo model
-    doctorInfo: {
+    // ... Other fields ...
+
+     doctorInfo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'DoctorInfo',
     },
-    
-    isActive: {
+    verifyBadge: {
       type: Boolean,
       default: true,
-    },
-    status: {
-      type: String,
-      enum: ['verified', 'unverified'],
-      default: 'unverified',
     },
     verified: {
       type: Boolean,
       default: false,
     },
     image: {
-      type: String,  
+      type: String,
     },
     dob: {
-      type: Date
-
+      type: Date,
     },
     address: {
-      type: String,  
+      type: String,
     },
     gender: {
-      type: String,  
+      type: String,
     },
     allergies: {
-      type: [String ] 
+      type: [String],
     },
-
-
-  },
+   
+    disease: [
+      {
+        disease: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Disease',
+        },
+        data: {
+          // Fields to store data specific to the disease
+          // For example: symptoms, treatment, notes, etc.
+        },
+      },
+    ],
+   
+    questionaire: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Questionaire',
+    },
+    
+    bookedAppointments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Appointment',
+      },
+    ],
+ },
+  
   { timestamps: true }
 );
 

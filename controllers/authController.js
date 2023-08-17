@@ -2,11 +2,12 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const createError = require('../utilities/createError');
+const DoctorInfo = require('../models/DoctorInfo');
 const User = require('../models/User');
-const transporter = require('../utilities/transporter')
+const transporter = require('../utilities/transporter');
 const OTPCode = require('../models/OtpCode'); // Add this line to import the OtpCode model
 require('dotenv').config();
-
+const { createTransporter, sendEmail } = require('../utilities/transporter'); // Import the emailUtils module
 
 //const { googleAuthConfig, getGoogleProfile } = require('../../utility/googleAuth'); // Import Google Auth utility functions
 
@@ -18,6 +19,87 @@ const generateOTPCode = () => {
   }
   return otpCode;
 };
+
+/*
+const registerUser = async (req, res) => {
+  const { firstName, lastName, phoneNumber, email, password } = req.body;
+
+  if (!firstName || !lastName || !phoneNumber || !email || !password) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Fields cannot be blank',
+    });
+  }
+
+  const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*]).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
+    });
+  }
+
+  try {
+    // Hash the password before saving to the database
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
+    const newUser = new User({
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      password: hashedPassword, // Store the hashed password in the database
+    });
+
+    const savedUser = await newUser.save();
+
+    // Send OTP code to user's email
+    const otpCode = generateOTPCode();
+
+    // Set the expiration time to 10 minutes from now
+    const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Save OTP code to database
+    const otpCodeRecord = new OTPCode({
+      userId: savedUser._id,
+      code: otpCode,
+      createdAt: Date.now(),
+      expiresAt: expirationTime,
+    });
+    await otpCodeRecord.save();
+
+    // Prepare and send the email using the transporter and sendEmail function
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: savedUser.email,
+      subject: 'Verify Your Email',
+      html: `
+        <h1>Email Verification</h1>
+        <p><strong>${otpCode}</strong></p>
+        <p>Please enter the verification code in your account settings to verify your email.</p>
+      `,
+    };
+
+    await sendEmail(transporter, mailOptions);
+
+    // Remove the password field from the response JSON
+    const { password: removedPassword, ...userWithoutPassword } = savedUser.toObject();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'OTP sent to your email.',
+      user: userWithoutPassword,
+    });
+  } catch (error) {
+    console.log('Error while saving the user:', error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while signing up. kindly try again',
+    });
+  }
+};
+*/
+
 
 const registerUser = async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password } = req.body;
@@ -33,15 +115,24 @@ const registerUser = async (req, res) => {
   if (!passwordRegex.test(password)) {
     return res.status(400).json({
       status: 'failed',
-      message:
-        'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
+      message: 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
     });
   }
 
   try {
-    const existingUser = await User.findOne({ $or: [{ phoneNumber }, { email }] });
+    // Check if the user with the given email already exists
+    let user = await User.findOne({ email });
 
-    if (existingUser && !existingUser.verified) {
+    if (user && !user.verified) {
+      // If the user exists and is not verified, update their data and resend verification email
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.phoneNumber = phoneNumber;
+      user.password = await bcrypt.hash(password, 10); // Hash the new password
+      await user.save();
+
+    
+
       // Send OTP code to user's email
       const otpCode = generateOTPCode();
 
@@ -50,108 +141,258 @@ const registerUser = async (req, res) => {
 
       // Save OTP code to database
       const otpCodeRecord = new OTPCode({
-        userId: existingUser._id,
+        userId: user._id,
         code: otpCode,
         createdAt: Date.now(),
         expiresAt: expirationTime,
       });
       await otpCodeRecord.save();
 
+      // Prepare and send the email using the transporter and sendEmail function
       const mailOptions = {
         from: process.env.AUTH_EMAIL,
-        to: existingUser.email,
+        to: user.email,
         subject: 'Verify Your Email',
         html: `
           <h1>Email Verification</h1>
-          <p><strong>${otpCode}</strong></p>
-          <p>Please enter the verification code in your account settings to verify your email.</p>
+          <h3>Welcome ${lastName}, </h3>
+          <p>Please enter the verification code to continue.</p>
+          <h2><strong>${otpCode}</strong></h2>
         `,
       };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log('Email sent: ' + info.response);
-        }
-      });
+      await transporter.sendMail(mailOptions);
 
       return res.status(200).json({
         status: 'success',
-        message: 'OTP sent to your email.',
+        message: 'Already registered with Phone number or email. New data captured and OTP resent to your email for verification.',
       });
-    } else {
+    } else if (user) {
+      // If the user exists and is already verified, return an error message
       return res.status(400).json({
         status: 'failed',
-        message: 'Email or Phone is already in use.',
+        message: 'User already exists and is verified.',
       });
     }
+
+  
+
+    // If the user does not exist, create a new user and set their verified status to false
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
+    const newUser = new User({
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      password: hashedPassword,
+      verified: false,
+    });
+
+    const savedUser = await newUser.save();
+
+    // Send OTP code to user's email
+    const otpCode = generateOTPCode();
+
+    // Set the expiration time to 10 minutes from now
+    const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Save OTP code to database
+    const otpCodeRecord = new OTPCode({
+      userId: savedUser._id,
+      code: otpCode,
+      createdAt: Date.now(),
+      expiresAt: expirationTime,
+    });
+    await otpCodeRecord.save();
+
+    // Prepare and send the email using the transporter and sendEmail function
+    const mailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: savedUser.email,
+      subject: 'Verify Your Email',
+      html: `
+      <h1>Email Verification</h1>
+      <p> Welcome ${lastName}, Please enter the verification code to continue.</p>
+      <h3><strong>${otpCode}</strong></h3>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'OTP sent to your email for verification.',
+    });
   } catch (error) {
-    console.log(error);
+    console.log('Error while saving the user:', error);
     return res.status(500).json({
       status: 'failed',
-      message: 'An error occurred while signing up.',
+      message: 'An error occurred while signing up. Kindly try again.',
     });
   }
 };
 
 
-  const loginUser = async (req, res, next) => {
-    try {
-      const { email, phoneNumber, password } = req.body;
-  
-      if (!email && !phoneNumber) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'Phone or email field is required',
-        });
-      }
-  
-      const user = await User.findOne({ $or: [{ phoneNumber }, { email }] });
-      if (!user) {
-        return res.status(404).json({
-          status: 'failed',
-          message: 'User not found',
-        });
-      }
-  
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'Invalid password',
-        });
-      }
-  
-      if (!user.verified) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'Please verify your email before signing in',
-        });
-      }
-  
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, { expiresIn: '1h' });
-      const { isAdmin, ...otherDetails } = user._doc;
-  
-      return res.status(200).json({
-        status: 'success',
-        message: 'Successfully signed in',
-        token,
-        user: otherDetails,
-      });
-    } catch (error) {
-      console.log(error); // Log the error for debugging purposes
-      return res.status(500).json({
+
+/*
+const loginUser = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
         status: 'failed',
-        message: 'Internal server error',
+        message: 'Email field is required',
       });
     }
-  };
-  
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found',
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Invalid password',
+      });
+    }
+
+    if (!user.verified) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Please verify your email before signing in',
+      });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, { expiresIn: '24h' });
+    const { isAdmin, ...otherDetails } = user._doc;
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Successfully signed in',
+      token,
+      user: otherDetails,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: 'failed',
+      message: 'Internal server error',
+    });
+  }
+};
+*/
+
+const loginUser = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Email field is required',
+      });
+    }
+
+    const user = await User.findOne({ email })
+      .populate({
+        path: 'doctorInfo',
+        model: 'DoctorInfo',
+        populate: {
+          path: 'user',
+          model: 'User',
+        },
+      });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found',
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Invalid password',
+      });
+    }
+
+    if (!user.verified) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Please verify your email before signing in',
+      });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, { expiresIn: '24h' });
+
+    let userDetails = {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      status: user.status,
+      verifyBadge: user.verifyBadge,
+      verified: user.verified,
+      image: user.image,
+      dob: user.dob,
+      address: user.address,
+      gender: user.gender,
+      allergies: user.allergies,
+      disease: user.disease,
+      questionaire: user.questionaire,
+      bookedAppointments: user.bookedAppointments,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+
+    if (user.role.includes('isDoctor')) {
+      // Only doctors should have their doctorInfo returned
+      const doctorInfo = await DoctorInfo.findOne({ user: user._id });
+      userDetails.doctorId = doctorInfo._id;
+      userDetails.qualifiction = doctorInfo.qualification;
+      userDetails.specialty = doctorInfo.specialty;
+      userDetails.yearOfExperience = doctorInfo.yearOfExperience;
+      userDetails.rate = doctorInfo.rate;
+      userDetails.bio = doctorInfo.bio;
+      userDetails.bankName = doctorInfo.bankName;
+      userDetails.accountName = doctorInfo.accountName;
+      userDetails.accountNumber = doctorInfo.accountNumber;
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Successfully signed in',
+      token,
+      user: userDetails,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'Internal server error',
+    });
+  }
+};
+
+
+
+
+
+
 
   ////// REQUEST FOR A NEW OTP IF USER DIDNT RECEIVE IT
-
-  const requestOTP = async (req, res) => {
+ const requestOTP = async (req, res) => {
     const { email } = req.body;
   
     // Check if the email is provided
@@ -272,7 +513,6 @@ const verifyOTP = async (req, res) => {
         message: 'Account verification successful.',
       });
     } catch (error) {
-      console.log(error);
       return res.status(500).json({
         status: 'failed',
         message: 'An error occurred while verifying the account.',
