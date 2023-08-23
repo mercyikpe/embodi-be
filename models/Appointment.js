@@ -10,7 +10,7 @@ const AppointmentSchema = new mongoose.Schema(
     
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Doctor',
+      ref: 'DoctorInfo',
      // required: true,
     },
     appointments: [{
@@ -20,7 +20,7 @@ const AppointmentSchema = new mongoose.Schema(
       },
       endTime: {
         type: String,
-        required: true,
+        //required: true,
       },
       status: {
         type: String,
@@ -40,14 +40,19 @@ const AppointmentSchema = new mongoose.Schema(
         ref: 'User',
         //required: true,
       },
-      /*
-      appointmentId: {
-        type: mongoose.Schema.Types.ObjectId,
-        auto: true,
-       
+      
+      bookingId: {
+        type: String,
       }, 
-       */
+       
     }],
+
+    ////// send email on request 
+    sendAppointmentEmail: {
+      type: Boolean,
+      default: true,
+    },
+
   },
   { timestamps: true }
 );

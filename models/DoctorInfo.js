@@ -7,7 +7,7 @@ const DoctorInfoSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      unique: true,
+      //unique: true,
     },
 
     appointments: [{
@@ -51,6 +51,7 @@ const DoctorInfoSchema = new mongoose.Schema(
       type: Number,
     },
     // Array of available time slots
+    /*
     availableTimeSlots: {
       type: [
         {
@@ -70,9 +71,47 @@ const DoctorInfoSchema = new mongoose.Schema(
       ],
       default: [], // Initialize with an empty array
     },
+    */
+    availableTimeSlots: {
+      type: [
+        {
+          date: {
+            type: Date,
+            // required: true,
+          },
+          startTime: {
+            type: String,
+            // required: true,
+          },
+          endTime: {
+            type: String,
+            // required: true,
+          },
+          status: {
+            type: String,
+            enum: ['Scheduled', 'Booked', 'Completed', 'Cancelled'],
+            
+          },
+          patient: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+          },
+        },
+      ],
+      default: [], // Initialize with an empty array
+    },
+    
+    
+       // Email sending functionality
+       sendAppointmentEmail: {
+        type: Boolean,
+        default: true,
+      },
   },
+
   { timestamps: true }
 );
+
 
 const DoctorInfo = mongoose.model('DoctorInfo', DoctorInfoSchema);
 

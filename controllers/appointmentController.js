@@ -2,13 +2,16 @@ const moment = require('moment');
 const Appointment = require('../models/Appointment');
 const DoctorInfo  = require('../models/DoctorInfo');
 const User = require('../models/User');
+const Patient = require('../models/User');
 const transporter = require('../utilities/transporter');
 //const moment = require('moment');
+const mongoose = require('mongoose');
 
-/** 
+
+////// i just suspended this this night 08 21 - 146am
 const createAppointment = async (doctorId, date, appointments) => {
   try {
-    const doctorInfo = await DoctorInfo.findOne({ user: doctorId });
+    const doctorInfo = await DoctorInfo.findById(doctorId).populate('user');
 
     if (!doctorInfo) {
       return { error: 'Doctor not found' };
@@ -51,24 +54,23 @@ const createAppointment = async (doctorId, date, appointments) => {
     }
 
     const appointment = await Appointment.findOneAndUpdate(
-  {
-    doctor: doctorId,
-    date,
-    $nor: [
       {
-        'appointments.startTime': { $eq: startTimeFormatted },
+        doctor: doctorId,
+        date,
+        $nor: [
+          {
+            'appointments.startTime': { $eq: startTimeFormatted },
+          },
+          {
+            'appointments.endTime': { $eq: endTimeFormatted },
+          },
+        ],
       },
       {
-        'appointments.endTime': { $eq: endTimeFormatted },
+        $push: { appointments: appointments[0] },
       },
-    ],
-  },
-  {
-    $push: { appointments: appointments[0] },
-  },
-  { new: true }
-)
-
+      { new: true }
+    );
 
     if (!appointment) {
       const newAppointmentData = {
@@ -80,28 +82,38 @@ const createAppointment = async (doctorId, date, appointments) => {
       const newAppointment = new Appointment(newAppointmentData);
       await newAppointment.save();
 
-      // Add the new appointment to the doctor's available time slots
-      const updatedAvailableTimeSlots = doctorInfo.availableTimeSlots.concat({
+      const appointmentId = newAppointment._id;
+
+      // Update the doctor's availableTimeSlots field
+      doctorInfo.availableTimeSlots.push({
         date,
         startTime: moment(startTimeFormatted).format('HH:mm'),
         endTime: moment(endTimeFormatted).format('HH:mm'),
+        status: 'Scheduled',
+        //patientId
       });
-
-      // Update the doctor's availableTimeSlots field
-      doctorInfo.availableTimeSlots = updatedAvailableTimeSlots;
       await doctorInfo.save();
+
+      //// APPOINTMENT ID
+    
 
       // Get the doctor's email address from the User model
       const doctorEmail = doctorInfo.user.email;
+      const doctorId = doctorInfo._id;
+      const doctorName = `${doctorInfo.user.firstName} ${doctorInfo.user.lastName}`;
+      const doctorPhone = doctorInfo.user.phoneNumber;
+      const doctorGender = doctorInfo.user.gender;
+      const doctorSpecialty = doctorInfo.specialty;
+      const doctorRate = doctorInfo.rate;
 
       // Send email to doctor to confirm appointment creation
       const doctorMailOptions = {
         from: process.env.AUTH_EMAIL,
         to: doctorEmail,
-        subject: 'Appointment Created',
+        subject: `Appointment Created For ${doctorName}`,
         html: `
-          <h1>Appointment Created</h1>
-          <p>An appointment has been created for you on ${date} from ${moment(startTimeFormatted).format('HH:mm')} to ${moment(endTimeFormatted).format('HH:mm')}.</p>
+          <h1>Appointment Created </h1>
+          <p> Hi ${doctorName}, An appointment has been created for you on ${date} from ${moment(startTimeFormatted).format('HH:mm')} to ${moment(endTimeFormatted).format('HH:mm')}.</p>
         `,
       };
 
@@ -109,11 +121,23 @@ const createAppointment = async (doctorId, date, appointments) => {
         if (error) {
           console.log(error);
         } else {
-          console.log('Doctor email sent: ' + info.response);
+          console.log('Doctor email sent to: ' +  doctorName, '|', doctorEmail);
         }
       });
 
-      return { success: true, appointment: newAppointment };
+      const doctorDetails = {
+        appointmentId,
+        doctorId,
+        doctorName,
+        doctorEmail,
+        doctorPhone,
+        doctorGender,
+        doctorSpecialty,
+        doctorRate,
+      };
+
+      return { success: true, appointmentId, appointment: newAppointment, doctorDetails, appointmentId};
+      console.log( newAppointment, doctorDetails, appointmentId)
     }
 
     return { success: true, appointment };
@@ -122,8 +146,10 @@ const createAppointment = async (doctorId, date, appointments) => {
     return { error: 'An error occurred while processing the appointment request.' };
   }
 };
-*/
 
+
+/*
+ /// recent commentented to test something
 const createAppointment = async (doctorId, date, appointments) => {
   try {
     const doctorInfo = await DoctorInfo.findOne({ user: doctorId });
@@ -204,103 +230,205 @@ const createAppointment = async (doctorId, date, appointments) => {
   }
 };
 
-
-
+*/
 
 
 
 ///////// USER TO BOOK APPOINTMENT
+
 const bookAppointment = async (req, res) => {
-  const { appointmentId, patientId } = req.body;
+  const { appointmentId, appointments } = req.body;
+  const patientId = appointments[0].patientId;
+
+  // Generate a new bookingId using the generateBookingId function
+  function generateBookingId() {
+    const min = 1000000000; // Minimum 10-digit number
+    const max = 9999999999; // Maximum 10-digit number
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  const newBookingId = generateBookingId();
 
   try {
-    // Find the appointment to book
     const appointment = await Appointment.findById(appointmentId);
 
-    // Check if the appointment exists and is available
-    if (!appointment || appointment.patient) {
-      return res.status(400).json({
-        status: 'failed',
-        message: 'Invalid appointment or appointment is already booked.',
-      });
-    }
-
-    // Update the appointment with the patientId and change status to 'booked'
-    appointment.patient = patientId;
-    appointment.status = 'Booked'; // Change the status to 'booked'
-    const bookedAppointment = await appointment.save();
-
-    // Find the doctor associated with the appointment
-    const doctor = await DoctorInfo.findById(appointment.doctor).populate('user');
-
-    // Check if the doctor exists
-    if (!doctor) {
+    if (!appointment) {
       return res.status(404).json({
-        status: 'failed',
-        message: 'Doctor not found for this appointment.',
+        message: `Appointment with ID ${appointmentId} not found.`,
       });
     }
 
-    // Get the doctor's email address and name from the User model
-    const doctorEmail = doctor.user.email;
-    const doctorName = `${doctor.user.firstName} ${doctor.user.lastName}`;
+    const foundAppointment = appointment.appointments.find(
+      appointment => appointment.startTime === appointments[0].startTime
+    );
 
-    // Get the patient's details
-    const patient = await User.findById(patientId);
+    // Check if foundAppointment is defined
+    if (foundAppointment) {
+      // Check if appointment is already booked
+      if (!foundAppointment.bookingId) {
+        // Generate a new bookingId
+        foundAppointment.newBookingId = newBookingId;
+        foundAppointment.bookingId = newBookingId;
+        foundAppointment.status = 'Booked';
+        foundAppointment.patient = patientId;
 
-    // Send email notifications to doctor and patient
-    const doctorMailOptions = {
-      from: process.env.AUTH_EMAIL,
-      to: doctorEmail,
-      subject: 'Appointment Booked',
-      html: `
-        <h1>Appointment Booked</h1>
-        <p> Hi, Dr. ${doctorName}, A Patient ${patient.firstName} ${patient.lastName} has booked an appointment with you  on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
-      `,
-    };
+        // Populate the model
+        const doctorInfo = await DoctorInfo.findById(foundAppointment.doctor).populate('user');
+        const patient = await User.findById(patientId).select('firstName lastName allergies email phoneNumber disease');
 
-    transporter.sendMail(doctorMailOptions, (error, info) => {
-      if (error) {
-        console.log(error);
+        await appointment.save();
+
+        // Find the specific appointment index
+        const appointmentIndex = appointment.appointments.findIndex(appointment => appointment.startTime === foundAppointment.startTime);
+
+        // Return the updated appointment model
+        return res.status(200).json({
+          message: `Appointment booked successfully.`,
+          appointment: {
+            _id: appointment._id,
+            date: appointment.date,
+            doctorId: appointment.doctor,
+            appointments: appointment.appointments,
+          },
+          appointmentIndex,
+          doctor: doctorInfo,
+          patient,
+        });
       } else {
-        console.log('Doctor email sent: ' + info.response);
+        // Appointment is already booked
+        return res.status(400).json({
+          message: `This appointment is already booked.`,
+        });
       }
-    });
-
-    const patientMailOptions = {
-      from: process.env.AUTH_EMAIL,
-      to: patient.email,
-      subject: 'Appointment Booked',
-      html: `
-        <h1> Appointment Succesfully Booked</h1>
-        <p> Hi, ${patient.lastName} You have successfully booked an appointment with Dr. ${doctorName} on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
-      `,
-    };
-
-    transporter.sendMail(patientMailOptions, (error, info) => {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log('Patient email sent: ' + info.response);
-      }
-    });
-
-    // Update the user's bookedAppointments array
-    await User.findByIdAndUpdate(patientId, { $push: { bookedAppointments: bookedAppointment._id } });
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Appointment booked successfully.',
-      data: bookedAppointment,
-    });
+    } else {
+      // Appointment does not exist
+      return res.status(404).json({
+        message: `Appointment with startTime ${appointments[0].startTime} does not exist.`,
+      });
+    }
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while booking the appointment.',
+      message: `An error occurred while booking the appointment.`,
     });
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const updateAppointment = async (doctorId, appointmentId, updateData) => {
+  try {
+    const { date, startTime, endTime, status } = updateData;
+
+    // Find the doctor's info
+    const doctorInfo = await DoctorInfo.findById(doctorId);
+    if (!doctorInfo) {
+      return { error: 'Doctor not found' };
+    }
+
+    // Find the appointment
+    const appointment = await Appointment.findOne({
+      doctor: doctorId,
+      'appointments._id': appointmentId,
+    });
+
+    if (!appointment) {
+      return { error: 'Appointment not found' };
+    }
+
+    // Update appointment details
+    const appointmentIndex = appointment.appointments.findIndex(
+      (appt) => appt._id.toString() === appointmentId
+    );
+
+    if (appointmentIndex === -1) {
+      return { error: 'Appointment not found' };
+    }
+
+    // Check if the status is updated to 'Completed' or 'Canceled'
+    if (status === 'Completed') {
+      // Notify the patient with an appreciation email
+      const patientId = appointment.appointments[appointmentIndex].patient;
+      const patient = await User.findById(patientId);
+      if (patient.sendAppointmentCompletedEmail) {
+        await sendPatientAppointmentCompletedEmail(patient, doctorInfo, date, startTime);
+      }
+    } else if (status === 'Canceled') {
+      // Notify the patient to rebook
+      const patientId = appointment.appointments[appointmentIndex].patient;
+      const patient = await User.findById(patientId);
+      if (patient.sendAppointmentCanceledEmail) {
+        await sendPatientAppointmentCanceledEmail(patient, doctorInfo, date, startTime);
+      }
+    }
+
+    // Update appointment details
+    if (date) {
+      appointment.appointments[appointmentIndex].date = date;
+    }
+    if (startTime) {
+      appointment.appointments[appointmentIndex].startTime = startTime;
+    }
+    if (endTime) {
+      appointment.appointments[appointmentIndex].endTime = endTime;
+    }
+    if (status) {
+      appointment.appointments[appointmentIndex].status = status;
+    }
+
+    await appointment.save();
+
+    return {
+      success: true,
+      message: 'Appointment updated successfully',
+      appointment: appointment.appointments[appointmentIndex],
+    };
+  } catch (error) {
+    console.error('Error:', error);
+    return { error: 'An error occurred while updating the appointment.' };
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //// view doctor and list of appointment. doctor's profile from user profile, and from doctor's information and times slots
 // Controller function to fetch booked appointments for each doctor
@@ -841,6 +969,7 @@ const sortByDates = async (req, res) => {
 module.exports = {
   createAppointment,
   bookAppointment,
+  updateAppointment,
   getBookedAppointmentsForDoctors,
   getBookedAppointmentsForDoctor,
   updateAppointmentStatus,

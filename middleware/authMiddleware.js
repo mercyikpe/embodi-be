@@ -51,28 +51,22 @@ const verifyToken = (req, res, next) => {
 };
 
 
-const verifyDoctor = (req, res, next) => {
-  verifyToken(req, res, async (err) => {
-    if (err) {
-      return next(err);
-    }
-
+const verifyDoctor = async (req, res, next) => {
+  try {
     const user = await User.findById(req.user.id);
 
-    if (user && user.roles) {
-
-      const doctorInfo = await DoctorInfo.findOne({ user: user._id });
-      if (doctorInfo) {
-        user.roles = ['isDoctor'];
-      } else {
-        user.roles = ['isUser'];
-      }
+    if (user && user.roles.includes('isDoctor')) {
+      req.doctorId = user._id; // Save the doctorId in the request object
       next();
     } else {
-      return next(new AppError('You are not a verified DOCTOR or ADMIN', 401));
+      return next(new AppError('You are not a verified DOCTOR', 401));
     }
-  });
-}
+  } catch (error) {
+    console.error('Middleware Error:', error);
+    res.status(500).json({ error: 'An error occurred while processing the request.' });
+  }
+};
+
   
   const verifyAdmin = (req, res, next) => {
   verifyToken(req, res, async (err) => {

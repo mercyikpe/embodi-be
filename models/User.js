@@ -93,10 +93,21 @@ const UserSchema = new mongoose.Schema(
     
     bookedAppointments: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Appointment',
+        appointment: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Appointment',
+        },
+        startTime: String,
+        endTime: String,
+        status: String,
+        doctorName: String,
       },
     ],
+
+    sendAppointmentEmails: {
+      type: Boolean,
+      default: true,
+    },
  },
   
   { timestamps: true }
