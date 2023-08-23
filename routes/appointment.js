@@ -100,8 +100,8 @@ router.put('/updatestatus/:appointmentId',  appointmentController.updateAppointm
 //// get complete appointment for each doctor getCompletedAppointments
 router.get('/getAppointmentById/:appointmentId',  appointmentController.getCompletedAppointments);
 
-////get completed appointment for all the doctors getAllCompletedAppointments
-router.get('/getAllTheAppointment',  appointmentController.getAllCompletedAppointments);
+////get completed appointment for all the doctors get All CompletedAppointments
+router.get('/getAllTheAppointment',  appointmentController.fetchCompletedAppointments);
 
 
 ///DELELTE APPOINTM

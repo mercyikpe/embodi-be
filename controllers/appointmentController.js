@@ -467,6 +467,54 @@ const fetchBookedAppointments = async (req, res) => {
 };
 
 
+///// FOR COMPLETED APPOINTMEN 
+const fetchCompletedAppointments = async (req, res) => {
+  try {
+    const completedAppointments = await Appointment.find({
+      'appointments.status': 'Completed',
+    }).populate('doctor').populate('appointments.patient');
+
+    const formattedAppointments = completedAppointments.map(appointment => {
+      return {
+        _id: appointment._id,
+        date: appointment.date,
+        doctorId: appointment.doctor ? appointment.doctor._id : null,
+        doctorName: appointment.doctor ? `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}` : null,
+        doctorSpecialty: appointment.doctor ? appointment.doctor.specialty : null,
+        appointments: appointment.appointments.map(appt => {
+          const patientInfo = appt.patient ? {
+            patientId: appt.patient._id,
+            patientName: `${appt.patient.firstName} ${appt.patient.lastName}`,
+            patientEmail: appt.patient.email,
+            patientPhoneNumber: appt.patient.phoneNumber,
+          } : null;
+
+          return {
+            startTime: appt.startTime,
+            endTime: appt.endTime,
+            status: appt.status,
+            bookingId: appt.bookingId,
+            patientId: appt.patient ? appt.patient._id : null,
+            createdAt: appt.createdAt,
+            updatedAt: appt.updatedAt,
+            ...patientInfo,
+          };
+        }),
+      };
+    });
+
+    return res.status(200).json(formattedAppointments);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: `An error occurred while fetching completed appointments.`,
+    });
+  }
+};
+
+
+
+
 
 
 
@@ -1027,7 +1075,8 @@ module.exports = {
   viewAllAppointments,
   sortByDates,
   getCompletedAppointmentsForDoctor,
-  fetchBookedAppointments
+  fetchBookedAppointments,
+  fetchCompletedAppointments
  
   //deleteAppointment,
   //viewAppointments,
