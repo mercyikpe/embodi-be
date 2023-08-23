@@ -89,7 +89,7 @@ router.post( '/book', verifyToken, appointmentController.bookAppointment );
 //router.post('/book/:userId', verifyToken, appointmentController.bookAppointment);
 
 //FETCH ALL THE BOOKED APPOINTMENT FOR ALL THE DOCTORS
-router.get('/bookedAppointment', appointmentController.getBookedAppointmentsForDoctors);
+router.get('/bookedAppointment', appointmentController.fetchBookedAppointments);
 
 ///// FETCH APPOINTMENT FOR INDIVIDUAL DOCTOR
 router.get('/bookedAppointment/:doctorId/view', appointmentController.getBookedAppointmentsForDoctor);
