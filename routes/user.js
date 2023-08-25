@@ -55,6 +55,16 @@ router.put('/updatePassword', requestNewPassword.resetPassword);
 ///////USER RESET PASSWORD ENDS HERE
 
 
+//// PATIENTS DATA
+const { populatePatientFields } = require('../middleware/populateFields');
+
+// Route to get patient details
+router.get('/patient/:patientId', populatePatientFields, (req, res) => {
+  const patient = req.patient;
+  return res.status(200).json({ patient });
+});
+
+
 
 
 

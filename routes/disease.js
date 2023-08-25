@@ -4,6 +4,7 @@ const router = express.Router();
 const questionnaire = require('../controllers/questionaireController');
 const diseaseController = require('../controllers/diseaseController');
 const { createDisease } = require('../controllers/diseaseController')
+const { verifyToken, verifyDoctor , verifyUser, verifyAdmin} = require('../middleware/authMiddleware');
 
 router.get('/', (req, res)=>{
     res.send('  DISEASES IS SHOWS UP HERE')

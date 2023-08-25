@@ -27,7 +27,7 @@ class AppError extends Error {
   }
 }
 
-const verifyToken = (req, res, next) => {
+const verifyUserToken = async (req, res, next) => {
   const bearerHeader = req.headers['authorization'];
 
   if (typeof bearerHeader === 'undefined') {
@@ -44,6 +44,42 @@ const verifyToken = (req, res, next) => {
   try {
     const user = jwt.verify(req.token, process.env.JWT_SEC_KEY);
     req.user = user;
+
+    const userData = await User.findById(user.id);
+    if (!userData || !userData.isValid) {
+      return next(new createError('Token is not valid or expired', 403));
+    }
+
+    next();
+  } catch (err) {
+    return next(new createError('Token is not valid or expired', 403));
+  }
+};
+const verifyToken = async (req, res, next) => {
+  const bearerHeader = req.headers['authorization'];
+
+  if (typeof bearerHeader === 'undefined') {
+    return res.status(403).json({
+      status: 403,
+      message: "You are not authenticated"
+    });
+  }
+
+  const bearer = bearerHeader.split(' ');
+  const bearerToken = bearer[1];
+  req.token = bearerToken;
+
+  try {
+    const user = await jwt.verify(req.token, process.env.JWT_SEC_KEY);
+    req.user = user;
+
+    // This line is now inside the async function
+    const userData = await User.findById(user.id);
+
+    if (!userData || !userData.isValid) {
+      return next(new createError('Token is not valid or expired', 403));
+    }
+
     next();
   } catch (err) {
     return next(new createError('Token is not valid or expired', 403));

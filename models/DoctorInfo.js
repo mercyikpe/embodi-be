@@ -7,7 +7,7 @@ const DoctorInfoSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      //unique: true,
+      unique: true,
     },
 
     appointments: [{
@@ -18,7 +18,7 @@ const DoctorInfoSchema = new mongoose.Schema(
 
     qualification: {
       type: String,
-      required: true,
+     // required: true,
     },
     placeOfWork: {
       type: String,
@@ -93,6 +93,11 @@ const DoctorInfoSchema = new mongoose.Schema(
             
           },
           patient: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+          },
+
+          bookingId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
           },

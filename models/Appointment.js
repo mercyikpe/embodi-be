@@ -14,6 +14,11 @@ const AppointmentSchema = new mongoose.Schema(
      // required: true,
     },
     appointments: [{
+
+      appointmentId: {
+        type: String,
+      },
+
       startTime: {
         type: String,
         required: true,

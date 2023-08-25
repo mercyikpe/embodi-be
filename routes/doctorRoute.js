@@ -29,6 +29,15 @@ router.get('/doctors', doctorController.fetchDoctorsWithFullInfo);
 //// remove doctor and keep as user removeDoctorRole
 router.put('/removedoctor/:userId', doctorController.removeDoctorRole);
 
+////fetchDoctor detils by id
+const { populateDoctorFields } = require('../middleware/populateFields');
+
+// Route to get doctor details
+router.get('/get/:doctorId', populateDoctorFields, (req, res) => {
+  const doctor = req.doctor;
+  return res.status(200).json({ doctor });
+});
+
 
 
 

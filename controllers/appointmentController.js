@@ -6,6 +6,8 @@ const Patient = require('../models/User');
 const transporter = require('../utilities/transporter');
 //const moment = require('moment');
 const mongoose = require('mongoose');
+//const { populateDoctorFields, populatePatientFields } = require('../middleware/populateFields');
+
 
 
 ////// i just suspended this this night 08 21 - 146am
@@ -235,6 +237,67 @@ const createAppointment = async (doctorId, date, appointments) => {
 
 
 ///////// USER TO BOOK APPOINTMENT
+//const { populateDoctorFields, populatePatientFields } = require('../middleware/populateFields');
+// Middleware to populate doctor and patient details
+const populateDoctorFields = async (req, res, next) => {
+  const { doctorId } = req.params;
+
+  try {
+    const doctor = await DoctorInfo.findById(doctorId).populate('user');
+    if (!doctor) {
+      return res.status(404).json({ message: `Doctor with ID ${doctorId} not found.` });
+    }
+
+    req.doctor = {
+      id: doctor._id,
+      userIdOfDoctor: doctor.user._id,
+      firstName: doctor.user.firstName,
+      lastName: doctor.user.lastName,
+      email: doctor.user.email,
+      gender: doctor.user.gender,
+      role: doctor.user.role,
+      status: doctor.user.status,
+      specialty: doctor.specialty,
+      rate: doctor.rate,
+      // ... add more fields as needed
+    };
+
+    
+    next();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred while populating doctor fields.' });
+  }
+};
+
+const populatePatientFields = async (req, res, next) => {
+  const { patientId } = req.params;
+
+  try {
+    const patient = await User.findById(patientId).select('firstName lastName dob phone email');
+    if (!patient) {
+      return res.status(404).json({ message: `Patient with ID ${patientId} not found.` });
+    }
+
+    req.patient = {
+      id: patient._id,
+      patientName: `${patient.firstName} ${patient.lastName}`,
+      dob: patient.dob,
+      phone: patient.phone,
+      email: patient.email,
+      allergies: patient.allergies,
+      //role: patient.role,
+      // ... add more fields as needed
+    };
+
+    
+
+    next();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred while populating patient fields.' });
+  }
+};
 
 const bookAppointment = async (req, res) => {
   const { appointmentId, appointments } = req.body;
@@ -272,27 +335,77 @@ const bookAppointment = async (req, res) => {
         foundAppointment.status = 'Booked';
         foundAppointment.patient = patientId;
 
-        // Populate the model
-        const doctorInfo = await DoctorInfo.findById(foundAppointment.doctor).populate('user');
-        const patient = await User.findById(patientId).select('firstName lastName allergies email phoneNumber disease');
+        // Populate doctor and patient fields using middleware
+        await populateDoctorFields(req, res, async () => {
+          await populatePatientFields(req, res, async () => {
+            const doctorInfo = req.doctor; // Populated doctor details
+            const patient = req.patient;
 
-        await appointment.save();
+            // Update the appointment logic here, if needed
 
-        // Find the specific appointment index
-        const appointmentIndex = appointment.appointments.findIndex(appointment => appointment.startTime === foundAppointment.startTime);
+            await appointment.save();
 
-        // Return the updated appointment model
-        return res.status(200).json({
-          message: `Appointment booked successfully.`,
-          appointment: {
-            _id: appointment._id,
-            date: appointment.date,
-            doctorId: appointment.doctor,
-            appointments: appointment.appointments,
-          },
-          appointmentIndex,
-          doctor: doctorInfo,
-          patient,
+            // Find the specific appointment index
+            const appointmentIndex = appointment.appointments.findIndex(
+              appt => appt.startTime === foundAppointment.startTime
+            );
+
+
+            /*
+            // Send email notifications to doctor and patient
+    const doctorMailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: doctorEmail,
+      subject: 'Appointment Booked',
+      html: `
+        <h1>Appointment Booked</h1>
+        <p> Hi, Dr. ${doctorName}, A Patient ${patient.firstName} ${patient.lastName} has booked an appointment with you  on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
+      `,
+    };
+
+    transporter.sendMail(doctorMailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Doctor email sent: ' + info.response);
+      }
+    });
+
+    const patientMailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: patient.email,
+      subject: 'Appointment Booked',
+      html: `
+        <h1> Appointment Succesfully Booked</h1>
+        <p> Hi, ${patient.lastName} You have successfully booked an appointment with Dr. ${doctorName} on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
+      `,
+    };
+
+    transporter.sendMail(patientMailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Patient email sent: ' + info.response);
+      }
+    });
+
+    */
+
+
+            // Return the updated appointment model
+            return res.status(200).json({
+              message: `Appointment booked successfully.`,
+              appointment: {
+                _id: appointment._id,
+                date: appointment.date,
+                doctorId: appointment.doctor,
+                appointments: appointment.appointments,
+              },
+              appointmentIndex, // Include the appointmentIndex
+              doctor: doctorInfo,
+              patient,
+            });
+          });
         });
       } else {
         // Appointment is already booked
@@ -314,6 +427,7 @@ const bookAppointment = async (req, res) => {
   }
 };
 
+// ... other code ...
 
 
 
@@ -344,78 +458,76 @@ const bookAppointment = async (req, res) => {
 
 
 
-const updateAppointment = async (doctorId, appointmentId, updateData) => {
+
+
+///////UPDATE  PPOINTMENT
+const updateAppointment = async (req, res) => {
+  const { doctorId, appointmentId, bookingId } = req.params;
+  const { startTime, endTime, status } = req.body;
+
   try {
-    const { date, startTime, endTime, status } = updateData;
+    // Find the doctor
+    const doctor = await DoctorInfo.findById(doctorId);
 
-    // Find the doctor's info
-    const doctorInfo = await DoctorInfo.findById(doctorId);
-    if (!doctorInfo) {
-      return { error: 'Doctor not found' };
+    if (!doctor) {
+      return res.status(404).json({ message: `Doctor with ID ${doctorId} not found.` });
     }
 
-    // Find the appointment
-    const appointment = await Appointment.findOne({
-      doctor: doctorId,
-      'appointments._id': appointmentId,
-    });
-
-    if (!appointment) {
-      return { error: 'Appointment not found' };
-    }
-
-    // Update appointment details
-    const appointmentIndex = appointment.appointments.findIndex(
-      (appt) => appt._id.toString() === appointmentId
+    // Find the appointment index in the doctor's availableTimeSlots array
+    const appointmentIndex = doctor.availableTimeSlots.findIndex(
+      appointment =>
+        appointment._id.toString() === appointmentId &&
+        appointment.bookingId.toString() === bookingId
     );
 
     if (appointmentIndex === -1) {
-      return { error: 'Appointment not found' };
+      return res.status(404).json({ message: `Appointment not found.` });
     }
 
-    // Check if the status is updated to 'Completed' or 'Canceled'
-    if (status === 'Completed') {
-      // Notify the patient with an appreciation email
-      const patientId = appointment.appointments[appointmentIndex].patient;
-      const patient = await User.findById(patientId);
-      if (patient.sendAppointmentCompletedEmail) {
-        await sendPatientAppointmentCompletedEmail(patient, doctorInfo, date, startTime);
-      }
-    } else if (status === 'Canceled') {
-      // Notify the patient to rebook
-      const patientId = appointment.appointments[appointmentIndex].patient;
-      const patient = await User.findById(patientId);
-      if (patient.sendAppointmentCanceledEmail) {
-        await sendPatientAppointmentCanceledEmail(patient, doctorInfo, date, startTime);
-      }
-    }
+    const updatedAppointment = doctor.availableTimeSlots[appointmentIndex];
 
-    // Update appointment details
-    if (date) {
-      appointment.appointments[appointmentIndex].date = date;
-    }
+    // Update fields if provided
     if (startTime) {
-      appointment.appointments[appointmentIndex].startTime = startTime;
+      updatedAppointment.startTime = startTime;
     }
     if (endTime) {
-      appointment.appointments[appointmentIndex].endTime = endTime;
+      updatedAppointment.endTime = endTime;
     }
     if (status) {
-      appointment.appointments[appointmentIndex].status = status;
+      updatedAppointment.status = status;
     }
 
-    await appointment.save();
+    // Update the updatedAt timestamp
+    updatedAppointment.updatedAt = new Date();
 
-    return {
-      success: true,
-      message: 'Appointment updated successfully',
-      appointment: appointment.appointments[appointmentIndex],
-    };
+    // Update the appointment in the doctor's availableTimeSlots array
+    doctor.availableTimeSlots[appointmentIndex] = updatedAppointment;
+
+    // Update the appointment in the patient's bookedAppointments field
+    const patient = await User.findOne({ 'bookedAppointments._id': appointmentId });
+    if (patient) {
+      const patientAppointmentIndex = patient.bookedAppointments.findIndex(
+        appointment => appointment._id.toString() === appointmentId
+      );
+      if (patientAppointmentIndex !== -1) {
+        patient.bookedAppointments[patientAppointmentIndex] = updatedAppointment;
+        await patient.save();
+      }
+    }
+
+    // Save the doctor's changes
+    await doctor.save();
+
+    return res.status(200).json({
+      message: `Appointment updated successfully.`,
+      updatedAppointment,
+    });
   } catch (error) {
-    console.error('Error:', error);
-    return { error: 'An error occurred while updating the appointment.' };
+    console.error(error);
+    return res.status(500).json({ message: `An error occurred while updating the appointment.` });
   }
 };
+
 
 
 
@@ -426,22 +538,32 @@ const fetchBookedAppointments = async (req, res) => {
   try {
     const bookedAppointments = await Appointment.find({
       'appointments.bookingId': { $ne: null },
-    }).populate('doctor').populate('appointments.patient');
+    })
+      .populate('doctor')
+      .populate({
+        path: 'appointments.patient',
+        model: 'User', // Assuming the model name is 'User'
+        select: 'firstName lastName email phoneNumber', // Select the fields you want to populate
+      });
 
     const formattedAppointments = bookedAppointments.map(appointment => {
       return {
         _id: appointment._id,
         date: appointment.date,
         doctorId: appointment.doctor ? appointment.doctor._id : null,
-        doctorName: appointment.doctor ? `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}` : null,
+        doctorName: appointment.doctor
+          ? `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`
+          : null,
         doctorSpecialty: appointment.doctor ? appointment.doctor.specialty : null,
         appointments: appointment.appointments.map(appt => {
-          const patientInfo = appt.patient ? {
-            patientId: appt.patient._id,
-            patientName: `${appt.patient.firstName} ${appt.patient.lastName}`,
-            patientEmail: appt.patient.email,
-            patientPhoneNumber: appt.patient.phoneNumber,
-          } : null;
+          const patientInfo = appt.patient
+            ? {
+                patientId: appt.patient._id,
+                patientName: `${appt.patient.firstName} ${appt.patient.lastName}`,
+                patientEmail: appt.patient.email,
+                patientPhoneNumber: appt.patient.phoneNumber,
+              }
+            : null;
 
           return {
             startTime: appt.startTime,
@@ -465,6 +587,7 @@ const fetchBookedAppointments = async (req, res) => {
     });
   }
 };
+
 
 
 ///// FOR COMPLETED APPOINTMEN 
@@ -672,6 +795,47 @@ const getCompletedAppointmentsForDoctor = async (req, res) => {
 };
 
 
+////// get booked appointment for single Doctor
+const fetchBookedAppointmentsByDoctor = async (req, res) => {
+  try {
+    const doctors = await DoctorInfo.find();
+    const bookedAppointmentsByDoctor = [];
+
+    for (const doctor of doctors) {
+      const bookedAppointments = doctor.availableTimeSlots
+        .filter(slot => slot.status === 'Booked')
+        .map(slot => {
+          return {
+            date: slot.date,
+            doctorId: doctor._id,
+            doctorName: `${doctor.user.firstName} ${doctor.user.lastName}`,
+            appointments: slot.appointments.map(appt => {
+              return {
+                startTime: appt.startTime,
+                endTime: appt.endTime,
+                status: appt.status,
+                bookingId: appt.bookingId,
+                patientId: appt.patient ? appt.patient._id : null,
+                createdAt: appt.createdAt,
+                updatedAt: appt.updatedAt,
+              };
+            }),
+          };
+        });
+
+      bookedAppointmentsByDoctor.push(...bookedAppointments);
+    }
+
+    return res.status(200).json(bookedAppointmentsByDoctor);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: `An error occurred while fetching booked appointments by doctor.`,
+    });
+  }
+};
+
+
 
 
 
@@ -741,322 +905,21 @@ const getBookedAppointmentsForDoctor = async (req, res) => {
 };
 
 
-////// update appoinment status
-const updateAppointmentStatus = async (req, res) => {
-  const { doctorId, status, startTime, endTime, date } = req.body;
-
-  try {
-    const appointmentId = req.params.appointmentId;
-
-    // Check if the doctor has created the appointment
-    const appointment = await Appointment.findOne({ _id: appointmentId, doctor: doctorId });
-
-    if (!appointment) {
-      return res.status(404).json({
-        status: 'failed',
-        message: 'Appointment not found for this doctor.',
-      });
-    }
-
-    // Update the appointment status if provided
-    if (status) {
-      appointment.status = status;
-    }
-
-    // Update the appointment time slot if provided
-    if (startTime || endTime) {
-      if (startTime) {
-        appointment.timeSlot.startTime = startTime;
-      }
-      if (endTime) {
-        appointment.timeSlot.endTime = endTime;
-      }
-    }
-
-    // Update the appointment date if provided
-    if (date) {
-      appointment.date = date;
-    }
-
-    const updatedAppointment = await appointment.save();
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Appointment updated successfully.',
-      data: updatedAppointment,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while updating the appointment.',
-    });
-  }
-};
-
-//// fetch completed appointment for single single
-const getCompletedAppointments = async (req, res) => {
-  const doctorId = req.params.doctorId;
-
-  try {
-    // Find the doctor's completed appointments
-    const completedAppointments = await Appointment.find({
-      doctor: doctorId,
-      status: 'completed',
-    })
-      .populate('patient', 'firstName lastName email address phoneNumber allergies')
-      .populate({
-        path: 'doctor',
-        model: 'DoctorInfo',
-        populate: {
-          path: 'user',
-          model: 'User',
-          select: 'name email phoneNumber specialty rate',
-        },
-      })
-      .sort({ date: 'asc' });
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Completed appointments fetched successfully.',
-      data: completedAppointments,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while fetching completed appointments.',
-    });
-  }
-};
-
-
-//////GET COMPLETED PPOINMENT FOR ALL THE DOCTORS
-const getAllCompletedAppointments = async (req, res) => {
-  try {
-    // Find all completed appointments with doctor and patient details
-    const completedAppointments = await Appointment.find({
-      status: 'completed',
-    })
-      .populate('patient', 'firstName lastName email address phoneNumber allergies')
-      .populate({
-        path: 'doctor',
-        model: 'DoctorInfo',
-        populate: {
-          path: 'user',
-          model: 'User',
-          select: 'name email phoneNumber specialty rate',
-        },
-      })
-      .sort({ doctor: 'asc', date: 'asc' });
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Completed appointments fetched successfully.',
-      data: completedAppointments,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while fetching completed appointments.',
-    });
-  }
-};
-
-
-//////DELTE APPOITMENT
-const deleteAppointment = async (req, res) => {
-  const appointmentId = req.params.appointmentId;
-  const userId = req.user._id; // Assuming the authenticated user ID is available
-
-  try {
-    // Find the appointment to delete
-    const appointment = await Appointment.findById(appointmentId);
-
-    // Check if the appointment exists
-    if (!appointment) {
-      return res.status(404).json({
-        status: 'failed',
-        message: 'Appointment not found. Please enter a valid appointmentId.',
-      });
-    }
-
-    // Populate the doctorInfo field from the User model
-    await req.user.populate('doctorInfo').execPopulate();
-
-    // Check if the authenticated user is a doctor and is the creator of the appointment
-    if (req.user.role.includes('isDoctor') && appointment.doctor.toString() !== req.user.doctorInfo._id.toString()) {
-      return res.status(403).json({
-        status: 'failed',
-        message: 'You are not authorized to delete this appointment.',
-      });
-    }
-
-    // Delete the appointment
-    await Appointment.findByIdAndDelete(appointmentId);
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Appointment deleted successfully.',
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while deleting the appointment.',
-    });
-  }
-};
 
 
 
-////FETCG EVERYTHING APPOINTMENT
-const viewAllAppointments = async (req, res) => {
-  try {
-    // Fetch all appointments
-    const appointments = await Appointment.find()
-      .populate({
-        path: 'doctor',
-        model: 'DoctorInfo',
-        populate: {
-          path: 'user',
-          model: 'User',
-        },
-      })
-      .populate('patient') // Populate patient information
-      .sort({ date: 1 }); // Sort appointments by date in ascending order
 
-    // Map appointments and format the data
-    const formattedAppointments = appointments.map(appointment => {
-      if (!appointment.doctor || !appointment.patient) {
-        return null;
-      }
 
-      const doctor = appointment.doctor;
-      const patient = appointment.patient;
 
-      return {
-        doctor: {
-          DoctorId: doctor._id,
-          name: `${doctor.user.firstName} ${doctor.user.lastName}`,
-          email: doctor.user.email,
-          Phone: doctor.user.phoneNumber,
-          specialty: doctor.specialty,
-          rate: doctor.rate,
-          // Other doctor's information from DoctorInfo model
-          // ...
-        },
-        patient: {
-          patientId: patient._id,
-          name: `${patient.firstName} ${patient.lastName}`,
-          email: patient.email,
-          address: patient.address,
-          phoneNumber: patient.phoneNumber,
-          allergies: patient.allergies,
-          // ...
-        },
-        AppointmentId: appointment._id,
-        date: appointment.date,
-        startTime: appointment.timeSlot.startTime,
-        endTime: appointment.timeSlot.endTime,
-        status: appointment.status,
-        // ...
-      };
-    });
 
-    // Remove any null entries
-    const validAppointments = formattedAppointments.filter(appointment => appointment !== null);
 
-    // Return the formatted data
-    return res.status(200).json({
-      status: 'success',
-      message: 'Fetched all appointments successfully.',
-      data: validAppointments,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while fetching appointments.',
-    });
-  }
-};
 
-//////// SORT ALL APPOINTMENT FOR INDIVIDUAL DOCTOR BY DATE
-const sortByDates = async (req, res) => {
-  try {
-    const doctorId = req.params.doctorId;
 
-    // Fetch all appointments for the specific doctor
-    const appointments = await Appointment.find({ doctor: doctorId })
-      .populate({
-        path: 'doctor',
-        model: 'DoctorInfo',
-        populate: {
-          path: 'user',
-          model: 'User',
-        },
-      })
-      .populate('patient')
-      .sort({ date: 1 });
 
-    const formattedAppointments = appointments.map(appointment => {
-      if (!appointment.doctor || !appointment.patient) {
-        return null;
-      }
 
-      const doctor = appointment.doctor;
-      const patient = appointment.patient;
 
-      return {
-        doctor: {
-          DoctorId: doctor._id,
-          name: `${doctor.user.firstName} ${doctor.user.lastName}`,
-          email: doctor.user.email,
-          Phone: doctor.user.phoneNumber,
-          specialty: doctor.specialty,
-          rate: doctor.rate,
-          // Other doctor's information from DoctorInfo model
-          // ...
-        },
-        patient: {
-          patientId: patient._id,
-          name: `${patient.firstName} ${patient.lastName}`,
-          email: patient.email,
-          address: patient.address,
-          phoneNumber: patient.phoneNumber,
-          allergies: patient.allergies,
-          // ...
-        },
-        AppointmentId: appointment._id,
-        date: appointment.date,
-        startTime: appointment.timeSlot.startTime,
-        endTime: appointment.timeSlot.endTime,
-        status: appointment.status,
-        Created: appointment.createdAt,
-        Updated: appointment.updatedAt
-        // ...
-      };
-    });
 
-    // Remove any null entries
-    const validAppointments = formattedAppointments.filter(appointment => appointment !== null);
 
-    // Return the formatted data
-    return res.status(200).json({
-      status: 'success',
-      message: 'Fetched appointments for the specific doctor successfully.',
-      data: validAppointments,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while fetching appointments for the specific doctor.',
-    });
-  }
-};
 
 
 
@@ -1066,18 +929,15 @@ module.exports = {
   createAppointment,
   bookAppointment,
   updateAppointment,
-  getBookedAppointmentsForDoctors,
-  getBookedAppointmentsForDoctor,
-  updateAppointmentStatus,
-  getCompletedAppointments,
-  getAllCompletedAppointments,
-  deleteAppointment,
-  viewAllAppointments,
-  sortByDates,
   getCompletedAppointmentsForDoctor,
   fetchBookedAppointments,
-  fetchCompletedAppointments
+  fetchCompletedAppointments,
+  fetchBookedAppointmentsByDoctor,
  
+bookAppointment,
+populateDoctorFields,
+populatePatientFields,
+
   //deleteAppointment,
   //viewAppointments,
 };
