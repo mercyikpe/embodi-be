@@ -55,7 +55,7 @@ const verifyUserToken = async (req, res, next) => {
     return next(new createError('Token is not valid or expired', 403));
   }
 };
-const verifyToken = async (req, res, next) => {
+const verifyToken = (req, res, next) => {
   const bearerHeader = req.headers['authorization'];
 
   if (typeof bearerHeader === 'undefined') {
@@ -70,16 +70,12 @@ const verifyToken = async (req, res, next) => {
   req.token = bearerToken;
 
   try {
-    const user = await jwt.verify(req.token, process.env.JWT_SEC_KEY);
+    const user = jwt.verify(req.token, process.env.JWT_SEC_KEY);
     req.user = user;
 
-    // This line is now inside the async function
-    const userData = await User.findById(user.id);
 
-    if (!userData || !userData.isValid) {
-      return next(new createError('Token is not valid or expired', 403));
-    }
-
+    ///// just added this to test logout
+    
     next();
   } catch (err) {
     return next(new createError('Token is not valid or expired', 403));

@@ -13,7 +13,7 @@ router.get('/', (req, res) => {
 
 // Route to create a new appointment
 //router.post('/create/:userId', verifyToken, verifyDoctor, verifyUser, appointmentController.createAppointment);
-router.post('/create/:userId', verifyToken, async (req, res) => {
+router.post('/create/:userId',  async (req, res) => {
   const { doctorId, date, appointments } = req.body;
 
   if (!doctorId || !date || !appointments) {
