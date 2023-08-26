@@ -533,6 +533,42 @@ const updateAppointment = async (req, res) => {
 
 
 
+const getDoctorScheduledAppointments = async (req, res) => {
+  const { doctorId } = req.params;
+
+  try {
+    const doctorAppointments = await Appointment.find({
+      doctor: doctorId,
+      'appointments.status': 'Scheduled',
+    }).select({
+      date: 1,
+      doctor: 1,
+      'appointments.startTime': 1,
+      'appointments.endTime': 1,
+      'appointments.status': 1,
+      'appointments.createdAt': 1,
+      'appointments.updatedAt': 1,
+      appointments: {
+        $filter: {
+          input: '$appointments',
+          as: 'appt',
+          cond: { $eq: ['$$appt.status', 'Scheduled'] },
+        },
+      },
+    });
+
+    return res.status(200).json(doctorAppointments);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'An error occurred while fetching doctor appointments.',
+    });
+  }
+};
+
+
+
+
 ///// new: GET ALL BOOKED APPOINTMENTS
 const fetchBookedAppointments = async (req, res) => {
   try {
@@ -929,6 +965,7 @@ module.exports = {
   createAppointment,
   bookAppointment,
   updateAppointment,
+  getDoctorScheduledAppointments,
   getCompletedAppointmentsForDoctor,
   fetchBookedAppointments,
   fetchCompletedAppointments,

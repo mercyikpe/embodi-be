@@ -27,7 +27,7 @@ class AppError extends Error {
   }
 }
 
-const verifyUserToken = async (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   const bearerHeader = req.headers['authorization'];
 
   if (typeof bearerHeader === 'undefined') {
@@ -45,17 +45,13 @@ const verifyUserToken = async (req, res, next) => {
     const user = jwt.verify(req.token, process.env.JWT_SEC_KEY);
     req.user = user;
 
-    const userData = await User.findById(user.id);
-    if (!userData || !userData.isValid) {
-      return next(new createError('Token is not valid or expired', 403));
-    }
-
+   
     next();
   } catch (err) {
     return next(new createError('Token is not valid or expired', 403));
   }
 };
-const verifyToken = (req, res, next) => {
+const verifyToken1 = (req, res, next) => {
   const bearerHeader = req.headers['authorization'];
 
   if (typeof bearerHeader === 'undefined') {

@@ -55,7 +55,8 @@ router.get('/bookedAppointment/:doctorId/view', appointmentController.fetchBooke
 router.get('/getAppointmentById/:appointmentId');
 
 
-
+//// get scheduled appointmet getDoctorScheduledAppointments
+router.get('/scheduledAppointment', appointmentController.getDoctorScheduledAppointments);
 
 ///DELELTE APPOINTM
 router.delete('/delete/:appointmentId');
