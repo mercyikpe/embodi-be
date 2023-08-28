@@ -253,7 +253,7 @@ const populateDoctorFields = async (req, res, next) => {
       userIdOfDoctor: doctor.user._id,
       firstName: doctor.user.firstName,
       lastName: doctor.user.lastName,
-      email: doctor.user.email,
+      doctorEmail: doctor.user.email,
       gender: doctor.user.gender,
       role: doctor.user.role,
       status: doctor.user.status,
@@ -274,7 +274,7 @@ const populatePatientFields = async (req, res, next) => {
   const { patientId } = req.params;
 
   try {
-    const patient = await User.findById(patientId).select('firstName lastName dob phone email');
+    const patient = await User.findById(patientId).select('firstName lastName dob phone email allergies phoneNumber role');
     if (!patient) {
       return res.status(404).json({ message: `Patient with ID ${patientId} not found.` });
     }
@@ -283,10 +283,10 @@ const populatePatientFields = async (req, res, next) => {
       id: patient._id,
       patientName: `${patient.firstName} ${patient.lastName}`,
       dob: patient.dob,
-      phone: patient.phone,
-      email: patient.email,
+      phoneNumber: patient.phone,
+      patientEmail: patient.email,
       allergies: patient.allergies,
-      //role: patient.role,
+      role: patient.role,
       // ... add more fields as needed
     };
 
@@ -530,9 +530,6 @@ const updateAppointment = async (req, res) => {
 
 
 
-
-
-
 const getDoctorScheduledAppointments = async (req, res) => {
   const { doctorId } = req.params;
 
@@ -540,24 +537,23 @@ const getDoctorScheduledAppointments = async (req, res) => {
     const doctorAppointments = await Appointment.find({
       doctor: doctorId,
       'appointments.status': 'Scheduled',
-    }).select({
-      date: 1,
-      doctor: 1,
-      'appointments.startTime': 1,
-      'appointments.endTime': 1,
-      'appointments.status': 1,
-      'appointments.createdAt': 1,
-      'appointments.updatedAt': 1,
-      appointments: {
-        $filter: {
-          input: '$appointments',
-          as: 'appt',
-          cond: { $eq: ['$$appt.status', 'Scheduled'] },
-        },
-      },
+    })
+
+    const formattedAppointments = doctorAppointments.map(appointment => {
+      const appointmentInfo = appointment.appointments[0];
+
+      return {
+        date: appointment.date,
+        doctor: appointment.doctor,
+        startTime: appointmentInfo.startTime,
+        endTime: appointmentInfo.endTime,
+        status: appointmentInfo.status,
+        createdAt: appointmentInfo.createdAt,
+        updatedAt: appointmentInfo.updatedAt,
+      };
     });
 
-    return res.status(200).json(doctorAppointments);
+    return res.status(200).json(formattedAppointments);
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -565,6 +561,8 @@ const getDoctorScheduledAppointments = async (req, res) => {
     });
   }
 };
+
+
 
 
 
