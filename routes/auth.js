@@ -4,6 +4,8 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const { verifyToken, verifyAdmin, verifyDoctor, verifyUser} = require('../middleware/authMiddleware');
+const {authValidator} = require("../validators/auth");
+const runValidation = require("../validators");
 
 router.get('/', (req, res)=>{
     res.send(' running here')
@@ -11,7 +13,7 @@ router.get('/', (req, res)=>{
 )
 
 // User registration route
-router.post('/register', authController.registerUser); 
+router.post('/register', authValidator, runValidation,  authController.registerUser);
 
 // User login route
 router.post('/login', authController.loginUser);

@@ -1,19 +1,19 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
-const createError = require('../utilities/createError');
-const DoctorInfo = require('../models/DoctorInfo');
-const User = require('../models/User');
-const transporter = require('../utilities/transporter');
-const OTPCode = require('../models/OtpCode'); // Add this line to import the OtpCode model
-require('dotenv').config();
-const { createTransporter, sendEmail } = require('../utilities/transporter'); // Import the emailUtils module
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const { v4: uuidv4 } = require("uuid");
+const createError = require("../utilities/createError");
+const DoctorInfo = require("../models/DoctorInfo");
+const User = require("../models/User");
+const transporter = require("../utilities/transporter");
+const OTPCode = require("../models/OtpCode"); // Add this line to import the OtpCode model
+require("dotenv").config();
+const { createTransporter, sendEmail } = require("../utilities/transporter"); // Import the emailUtils module
 
 //const { googleAuthConfig, getGoogleProfile } = require('../../utility/googleAuth'); // Import Google Auth utility functions
 
 const generateOTPCode = () => {
-  const digits = '0123456789';
-  let otpCode = '';
+  const digits = "0123456789";
+  let otpCode = "";
   for (let i = 0; i < 6; i++) {
     otpCode += digits[Math.floor(Math.random() * 10)];
   }
@@ -100,24 +100,23 @@ const registerUser = async (req, res) => {
 };
 */
 
-
 const registerUser = async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password } = req.body;
 
-  if (!firstName || !lastName || !phoneNumber || !email || !password) {
-    return res.status(400).json({
-      status: 'failed',
-      message: 'Fields cannot be blank',
-    });
-  }
+  // if (!firstName || !lastName || !phoneNumber || !email || !password) {
+  //   return res.status(400).json({
+  //     status: 'failed',
+  //     message: 'Fields cannot be blank',
+  //   });
+  // }
 
-  const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*]).{8,}$/;
-  if (!passwordRegex.test(password)) {
-    return res.status(400).json({
-      status: 'failed',
-      message: 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
-    });
-  }
+  // const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*]).{8,}$/;
+  // if (!passwordRegex.test(password)) {
+  //   return res.status(400).json({
+  //     status: 'failed',
+  //     message: 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
+  //   });
+  // }
 
   try {
     // Check if the user with the given email already exists
@@ -130,8 +129,6 @@ const registerUser = async (req, res) => {
       user.phoneNumber = phoneNumber;
       user.password = await bcrypt.hash(password, 10); // Hash the new password
       await user.save();
-
-    
 
       // Send OTP code to user's email
       const otpCode = generateOTPCode();
@@ -152,7 +149,7 @@ const registerUser = async (req, res) => {
       const mailOptions = {
         from: process.env.AUTH_EMAIL,
         to: user.email,
-        subject: 'Verify Your Email',
+        subject: "Verify Your Email",
         html: `
           <h1>Email Verification</h1>
           <h3>Welcome ${lastName}, </h3>
@@ -164,18 +161,17 @@ const registerUser = async (req, res) => {
       await transporter.sendMail(mailOptions);
 
       return res.status(200).json({
-        status: 'success',
-        message: 'Already registered with Phone number or email. New data captured and OTP resent to your email for verification.',
+        status: "success",
+        message:
+          "Already registered with Phone number or email. New data captured and OTP resent to your email for verification.",
       });
     } else if (user) {
       // If the user exists and is already verified, return an error message
       return res.status(400).json({
-        status: 'failed',
-        message: 'User already exists and is verified.',
+        status: "failed",
+        message: "User already exists and is verified.",
       });
     }
-
-  
 
     // If the user does not exist, create a new user and set their verified status to false
     const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
@@ -209,7 +205,7 @@ const registerUser = async (req, res) => {
     const mailOptions = {
       from: process.env.AUTH_EMAIL,
       to: savedUser.email,
-      subject: 'Verify Your Email',
+      subject: "Verify Your Email",
       html: `
       <h1>Email Verification</h1>
       <p> Welcome ${lastName}, Please enter the verification code to continue.</p>
@@ -220,19 +216,17 @@ const registerUser = async (req, res) => {
     await transporter.sendMail(mailOptions);
 
     return res.status(200).json({
-      status: 'success',
-      message: 'OTP sent to your email for verification.',
+      status: "success",
+      message: "Sign up successful, OTP sent to your email for verification.",
     });
   } catch (error) {
-    console.log('Error while saving the user:', error);
+    console.log("Error while saving the user:", error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while signing up. Kindly try again.',
+      status: "failed",
+      message: "An error occurred while signing up. Kindly try again.",
     });
   }
 };
-
-
 
 /*
 const loginUser = async (req, res, next) => {
@@ -294,25 +288,24 @@ const loginUser = async (req, res, next) => {
 
     if (!email) {
       return res.status(400).json({
-        status: 'failed',
-        message: 'Email field is required',
+        status: "failed",
+        message: "Email field is required",
       });
     }
 
-    const user = await User.findOne({ email })
-      .populate({
-        path: 'doctorInfo',
-        model: 'DoctorInfo',
-        populate: {
-          path: 'user',
-          model: 'User',
-        },
-      });
+    const user = await User.findOne({ email }).populate({
+      path: "doctorInfo",
+      model: "DoctorInfo",
+      populate: {
+        path: "user",
+        model: "User",
+      },
+    });
 
     if (!user) {
       return res.status(404).json({
-        status: 'failed',
-        message: 'User not found',
+        status: "failed",
+        message: "User not found",
       });
     }
 
@@ -320,19 +313,21 @@ const loginUser = async (req, res, next) => {
 
     if (!isPasswordValid) {
       return res.status(400).json({
-        status: 'failed',
-        message: 'Invalid password',
+        status: "failed",
+        message: "Invalid password",
       });
     }
 
     if (!user.verified) {
       return res.status(400).json({
-        status: 'failed',
-        message: 'Please verify your email before signing in',
+        status: "failed",
+        message: "Please verify your email before signing in",
       });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, { expiresIn: '24h' });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, {
+      expiresIn: "24h",
+    });
 
     let userDetails = {
       _id: user._id,
@@ -356,7 +351,7 @@ const loginUser = async (req, res, next) => {
       updatedAt: user.updatedAt,
     };
 
-    if (user.role.includes('isDoctor')) {
+    if (user.role.includes("isDoctor")) {
       // Only doctors should have their doctorInfo returned
       const doctorInfo = await DoctorInfo.findOne({ user: user._id });
       userDetails.doctorId = doctorInfo._id;
@@ -371,156 +366,147 @@ const loginUser = async (req, res, next) => {
     }
 
     return res.status(200).json({
-      status: 'success',
-      message: 'Successfully signed in',
+      status: "success",
+      message: "Successfully signed in",
       token,
       user: userDetails,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'Internal server error',
+      status: "failed",
+      message: "Internal server error",
     });
   }
 };
 
+////// REQUEST FOR A NEW OTP IF USER DIDNT RECEIVE IT
+const requestOTP = async (req, res) => {
+  const { email } = req.body;
 
+  // Check if the email is provided
+  if (!email) {
+    return res.status(400).json({
+      status: "failed",
+      message: "Email cannot be blank",
+    });
+  }
 
+  try {
+    // Check if the user with the provided email exists and is unverified
+    const existingUser = await User.findOne({ email, verified: false });
 
-
-
-
-  ////// REQUEST FOR A NEW OTP IF USER DIDNT RECEIVE IT
- const requestOTP = async (req, res) => {
-    const { email } = req.body;
-  
-    // Check if the email is provided
-    if (!email) {
+    if (!existingUser) {
       return res.status(400).json({
-        status: 'failed',
-        message: 'Email cannot be blank',
+        status: "failed",
+        message: "User with the provided email not found or already verified.",
       });
     }
-  
-    try {
-      // Check if the user with the provided email exists and is unverified
-      const existingUser = await User.findOne({ email, verified: false });
-  
-      if (!existingUser) {
-        return res.status(400).json({
-          status: 'failed',
-          message: 'User with the provided email not found or already verified.',
-        });
-      }
-  
-      // Regenerate a new OTP for the existing unverified user
-      const otpCode = generateOTPCode();
-      const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
-  
-      // Save the new OTP code to the database
-      const newOTPCode = new OTPCode({
-        userId: existingUser._id,
-        code: otpCode,
-        createdAt: Date.now(),
-        expiresAt: expirationTime,
-      });
-      await newOTPCode.save();
-  
-      // Resend the OTP to the user's email
-      const mailOptions = {
-        from: process.env.AUTH_EMAIL,
-        to: existingUser.email,
-        subject: 'Verify Your Email',
-        html: `
+
+    // Regenerate a new OTP for the existing unverified user
+    const otpCode = generateOTPCode();
+    const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Save the new OTP code to the database
+    const newOTPCode = new OTPCode({
+      userId: existingUser._id,
+      code: otpCode,
+      createdAt: Date.now(),
+      expiresAt: expirationTime,
+    });
+    await newOTPCode.save();
+
+    // Resend the OTP to the user's email
+    const mailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: existingUser.email,
+      subject: "Verify Your Email",
+      html: `
           <h1>Email Verification</h1>
           <p><strong>${otpCode}</strong></p>
           <p>Please enter the verification code in your account settings to verify your email.</p>
         `,
-      };
-  
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log(error);
-          return res.status(500).json({
-            status: 'failed',
-            message: 'An error occurred while resending the verification code.',
-          });
-        } else {
-          console.log('Email sent: ' + info.response);
-          return res.status(200).json({
-            status: 'success',
-            message: 'Verification code has been resent. Please check your email.',
-          });
-        }
-      });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({
-        status: 'failed',
-        message: 'An error occurred while resending the verification code.',
-      });
-    }
-  };
-  
+    };
 
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+        return res.status(500).json({
+          status: "failed",
+          message: "An error occurred while resending the verification code.",
+        });
+      } else {
+        console.log("Email sent: " + info.response);
+        return res.status(200).json({
+          status: "success",
+          message:
+            "Verification code has been resent. Please check your email.",
+        });
+      }
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while resending the verification code.",
+    });
+  }
+};
 
 const verifyOTP = async (req, res) => {
-    // Extract the userId and the verification code from the request body
-    const { userId, verificationCode } = req.body;
-  
-    try {
-      const otpCodeRecord = await OTPCode.findOne({ userId });
-  
-      if (!otpCodeRecord) {
-        // No OTP record found for the user
-        return res.status(400).json({
-          status: 'failed',
-          message: 'Invalid verification code.',
-        });
-      }
-  
-      // Check if the OTP code has expired
-      if (otpCodeRecord.expiresAt < Date.now()) {
-        // If the OTP code has expired, delete the OTP record and inform the user
-        await OtpCode.deleteOne({ userId }); // Delete the record directly from the model
-  
-        return res.status(400).json({
-          status: 'failed',
-          message: 'Verification code has expired. Please sign up again.',
-        });
-      }
-  
-      // Compare the verification code with the stored OTP code
-      const isMatch = verificationCode === otpCodeRecord.code;
-  
-      if (!isMatch) {
-        // Incorrect verification details
-        return res.status(400).json({
-          status: 'failed',
-          message: 'Invalid verification code.',
-        });
-      }
-  
-      // Mark the user as verified (you can add this field to your User model)
-      await User.updateOne({ _id: userId }, { verified: true });
-  
-      // Delete the OTP record
-      await OTPCode.deleteOne({ userId });
-  
-      return res.status(200).json({
-        status: 'success',
-        message: 'Account verification successful.',
-      });
-    } catch (error) {
-      return res.status(500).json({
-        status: 'failed',
-        message: 'An error occurred while verifying the account.',
+  // Extract the userId and the verification code from the request body
+  const { userId, verificationCode } = req.body;
+
+  try {
+    const otpCodeRecord = await OTPCode.findOne({ userId });
+
+    if (!otpCodeRecord) {
+      // No OTP record found for the user
+      return res.status(400).json({
+        status: "failed",
+        message: "Invalid verification code.",
       });
     }
-  };
-  
 
+    // Check if the OTP code has expired
+    if (otpCodeRecord.expiresAt < Date.now()) {
+      // If the OTP code has expired, delete the OTP record and inform the user
+      await OtpCode.deleteOne({ userId }); // Delete the record directly from the model
+
+      return res.status(400).json({
+        status: "failed",
+        message: "Verification code has expired. Please sign up again.",
+      });
+    }
+
+    // Compare the verification code with the stored OTP code
+    const isMatch = verificationCode === otpCodeRecord.code;
+
+    if (!isMatch) {
+      // Incorrect verification details
+      return res.status(400).json({
+        status: "failed",
+        message: "Invalid verification code.",
+      });
+    }
+
+    // Mark the user as verified (you can add this field to your User model)
+    await User.updateOne({ _id: userId }, { verified: true });
+
+    // Delete the OTP record
+    await OTPCode.deleteOne({ userId });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Account verification successful.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while verifying the account.",
+    });
+  }
+};
 
 /*
 
