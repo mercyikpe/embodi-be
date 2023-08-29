@@ -21,20 +21,16 @@ const authValidator = [
     .isLength({ max: 31 })
     .withMessage("Last Name can have a maximum of 31 characters"),
 
-  check("phoneNumber")
-    .trim()
-    .notEmpty()
-    .withMessage("Phone Number is missing"),
+  check("phoneNumber").notEmpty().withMessage("Phone Number is missing"),
 
   check("email")
-    .trim()
+    // .trim()
     .notEmpty()
     .withMessage("Email is missing")
     .isEmail()
     .withMessage("Not a valid email"),
 
   check("password")
-    .trim()
     .notEmpty()
     .withMessage("Password is missing")
     .isLength({ min: 6 })
