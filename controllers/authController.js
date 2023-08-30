@@ -364,7 +364,7 @@ const loginUser = async (req, res, next) => {
       updatedAt: user.updatedAt,
     };
 
-    if (user.role == "isDoctor") {
+    if (user.role === "isDoctor") {
       // Only doctors should have their doctorInfo returned
       const doctorInfo = await DoctorInfo.findOne({ user: user._id });
       userDetails.doctorId = doctorInfo._id;
