@@ -33,6 +33,7 @@ const updateAdminProfile = async (userId, updateData) => {
 };
 
 
+
 /////// user by admin
 const updateUserByAdmin = async (userId, phoneNumber, firstName, lastName) => {
   try {
@@ -42,7 +43,7 @@ const updateUserByAdmin = async (userId, phoneNumber, firstName, lastName) => {
       return { success: false, message: 'User not found.' };
     }
 
-    if (!user.role.includes('isAdmin')) {
+    if (!user.role === 'isAdmin') {
       return { success: false, message: 'User is not authorized as an admin.' };
     }
 
@@ -62,14 +63,16 @@ const updateUserByAdmin = async (userId, phoneNumber, firstName, lastName) => {
 
 
 
+
 const viewAllAdmins = async () => {
-    try {
-      const admins = await User.find({ role: 'isAdmin' }).select('firstName lastName email');
-      return admins;
-    } catch (error) {
-      throw error; // Rethrow the error to be caught in the calling function
-    }
-  };
+  try {
+    const admins = await User.find({ role: 'isAdmin' }).select('firstName lastName email');
+    return admins;
+  } catch (error) {
+    throw error; // Rethrow the error to be caught in the calling function
+  }
+};
+
 
 
 

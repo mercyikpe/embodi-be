@@ -87,7 +87,7 @@ const deleteUser = async (req, res, next) => {
   try {
     // Check if the user making the request is an admin
     const adminUser = await User.findById(req.user.id);
-    if (!adminUser || !adminUser.role.includes('isAdmin')) {
+    if (!adminUser || adminUser.role !== 'isAdmin') { // Use '!=='
       return res.status(403).json({
         status: 'failed',
         message: 'You do not have permission to delete users.',
@@ -103,7 +103,7 @@ const deleteUser = async (req, res, next) => {
       });
     }
 
-    if (userToDelete.role.includes('isAdmin')) {
+    if (userToDelete.role === 'isAdmin') { // Use '==='
       return res.status(403).json({
         status: 'failed',
         message: 'You cannot delete an admin user.',
@@ -119,6 +119,7 @@ const deleteUser = async (req, res, next) => {
     next(error);
   }
 };
+
 
 
 const getUser = async (req, res, next) => {
@@ -141,6 +142,7 @@ const getUser = async (req, res, next) => {
     next(error);
   }
 };
+
 
 
 

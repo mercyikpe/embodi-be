@@ -48,7 +48,7 @@ router.get('/getAllTheAppointment',  appointmentController.fetchCompletedAppoint
 ///// FETCH BOOKED APPOINTMENT FOR INDIVIDUAL DOCTOR
 router.get('/bookedAppointment/:doctorId/view', appointmentController.fetchBookedAppointmentsByDoctor);
 
-//// CHANGE APPOINTMENT STATUS
+//// CHANGE APPOINTMENT STATUSff
 
 
 //// get complete appointment for each doctor getCompletedAppointments

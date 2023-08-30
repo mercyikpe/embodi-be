@@ -51,40 +51,15 @@ const verifyToken = async (req, res, next) => {
     return next(new createError('Token is not valid or expired', 403));
   }
 };
-const verifyToken1 = (req, res, next) => {
-  const bearerHeader = req.headers['authorization'];
 
-  if (typeof bearerHeader === 'undefined') {
-    return res.status(403).json({
-      status: 403,
-      message: "You are not authenticated"
-    });
-  }
-
-  const bearer = bearerHeader.split(' ');
-  const bearerToken = bearer[1];
-  req.token = bearerToken;
-
-  try {
-    const user = jwt.verify(req.token, process.env.JWT_SEC_KEY);
-    req.user = user;
-
-
-    ///// just added this to test logout
-    
-    next();
-  } catch (err) {
-    return next(new createError('Token is not valid or expired', 403));
-  }
-};
 
 
 const verifyDoctor = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
 
-    if (user && user.roles.includes('isDoctor')) {
-      req.doctorId = user._id; // Save the doctorId in the request object
+    if (user && user.role === 'isDoctor') {
+      req.doctorId = user._id; // Save the doctorId as new the request object
       next();
     } else {
       return next(new AppError('You are not a verified DOCTOR', 401));
@@ -95,38 +70,41 @@ const verifyDoctor = async (req, res, next) => {
   }
 };
 
+
   
-  const verifyAdmin = (req, res, next) => {
+const verifyAdmin = (req, res, next) => {
   verifyToken(req, res, async (err) => {
-  if (err) {
-  return next(err);
-  }
-  
-  const user = await User.findById(req.user.id);
-  
-  if (user && (user.roles.includes('isAdmin') || user.roles.includes('isUser'))) {
-    next();
-  } else {
-    return next(new AppError('You are not an ADMIN or USER', 401));
-  }
+    if (err) {
+      return next(err);
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (user && (user.role === 'isAdmin' || user.role === 'isUser')) { // Use === for strict equality
+      next();
+    } else {
+      return next(new AppError('You are not an ADMIN or USER', 401));
+    }
   });
-  };
+};
+
   
-  const verifyUser = (req, res, next) => {
+const verifyUser = (req, res, next) => {
   verifyToken(req, res, async (err) => {
-  if (err) {
-  return next(err);
-  }
-  
-  const user = await User.findById(req.user.id);
-  
-  if (user && user.roles.includes('isUser')) {
-    next();
-  } else {
-    return next(new AppError('You are not a verified USER', 401));
-  }
+    if (err) {
+      return next(err);
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (user && user.role === 'isUser') {
+      next();
+    } else {
+      return next(new AppError('You are not a verified USER', 401));
+    }
   });
-  };
+};
+
 
 
 

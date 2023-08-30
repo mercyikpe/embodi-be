@@ -32,15 +32,15 @@ const UserSchema = new mongoose.Schema(
       required: true,
     },
     role: {
-      type: [String],
+      type: String,
       enum: ["isUser", "isAdmin", "isDoctor", "isOthers"],
-      default: ["isAdmin"], // Default to 'isUser' if no role is provided during user creation
+      default: "isDoctor", // Default to 'isUser'
     },
 
     status: {
       type: String,
       enum: ["isActive", "isInactive", "isBlocked", "isSuspended", "isLimited"],
-      default: "isActive", // Default to 'isActive' if no status is provided during user creation
+      default: "isActive", 
     },
 
     // ... Other fields ...
