@@ -504,14 +504,19 @@ const verifyOTP = async (req, res) => {
     }
 
     // Mark the user as verified (you can add this field to your User model)
-    await User.updateOne({ _id: userId }, { verified: true });
+     await User.updateOne({ _id: userId }, { verified: true });
 
     // Delete the OTP record
     await OTPCode.deleteOne({ userId });
 
+
+    // Retrieve the user data after successful account verification
+    const user = await User.findOne({ _id: userId });
+
     return res.status(200).json({
       status: "success",
       message: "Account verification successful.",
+      user
     });
   } catch (error) {
     return res.status(500).json({
