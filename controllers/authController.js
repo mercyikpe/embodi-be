@@ -33,7 +33,6 @@ const registerUser = async (req, res) => {
         return res.status(400).json({
           status: 'failed',
           message: 'User already exists and is verified.',
-          user: user,
         });
       }
 
