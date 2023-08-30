@@ -1,16 +1,15 @@
-//////// A
 
 const express = require('express');
 const router = express.Router();
 const admin = require('../controllers/adminController');
 const userController = require('../controllers/adminController');
-const { verifyToken,verifyDoctor, verifyUser, verifyAdmin } = require('../middleware/authMiddleware');
+const { verifyToken, verifyAdmin } = require('../middleware/authMiddleware');
 
 
 
 
 // Route for a protected admin-only endpoint
-router.get('/', verifyToken, (req, res)=>{
+router.get('/', verifyToken, verifyAdmin, (req, res)=>{
     res.send('admin MICROPHONE')
 } );
 
