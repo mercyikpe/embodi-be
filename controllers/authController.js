@@ -529,29 +529,23 @@ const verifyOTP = async (req, res) => {
     const otpCodeRecord = await OTPCode.findOne({ userId });
 
     if (!otpCodeRecord) {
-      // No OTP record found for the user
       return res.status(400).json({
         status: "failed",
         message: "Invalid verification code.",
       });
     }
 
-    // Check if the OTP code has expired
     if (otpCodeRecord.expiresAt < Date.now()) {
-      // If the OTP code has expired, delete the OTP record and inform the user
-      await OtpCode.deleteOne({ userId }); // Delete the record directly from the model
-
+      await OTPCode.deleteOne({ userId });
       return res.status(400).json({
         status: "failed",
         message: "Verification code has expired. Please sign up again.",
       });
     }
 
-    // Compare the verification code with the stored OTP code
     const isMatch = verificationCode === otpCodeRecord.code;
 
     if (!isMatch) {
-      // Incorrect verification details
       return res.status(400).json({
         status: "failed",
         message: "Invalid verification code.",
@@ -559,27 +553,95 @@ const verifyOTP = async (req, res) => {
     }
 
     // Mark the user as verified (you can add this field to your User model)
-     await User.updateOne({ _id: userId }, { verified: true });
-
-    // Delete the OTP record
-    await OTPCode.deleteOne({ userId });
-
+    await User.updateOne({ _id: userId }, { verified: true });
 
     // Retrieve the user data after successful account verification
     const user = await User.findOne({ _id: userId });
 
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, {
+      expiresIn: "24h",
+    });
+
     return res.status(200).json({
       status: "success",
       message: "Account verification successful.",
+      token,
       user
     });
   } catch (error) {
+    console.error("Error while verifying the account:", error);
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while verifying the account.",
     });
   }
 };
+
+
+// const verifyOTP = async (req, res) => {
+//   // Extract the userId and the verification code from the request body
+//   const { userId, verificationCode } = req.body;
+//
+//   try {
+//     const otpCodeRecord = await OTPCode.findOne({ userId });
+//
+//     if (!otpCodeRecord) {
+//       // No OTP record found for the user
+//       return res.status(400).json({
+//         status: "failed",
+//         message: "Invalid verification code.",
+//       });
+//     }
+//
+//     // Check if the OTP code has expired
+//     if (otpCodeRecord.expiresAt < Date.now()) {
+//       // If the OTP code has expired, delete the OTP record and inform the user
+//       await OtpCode.deleteOne({ userId }); // Delete the record directly from the model
+//
+//       return res.status(400).json({
+//         status: "failed",
+//         message: "Verification code has expired. Please sign up again.",
+//       });
+//     }
+//
+//     // Compare the verification code with the stored OTP code
+//     const isMatch = verificationCode === otpCodeRecord.code;
+//
+//     if (!isMatch) {
+//       // Incorrect verification details
+//       return res.status(400).json({
+//         status: "failed",
+//         message: "Invalid verification code.",
+//       });
+//     }
+//
+//     // Mark the user as verified (you can add this field to your User model)
+//      await User.updateOne({ _id: userId }, { verified: true });
+//
+//     // Delete the OTP record
+//     await OTPCode.deleteOne({ userId });
+//
+//     const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, {
+//       expiresIn: "24h",
+//     });
+//
+//     // Retrieve the user data after successful account verification
+//     const user = await User.findOne({ _id: userId });
+//
+//     return res.status(200).json({
+//       status: "success",
+//       message: "Account verification successful.",
+//       token,
+//       user
+//     });
+//   } catch (error) {
+//     return res.status(500).json({
+//       status: "failed",
+//       message: "An error occurred while verifying the account.",
+//     });
+//   }
+// };
 
 /*
 
