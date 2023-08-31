@@ -4,10 +4,10 @@ const express = require('express');
 const router = express.Router();
 const requestNewPassword = require('../controllers/resetPasswordController');
 const userController = require('../controllers/userController')
-const { verifyToken, verifyUser } = require('../middleware/authMiddleware');
+const { verifyToken } = require('../middleware/authMiddleware');
 
 ////// ROUTE FOR TESTING
-router.get('/', verifyToken,  verifyUser, (req, res)=>{
+router.get('/', verifyToken,  (req, res)=>{
     res.send(' USER SIDE')
 })
 

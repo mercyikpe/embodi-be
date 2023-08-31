@@ -20,117 +20,23 @@ const generateOTPCode = () => {
   return otpCode;
 };
 
-/*
 const registerUser = async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password } = req.body;
 
-  if (!firstName || !lastName || !phoneNumber || !email || !password) {
-    return res.status(400).json({
-      status: 'failed',
-      message: 'Fields cannot be blank',
-    });
-  }
-
-  const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*]).{8,}$/;
-  if (!passwordRegex.test(password)) {
-    return res.status(400).json({
-      status: 'failed',
-      message: 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
-    });
-  }
-
   try {
-    // Hash the password before saving to the database
-    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
-    const newUser = new User({
-      firstName,
-      lastName,
-      phoneNumber,
-      email,
-      password: hashedPassword, // Store the hashed password in the database
-    });
 
-    const savedUser = await newUser.save();
-
-    // Send OTP code to user's email
-    const otpCode = generateOTPCode();
-
-    // Set the expiration time to 10 minutes from now
-    const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
-
-    // Save OTP code to database
-    const otpCodeRecord = new OTPCode({
-      userId: savedUser._id,
-      code: otpCode,
-      createdAt: Date.now(),
-      expiresAt: expirationTime,
-    });
-    await otpCodeRecord.save();
-
-    // Prepare and send the email using the transporter and sendEmail function
-    const transporter = createTransporter();
-    const mailOptions = {
-      from: process.env.AUTH_EMAIL,
-      to: savedUser.email,
-      subject: 'Verify Your Email',
-      html: `
-        <h1>Email Verification</h1>
-        <p><strong>${otpCode}</strong></p>
-        <p>Please enter the verification code in your account settings to verify your email.</p>
-      `,
-    };
-
-    await sendEmail(transporter, mailOptions);
-
-    // Remove the password field from the response JSON
-    const { password: removedPassword, ...userWithoutPassword } = savedUser.toObject();
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'OTP sent to your email.',
-      user: userWithoutPassword,
-    });
-  } catch (error) {
-    console.log('Error while saving the user:', error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while signing up. kindly try again',
-    });
-  }
-};
-*/
-
-const registerUser = async (req, res) => {
-  const { firstName, lastName, phoneNumber, email, password } = req.body;
-
-  // if (!firstName || !lastName || !phoneNumber || !email || !password) {
-  //   return res.status(400).json({
-  //     status: 'failed',
-  //     message: 'Fields cannot be blank',
-  //   });
-  // }
-
-  // const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*]).{8,}$/;
-  // if (!passwordRegex.test(password)) {
-  //   return res.status(400).json({
-  //     status: 'failed',
-  //     message: 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, and a special character.',
-  //   });
-  // }
-
-  try {
     // Check if the user with the given email already exists
     let user = await User.findOne({ email });
 
-    if (user && !user.verified) {
-      // If the user exists and is not verified, update their data and resend verification email
-      user.firstName = firstName;
-      user.lastName = lastName;
-      user.phoneNumber = phoneNumber;
-      user.password = await bcrypt.hash(password, 10); // Hash the new password
-      await user.save();
+    if (user) {
+      if (user.verified) {
+        return res.status(400).json({
+          status: 'failed',
+          message: 'User already exists and is verified.',
+        });
+      }
 
-      // Send OTP code to user's email
+      // Resend OTP for account verification
       const otpCode = generateOTPCode();
 
       // Set the expiration time to 10 minutes from now
@@ -161,15 +67,9 @@ const registerUser = async (req, res) => {
       await transporter.sendMail(mailOptions);
 
       return res.status(200).json({
-        status: "success",
-        message:
-          "Already registered with Phone number or email. New data captured and OTP resent to your email for verification.",
-      });
-    } else if (user) {
-      // If the user exists and is already verified, return an error message
-      return res.status(400).json({
-        status: "failed",
-        message: "User already exists and is verified.",
+        status: 'success',
+        message: 'Account already registered, new OTP sent for verification.',
+        user: user,
       });
     }
 
@@ -216,71 +116,18 @@ const registerUser = async (req, res) => {
     await transporter.sendMail(mailOptions);
 
     return res.status(200).json({
-      status: "success",
-      message: "Sign up successful, OTP sent to your email for verification.",
-    });
-  } catch (error) {
-    console.log("Error while saving the user:", error);
-    return res.status(500).json({
-      status: "failed",
-      message: "An error occurred while signing up. Kindly try again.",
-    });
-  }
-};
-
-/*
-const loginUser = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email) {
-      return res.status(400).json({
-        status: 'failed',
-        message: 'Email field is required',
-      });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({
-        status: 'failed',
-        message: 'User not found',
-      });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return res.status(400).json({
-        status: 'failed',
-        message: 'Invalid password',
-      });
-    }
-
-    if (!user.verified) {
-      return res.status(400).json({
-        status: 'failed',
-        message: 'Please verify your email before signing in',
-      });
-    }
-
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, { expiresIn: '24h' });
-    const { isAdmin, ...otherDetails } = user._doc;
-
-    return res.status(200).json({
       status: 'success',
-      message: 'Successfully signed in',
-      token,
-      user: otherDetails,
+      message: 'Sign up successful, OTP sent for verification.',
+      user: savedUser,
     });
   } catch (error) {
+    console.error('Error while registering user:', error);
     return res.status(500).json({
       status: 'failed',
-      message: 'Internal server error',
+      message: 'An error occurred while signing up. Please try again.',
     });
   }
 };
-*/
 
 const loginUser = async (req, res, next) => {
   try {
@@ -351,7 +198,7 @@ const loginUser = async (req, res, next) => {
       updatedAt: user.updatedAt,
     };
 
-    if (user.role == "isDoctor") {
+    if (user.role === "isDoctor") {
       // Only doctors should have their doctorInfo returned
       const doctorInfo = await DoctorInfo.findOne({ user: user._id });
       userDetails.doctorId = doctorInfo._id || null;
@@ -453,6 +300,7 @@ const requestOTP = async (req, res) => {
   }
 };
 
+
 const verifyOTP = async (req, res) => {
   // Extract the userId and the verification code from the request body
   const { userId, verificationCode } = req.body;
@@ -461,29 +309,23 @@ const verifyOTP = async (req, res) => {
     const otpCodeRecord = await OTPCode.findOne({ userId });
 
     if (!otpCodeRecord) {
-      // No OTP record found for the user
       return res.status(400).json({
         status: "failed",
         message: "Invalid verification code.",
       });
     }
 
-    // Check if the OTP code has expired
     if (otpCodeRecord.expiresAt < Date.now()) {
-      // If the OTP code has expired, delete the OTP record and inform the user
-      await OtpCode.deleteOne({ userId }); // Delete the record directly from the model
-
+      await OTPCode.deleteOne({ userId });
       return res.status(400).json({
         status: "failed",
         message: "Verification code has expired. Please sign up again.",
       });
     }
 
-    // Compare the verification code with the stored OTP code
     const isMatch = verificationCode === otpCodeRecord.code;
 
     if (!isMatch) {
-      // Incorrect verification details
       return res.status(400).json({
         status: "failed",
         message: "Invalid verification code.",
@@ -493,20 +335,30 @@ const verifyOTP = async (req, res) => {
     // Mark the user as verified (you can add this field to your User model)
     await User.updateOne({ _id: userId }, { verified: true });
 
-    // Delete the OTP record
-    await OTPCode.deleteOne({ userId });
+    // Retrieve the user data after successful account verification
+    const user = await User.findOne({ _id: userId });
+
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, {
+      expiresIn: "24h",
+    });
 
     return res.status(200).json({
       status: "success",
       message: "Account verification successful.",
+      token,
+      user
     });
   } catch (error) {
+    console.error("Error while verifying the account:", error);
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while verifying the account.",
     });
   }
 };
+
+
 
 /*
 
