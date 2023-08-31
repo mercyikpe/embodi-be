@@ -10,7 +10,8 @@ node_modules
 /utilities\transporter.js
 utilities\transporter.js
 
-
+middleware\authMiddleware.js
+/middleware\authMiddleware.js
 
 controllers\test.js
 /controllers\test.js

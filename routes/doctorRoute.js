@@ -10,6 +10,9 @@ router.get("/", verifyToken, verifyDoctor, (req, res) => {
 ////// sign uo doctor
 router.post("/signupdoctor", doctorController.signUpAsDoctors);
 
+///SIGNIN dOCTOR
+router.post('/login', doctorController.doctorSignin)
+
 // update doctor's user information fields and addtional information
 router.put("/:userId/info", doctorController.updateDoctorInfo);
 
@@ -18,6 +21,9 @@ router.put("/account/:userId", doctorController.updateDoctorAccountInfo);
 
 /// VIEW DOCTOR WITH ID
 router.get("/view/:userId", doctorController.viewDoctor);
+
+//// DELETE DOCTOR router.delete('/doctors/:userId', deleteDoctor);
+router.delete('/delete/:userId', doctorController.deleteDoctor);
 
 ///////VIEW ALL DOCTOR viewDoctorInfo
 router.get("/viewone/:userId", doctorController.viewDoctorInfo);

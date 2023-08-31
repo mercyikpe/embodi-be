@@ -22,23 +22,23 @@ const DoctorInfoSchema = new mongoose.Schema(
     },
     placeOfWork: {
       type: String,
-      required: true,
+     // required: true,
     },
     specialty: {
       type: String,
-      required: true,
+     // required: true,
     },
     yearOfExperience: {
       type: Number,
-      required: true,
+     // required: true,
     },
     rate: {
       type: Number,
-      required: true,
+     // required: true,
     },
     bio: {
       type: String,
-      required: true,
+      //required: true,
     },
     // Bank information fields for doctors
     bankName: {

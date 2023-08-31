@@ -2,6 +2,7 @@ const User = require('../models/User');
 const DoctorInfo = require('../models/DoctorInfo');
 const transporter = require('../utilities/transporter');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 //const DoctorInfo = require('../models/DoctorInfo');
 
 
@@ -14,7 +15,7 @@ const signUpAsDoctors = async (req, res) => {
     // Check if the user making the request is an admin
     const adminUser = await User.findById(adminUserId);
 
-    if (!adminUser || !adminUser.role.includes('isAdmin')) {
+    if (!adminUser || adminUser.role !== 'isAdmin') {
       return res.status(403).json({
         status: 'failed',
         message: 'You do not have permission to sign up doctors.',
@@ -25,8 +26,8 @@ const signUpAsDoctors = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
-      // If the user exists, update their isDoctor field to true and save the user
-      role: ['isDoctor']
+      // If the user exists, update their role to 'isDoctor' and save the user
+      user.role = 'isDoctor';
       await user.save();
 
       // Send an email notifying the user that they are now a doctor
@@ -50,10 +51,10 @@ const signUpAsDoctors = async (req, res) => {
         message: 'Doctor created successfully.',
       });
     } else {
-      // If the user does not exist, create a new user and set their isDoctor field to true
+      // If the user does not exist, create a new user with role 'isDoctor'
       const doctor = new User({
         email,
-        role: ['isDoctor'],
+        role: 'isDoctor',
       });
 
       await doctor.save();
@@ -65,7 +66,7 @@ const signUpAsDoctors = async (req, res) => {
         { expiresIn: '10h' }
       );
 
-      const verificationLink = `http://yourdomain.com/verify-doctor?token=${verificationToken}`;
+      const verificationLink = `http://emboimentapp.com/verify-doctor?token=${verificationToken}`;
 
       const mailOptions = {
         from: 'Your Email <youremail@gmail.com>',
@@ -95,6 +96,118 @@ const signUpAsDoctors = async (req, res) => {
     });
   }
 };
+
+
+
+/////SIGNIN DOCTOR
+const doctorSignin = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Email field is required",
+      });
+    }
+
+    const user = await User.findOne({ email }).populate({
+      path: "doctorInfo",
+      model: "DoctorInfo",
+      populate: {
+        path: "user",
+        model: "User",
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Invalid password",
+      });
+    }
+
+    if (!user.verified) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Please verify your email before signing in",
+      });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, {
+      expiresIn: "24h",
+    });
+
+    let userDetails = {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      status: user.status,
+      verifyBadge: user.verifyBadge,
+      verified: user.verified,
+      image: user.image,
+      dob: user.dob,
+      address: user.address,
+      gender: user.gender,
+      allergies: user.allergies,
+      disease: user.disease,
+      questionaire: user.questionaire,
+      bookedAppointments: user.bookedAppointments,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+
+    if (user.role === "isDoctor") {
+      // Only doctors should have their doctorInfo returned
+      const doctorInfo = await DoctorInfo.findOne({ user: user._id });
+
+      if (doctorInfo) {
+        userDetails.doctorId = doctorInfo._id;
+        userDetails.qualification = doctorInfo.qualification;
+        userDetails.specialty = doctorInfo.specialty;
+        userDetails.yearOfExperience = doctorInfo.yearOfExperience;
+        userDetails.rate = doctorInfo.rate;
+        userDetails.bio = doctorInfo.bio;
+        userDetails.bankName = doctorInfo.bankName;
+        userDetails.accountName = doctorInfo.accountName;
+        userDetails.accountNumber = doctorInfo.accountNumber;
+      } else {
+        // Create doctorInfo entry if not present
+        const newDoctorInfo = new DoctorInfo({
+          user: user._id,
+        });
+
+        await newDoctorInfo.save();
+      }
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Successfully signed in",
+      token,
+      user: userDetails,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: "failed",
+      message: "Internal server error",
+    });
+  }
+};
+
 
 /////////SIGN UP DOCTOR. This is not in use
 const signUpAsDoctor = async (req, res) => {
@@ -209,7 +322,7 @@ const updateDoctorInfo = async (req, res, next) => {
 
   try {
     const user = await User.findById(userId);
-    if (!user || !user.role.includes('isDoctor')) {
+    if (!user || user.role !== 'isDoctor') {
       return res.status(403).json({
         status: 'failed',
         message: 'User not found or is not authorized as a doctor.',
@@ -245,7 +358,7 @@ const updateDoctorInfo = async (req, res, next) => {
     const updatedDoctorInfo = await DoctorInfo.findOneAndUpdate(
       { user: userId },
       doctorUpdateData,
-      { upsert: true }
+      { upsert: true, new: true } // Added 'new' option to get the updated document
     );
 
     return res.status(200).json({
@@ -262,13 +375,14 @@ const updateDoctorInfo = async (req, res, next) => {
   }
 };
 
+
 ////// update doctors account information
 const updateDoctorAccountInfo = async (req, res, next) => {
   const { userId } = req.params;
 
   try {
     const user = await User.findById(userId);
-    if (!user || !user.role.includes('isDoctor')) {
+    if (!user || user.role !== 'isDoctor') {
       return res.status(403).json({
         status: 'failed',
         message: 'User not found or is not authorized as a doctor.',
@@ -284,7 +398,7 @@ const updateDoctorAccountInfo = async (req, res, next) => {
     const updatedDoctorAccountInfo = await DoctorInfo.findOneAndUpdate(
       { user: userId },
       updateData,
-      { upsert: true }
+      { upsert: true, new: true } // Added 'new' option to get the updated document
     );
 
     return res.status(200).json({
@@ -301,6 +415,7 @@ const updateDoctorAccountInfo = async (req, res, next) => {
   }
 };
 
+
 ///// view doctorinfo only using userId
 const viewDoctor = async (req, res, next) => {
   const { userId } = req.params;
@@ -308,7 +423,7 @@ const viewDoctor = async (req, res, next) => {
   try {
     // Find the user by ID and check if they have the 'isDoctor' role
     const user = await User.findById(userId).populate('doctorInfo');
-    if (!user || !user.role.includes('isDoctor')) {
+    if (!user || user.role !== 'isDoctor') {
       return res.status(403).json({
         status: 'failed',
         message: 'User not found or is not authorized as a doctor.',
@@ -335,6 +450,7 @@ const viewDoctor = async (req, res, next) => {
 
 
 
+
 //////// view full doctor;'s info for one doctor
 const viewDoctorInfo = async (req, res) => {
   const { userId } = req.params;
@@ -342,7 +458,7 @@ const viewDoctorInfo = async (req, res) => {
   try {
     // Check if the user exists and is a doctor
     const user = await User.findById(userId);
-    if (!user || !user.isDoctor) {
+    if (!user || user.role !== 'isDoctor') {
       return res.status(404).json({
         status: 'failed',
         message: 'Doctor not found. Please enter a valid doctor userId.',
@@ -392,112 +508,159 @@ const viewDoctorInfo = async (req, res) => {
 
 
 
-    const fetchDoctorsWithFullInfo = async (req, res) => {
-      try {
-        // Use the aggregate pipeline to perform a lookup between User and DoctorInfo models
-        const doctors = await User.aggregate([
-          {
-            // Match only users with the role 'isDoctor'
-            $match: { role: 'isDoctor' }
-          },
-          {
-            // Perform a left outer join with DoctorInfo model using the 'user' field
-            $lookup: {
-              from: 'doctorinfos', // The collection name for DoctorInfo model
-              localField: '_id',
-              foreignField: 'user',
-              as: 'doctorInfo'
-            }
-          },
-          {
-            // Unwind the 'doctorInfo' array to get individual doctor information
-            $unwind: {
-              path: '$doctorInfo',
-              preserveNullAndEmptyArrays: true // Handle the case where a doctor may not have DoctorInfo
-            }
-          },
-          {
-            // Project only the fields you need from both User and DoctorInfo models
-            $project: {
-              _id: 1,
-              firstName: 1,
-              lastName: 1,
-              email: 1,
-              phoneNumber: 1,
-              qualification: { $ifNull: ['$doctorInfo.qualification', null] },
-              placeOfWork: { $ifNull: ['$doctorInfo.placeOfWork', null] },
-              specialty: { $ifNull: ['$doctorInfo.specialty', null] },
-              yearOfExperience: { $ifNull: ['$doctorInfo.yearOfExperience', null] },
-              rate: { $ifNull: ['$doctorInfo.rate', null] },
-              bio: { $ifNull: ['$doctorInfo.bio', null] }
-              // Add more fields as needed from both User and DoctorInfo models
-            }
-          }
-        ]);
-    
-        return res.status(200).json({
-          status: 'success',
-          message: 'Doctors information fetched successfully.',
-          data: doctors,
-        });
-      } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-          status: 'failed',
-          message: 'An error occurred while fetching doctors information.',
-        });
+
+const fetchDoctorsWithFullInfo = async (req, res) => {
+  try {
+    // Use the aggregate pipeline to perform a lookup between User and DoctorInfo models
+    const doctors = await User.aggregate([
+      {
+        // Match only users with the role 'isDoctor'
+        $match: { role: 'isDoctor' }
+      },
+      {
+        // Perform a left outer join with DoctorInfo model using the 'user' field
+        $lookup: {
+          from: 'doctorinfos', // The collection name for DoctorInfo model
+          localField: '_id',
+          foreignField: 'user',
+          as: 'doctorInfo'
+        }
+      },
+      {
+        // Unwind the 'doctorInfo' array to get individual doctor information
+        $unwind: {
+          path: '$doctorInfo',
+          preserveNullAndEmptyArrays: true // Handle the case where a doctor may not have DoctorInfo
+        }
+      },
+      {
+        // Project only the fields you need from both User and DoctorInfo models
+        $project: {
+          _id: 1,
+          firstName: 1,
+          lastName: 1,
+          email: 1,
+          phoneNumber: 1,
+          qualification: { $ifNull: ['$doctorInfo.qualification', null] },
+          placeOfWork: { $ifNull: ['$doctorInfo.placeOfWork', null] },
+          specialty: { $ifNull: ['$doctorInfo.specialty', null] },
+          yearOfExperience: { $ifNull: ['$doctorInfo.yearOfExperience', null] },
+          rate: { $ifNull: ['$doctorInfo.rate', null] },
+          bio: { $ifNull: ['$doctorInfo.bio', null] }
+          // Add more fields as needed from both User and DoctorInfo models
+        }
       }
-    };
+    ]);
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Doctors information fetched successfully.',
+      data: doctors,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while fetching doctors information.',
+    });
+  }
+};
+
   
    
 
-    const removeDoctorRole = async (req, res) => {
-      const { userId } = req.params;
-    
-      try {
-        // Find the user with the provided user ID
-        const user = await User.findById(userId);
-    
-        if (!user) {
-          return res.status(404).json({
-            status: 'failed',
-            message: 'User not found. Please enter a valid user ID.',
-          });
-        }
-    
-        // Check if the user has the role 'isDoctor'
-        if (user.role.includes('isDoctor')) {
-          // Remove the 'isDoctor' role from the user and update their role to 'isUser'
-          user.role = user.role.filter((role) => role !== 'isDoctor');
-          user.role.push('isUser');
-          await user.save();
-    
-          return res.status(200).json({
-            status: 'success',
-            message: 'Doctor role removed successfully.',
-            data: user,
-          });
-        } else {
-          return res.status(400).json({
-            status: 'failed',
-            message: 'The user is not a doctor.',
-          });
-        }
-      } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-          status: 'failed',
-          message: 'An error occurred while processing your request.',
-        });
-      }
-    };
+const removeDoctorRole = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Find the user with the provided user ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found. Please enter a valid user ID.',
+      });
+    }
+
+    // Check if the user has the role 'isDoctor'
+    if (user.role === 'isDoctor') {
+      // Update the user's role to 'isUser'
+      user.role = 'isUser';
+      await user.save();
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'Doctor role removed successfully.',
+        data: user,
+      });
+    } else {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'The user is not a doctor.',
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
+
+
+///// DELETE DOCTOR TOTALLY FROM THE SYSTEM
+const deleteDoctor = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found. Please enter a valid user ID.',
+      });
+    }
+
+    // Check if the user has the role 'isDoctor'
+    if (user.role === 'isDoctor') {
+      // Delete the user and associated DoctorInfo
+      await Promise.all([
+        User.findByIdAndDelete(userId),
+        DoctorInfo.findOneAndDelete({ user: userId }),
+      ]);
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'Doctor user and associated DoctorInfo deleted successfully.',
+      });
+    } else {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'The user is not a doctor.',
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
+
     
 
 module.exports = {
   fetchDoctorsWithFullInfo,
   signUpAsDoctor,
+  doctorSignin,
   signUpAsDoctors,
   viewDoctor,
+  deleteDoctor,
   updateDoctorInfo,
   updateDoctorAccountInfo,
   viewDoctorInfo,

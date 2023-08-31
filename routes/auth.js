@@ -8,7 +8,7 @@ const {authValidator} = require("../validators/auth");
 const runValidation = require("../validators");
 
 router.get('/', (req, res)=>{
-    res.send(' running here')
+    res.send(' running here');
 }
 )
 
