@@ -30,9 +30,14 @@ const registerUser = async (req, res) => {
 
     if (user) {
       if (user.verified) {
+        
+        // Remove the password field from the user object before sending the response
+        delete user.password;
+
         return res.status(400).json({
           status: 'failed',
           message: 'User already exists and is verified.',
+          user: user,
         });
       }
 

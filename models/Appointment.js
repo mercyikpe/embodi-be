@@ -13,6 +13,7 @@ const AppointmentSchema = new mongoose.Schema(
       ref: 'DoctorInfo',
      // required: true,
     },
+    
     appointments: [{
 
       appointmentId: {
