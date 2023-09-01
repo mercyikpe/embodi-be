@@ -483,6 +483,30 @@ const viewDoctorInfo = async (req, res) => {
 
       // Unwind the doctorInfo array to get a single object
       { $unwind: { path: '$doctorInfo', preserveNullAndEmptyArrays: true } },
+
+      // Exclude the password field and include other fields
+      {
+        $addFields: {
+          'password': '$$REMOVE', // Exclude the password field
+          'disease': '$$REMOVE', 
+          'bookedAppointments': '$$REMOVE', 
+          'bookedAppointment': '$$REMOVE', 
+          'isValid': '$$REMOVE', 
+          'status': '$$REMOVE', 
+          'ownedDiseases': '$$REMOVE', 
+          'diseaseData': '$$REMOVE', 
+          //'status': '$$REMOVE', 
+
+          /// remove from nestd array
+          'doctorInfo.user.password': '$$REMOVE', // Exclude the password field from nested user
+          'doctorInfo.user.disease': '$$REMOVE', 
+          'doctorInfo.user.bookedAppointments': '$$REMOVE',
+          'doctorInfo.user.bookedAppointment': '$$REMOVE',
+          'doctorInfo.placeOfWork': '$$REMOVE',
+          //'doctorInfo.user': '$$REMOVE',
+          // Include other fields you need
+        },
+      },
     ]);
 
     if (!doctorInfo || doctorInfo.length === 0 || !doctorInfo[0].doctorInfo) {
@@ -506,6 +530,8 @@ const viewDoctorInfo = async (req, res) => {
     });
   }
 };
+
+
 
 
 
