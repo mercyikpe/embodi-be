@@ -503,7 +503,8 @@ const viewDoctorInfo = async (req, res) => {
           'doctorInfo.user.bookedAppointments': '$$REMOVE',
           'doctorInfo.user.bookedAppointment': '$$REMOVE',
           'doctorInfo.placeOfWork': '$$REMOVE',
-          //'doctorInfo.user': '$$REMOVE',
+          'doctorInfo.availableTimeSlots': '$$REMOVE',
+          'doctorInfo.appointments': '$$REMOVE',
           // Include other fields you need
         },
       },
