@@ -14,7 +14,7 @@ router.post("/signupdoctor", doctorController.signUpAsDoctors);
 router.post('/login', doctorController.doctorSignin)
 
 // update doctor's user information fields and addtional information
-router.put("/:userId/info", doctorController.updateDoctorInfo);
+router.put("/update/:userId", doctorController.updateDoctorInfo);
 
 ///update doctor's Account information
 router.put("/account/:userId", doctorController.updateDoctorAccountInfo);
