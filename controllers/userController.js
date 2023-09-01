@@ -55,7 +55,7 @@ const createUser = async (req, res, next) => {
 
 
 const updateUser = async (req, res, next) => {
-  const { firstName, lastName, email, phoneNumber, image, dob, address, gender, allergies } = req.body;
+  const { firstName, lastName, email, phoneNumber, image, dob, address, gender, allergies, avatar} = req.body;
   const updateData = {
     firstName,
     lastName,
@@ -66,6 +66,7 @@ const updateUser = async (req, res, next) => {
     address,
     gender,
     allergies,
+    avatar
   };
 
   try {

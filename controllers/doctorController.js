@@ -3,6 +3,7 @@ const DoctorInfo = require('../models/DoctorInfo');
 const transporter = require('../utilities/transporter');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const mongoose = require('mongoose');
 //const DoctorInfo = require('../models/DoctorInfo');
 
 
@@ -316,7 +317,7 @@ const signUpAsDoctor = async (req, res) => {
   }
 };
 
-
+////// UPDATE DOCTOR'S PROFILE
 const updateDoctorInfo = async (req, res, next) => {
   const { userId } = req.params;
 
@@ -468,7 +469,7 @@ const viewDoctorInfo = async (req, res) => {
     // Use the aggregate method to perform a lookup and merge data from both collections
     const doctorInfo = await User.aggregate([
       // Match the user with the specified userId
-      { $match: { _id: mongoose.Types.ObjectId(userId) } },
+      { $match: { _id: new mongoose.Types.ObjectId(userId) } },
 
       // Perform a left outer join with the DoctorInfo collection
       {

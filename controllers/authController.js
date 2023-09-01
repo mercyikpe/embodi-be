@@ -140,7 +140,7 @@ const loginUser = async (req, res, next) => {
       });
     }
 
-    const user = await User.findOne({ email }).populate({
+    let user = await User.findOne({ email }).populate({
       path: "doctorInfo",
       model: "DoctorInfo",
       populate: {
@@ -199,10 +199,18 @@ const loginUser = async (req, res, next) => {
     };
 
     if (user.role === "isDoctor") {
-      // Only doctors should have their doctorInfo returned
+      // Fetch the doctorInfo and add its data to userDetails
       const doctorInfo = await DoctorInfo.findOne({ user: user._id });
-      userDetails.doctorId = doctorInfo._id || null;
-      userDetails.qualifiction = doctorInfo.qualification;
+
+      // If doctorInfo doesn't exist, create it
+      if (!doctorInfo) {
+        const newDoctorInfo = new DoctorInfo({ user: user._id });
+        await newDoctorInfo.save();
+        doctorInfo = newDoctorInfo;
+      }
+
+      userDetails.doctorId = doctorInfo._id;
+      userDetails.qualification = doctorInfo.qualification;
       userDetails.specialty = doctorInfo.specialty;
       userDetails.yearOfExperience = doctorInfo.yearOfExperience;
       userDetails.rate = doctorInfo.rate;
@@ -226,6 +234,7 @@ const loginUser = async (req, res, next) => {
     });
   }
 };
+
 
 ////// REQUEST FOR A NEW OTP IF USER DIDNT RECEIVE IT
 const requestOTP = async (req, res) => {
