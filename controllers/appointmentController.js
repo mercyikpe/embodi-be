@@ -11,7 +11,7 @@ const mongoose = require('mongoose');
 
 
 ////// i just suspended this this night 08 21 - 146am
-const createAppointment = async (doctorId, date, appointments) => {
+const createAppointments = async (doctorId, date, appointments) => {
   try {
     const doctorInfo = await DoctorInfo.findById(doctorId).populate('user');
 
@@ -150,7 +150,7 @@ const createAppointment = async (doctorId, date, appointments) => {
 };
 
 
-/*
+
  /// recent commentented to test something
 const createAppointment = async (doctorId, date, appointments) => {
   try {
@@ -232,7 +232,7 @@ const createAppointment = async (doctorId, date, appointments) => {
   }
 };
 
-*/
+
 
 
 
