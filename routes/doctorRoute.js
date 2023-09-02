@@ -30,8 +30,6 @@ router.delete('/delete/:userId', doctorController.deleteDoctor);
 ///////VIEW ALL DOCTOR viewDoctorInfo
 router.get("/viewone/:userId", doctorController.viewDoctorInfo);
 
-router.get('/doctors', viewAllDoctors);
-
 ////fetchDoctorsWithFullInfo
 router.get("/doctors", doctorController.fetchDoctorsWithFullInfo);
 

@@ -506,32 +506,6 @@ const viewDoctorInfo = async (req, res) => {
   }
 };
 
-const viewAllDoctors = async (req, res) => {
-  try {
-    // Find all users with the role 'isDoctor'
-    const doctors = await User.find({ role: 'isDoctor' }).select('-password');
-
-    if (!doctors || doctors.length === 0) {
-      return res.status(404).json({
-        status: 'failed',
-        message: 'No doctors found.',
-      });
-    }
-
-    // Return the list of doctors
-    return res.status(200).json({
-      status: 'success',
-      message: 'List of doctors found.',
-      data: doctors,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while processing your request.',
-    });
-  }
-};
 
 //////// view full doctor;'s info for one doctor
 // const viewDoctorInfo = async (req, res) => {
@@ -772,6 +746,5 @@ module.exports = {
   updateDoctorInfo,
   updateDoctorAccountInfo,
   viewDoctorInfo,
-  removeDoctorRole,
-  viewAllDoctors
+  removeDoctorRole
 };

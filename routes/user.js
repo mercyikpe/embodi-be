@@ -4,6 +4,10 @@ const express = require('express');
 const router = express.Router();
 const requestNewPassword = require('../controllers/resetPasswordController');
 const userController = require('../controllers/userController')
+
+const {viewAllDoctors} = require("../controllers/userController");
+
+
 const { verifyToken } = require('../middleware/authMiddleware');
 
 ////// ROUTE FOR TESTING
@@ -33,6 +37,8 @@ router.get('/alluserson', userController.getAllTheAppUsers);
 router.get('/active', userController.getActiveUsers);
 
 router.get('/viewsome', userController.viewUser);
+
+router.get('/doctors', viewAllDoctors);
 
 
 
