@@ -1,40 +1,41 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const DoctorInfoSchema = new mongoose.Schema(
   {
     // Additional fields for doctor information
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
       unique: true,
     },
 
-    appointments: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Appointment',
-      unique: true,
-    }],
+    appointments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Appointment",
+      },
+    ],
 
     qualification: {
       type: String,
-     // required: true,
+      // required: true,
     },
     placeOfWork: {
       type: String,
-     // required: true,
+      // required: true,
     },
     specialty: {
       type: String,
-     // required: true,
+      // required: true,
     },
     yearOfExperience: {
       type: Number,
-     // required: true,
+      // required: true,
     },
     rate: {
       type: Number,
-     // required: true,
+      // required: true,
     },
     bio: {
       type: String,
@@ -50,28 +51,6 @@ const DoctorInfoSchema = new mongoose.Schema(
     accountNumber: {
       type: Number,
     },
-    // Array of available time slots
-    /*
-    availableTimeSlots: {
-      type: [
-        {
-          date: {
-            type: Date,
-            //required: true,
-          },
-          startTime: {
-            type: String,
-           // required: true,
-          },
-          endTime: {
-            type: String,
-            //required: true,
-          },
-        },
-      ],
-      default: [], // Initialize with an empty array
-    },
-    */
     availableTimeSlots: {
       type: [
         {
@@ -89,35 +68,32 @@ const DoctorInfoSchema = new mongoose.Schema(
           },
           status: {
             type: String,
-            enum: ['Scheduled', 'Booked', 'Completed', 'Cancelled'],
-            
+            enum: ["Scheduled", "Booked", "Completed", "Cancelled"],
           },
           patient: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: "User",
           },
 
           bookingId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: "User",
           },
         },
       ],
       default: [], // Initialize with an empty array
     },
-    
-    
-       // Email sending functionality
-       sendAppointmentEmail: {
-        type: Boolean,
-        default: true,
-      },
+
+    // Email sending functionality
+    sendAppointmentEmail: {
+      type: Boolean,
+      default: true,
+    },
   },
 
   { timestamps: true }
 );
 
-
-const DoctorInfo = mongoose.model('DoctorInfo', DoctorInfoSchema);
+const DoctorInfo = mongoose.model("DoctorInfo", DoctorInfoSchema);
 
 module.exports = DoctorInfo;

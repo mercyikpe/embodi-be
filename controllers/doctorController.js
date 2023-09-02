@@ -449,16 +449,13 @@ const viewDoctor = async (req, res, next) => {
 };
 
 
-
-
-
-//////// view full doctor;'s info for one doctor
 const viewDoctorInfo = async (req, res) => {
   const { userId } = req.params;
 
   try {
     // Check if the user exists and is a doctor
     const user = await User.findById(userId);
+
     if (!user || user.role !== 'isDoctor') {
       return res.status(404).json({
         status: 'failed',
@@ -466,71 +463,189 @@ const viewDoctorInfo = async (req, res) => {
       });
     }
 
-    // Use the aggregate method to perform a lookup and merge data from both collections
-    const doctorInfo = await User.aggregate([
-      // Match the user with the specified userId
-      { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+    // Retrieve the doctor's information along with populated appointments and user data
+    const doctorInfo = await DoctorInfo.findOne({ user: userId })
+        .populate('appointments')
+        .populate('user', '-password'); // Exclude the password field from the user data
 
-      // Perform a left outer join with the DoctorInfo collection
-      {
-        $lookup: {
-          from: 'doctorinfos',
-          localField: '_id',
-          foreignField: 'user',
-          as: 'doctorInfo',
-        },
-      },
-
-      // Unwind the doctorInfo array to get a single object
-      { $unwind: { path: '$doctorInfo', preserveNullAndEmptyArrays: true } },
-
-      // Exclude the password field and include other fields
-      {
-        $addFields: {
-          'password': '$$REMOVE', // Exclude the password field
-          'disease': '$$REMOVE', 
-          'bookedAppointments': '$$REMOVE', 
-          'bookedAppointment': '$$REMOVE', 
-          'isValid': '$$REMOVE', 
-          'status': '$$REMOVE', 
-          'ownedDiseases': '$$REMOVE', 
-          'diseaseData': '$$REMOVE', 
-          //'status': '$$REMOVE', 
-
-          /// remove from nestd array
-          'doctorInfo.user.password': '$$REMOVE', // Exclude the password field from nested user
-          'doctorInfo.user.disease': '$$REMOVE', 
-          'doctorInfo.user.bookedAppointments': '$$REMOVE',
-          'doctorInfo.user.bookedAppointment': '$$REMOVE',
-          'doctorInfo.placeOfWork': '$$REMOVE',
-          //'doctorInfo.availableTimeSlots': '$$REMOVE',
-          'doctorInfo.appointments': '$$REMOVE',
-          // Include other fields you need
-        },
-      },
-    ]);
-
-    if (!doctorInfo || doctorInfo.length === 0 || !doctorInfo[0].doctorInfo) {
+    if (!doctorInfo) {
       return res.status(404).json({
         status: 'failed',
         message: 'Doctor information not found.',
       });
     }
 
-    // Return the merged data
+    // Calculate the total number of appointments and booked/unbooked counts
+    const totalAppointments = doctorInfo.appointments.length;
+    const totalAppointmentsScheduled = doctorInfo.appointments.filter(appointment => appointment.status === 'Scheduled').length;
+    const totalAppointmentsBooked = doctorInfo.appointments.filter(appointment => appointment.status === 'Booked').length;
+    const totalAppointmentsCompleted = doctorInfo.appointments.filter(appointment => appointment.status === 'Completed').length;
+    const totalAppointmentsCancelled = doctorInfo.appointments.filter(appointment => appointment.status === 'Cancelled').length;
+
+    // Return the doctorInfo with appointments and additional fields
     return res.status(200).json({
       status: 'success',
       message: 'Doctor information found.',
-      data: doctorInfo[0], // doctorInfo is an array, but we know there's only one element
+      data: {
+        ...doctorInfo._doc,
+        user: doctorInfo.user,
+        appointments: doctorInfo.appointments,
+        total_number_of_appointment: totalAppointments,
+        total_number_of_appointment_scheduled: totalAppointmentsScheduled,
+        total_number_of_appointment_booked: totalAppointmentsBooked,
+        total_number_of_appointment_completed: totalAppointmentsCompleted,
+        total_number_of_appointment_cancelled: totalAppointmentsCancelled,
+      },
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({
       status: 'failed',
       message: 'An error occurred while processing your request.',
     });
   }
 };
+
+
+// const viewDoctorInfo = async (req, res) => {
+//   const { userId } = req.params;
+//
+//   try {
+//     // Check if the user exists and is a doctor
+//     const user = await User.findById(userId);
+//
+//     if (!user || user.role !== 'isDoctor') {
+//       return res.status(404).json({
+//         status: 'failed',
+//         message: 'Doctor not found. Please enter a valid doctor userId.',
+//       });
+//     }
+//
+//     // Retrieve the doctor's information along with populated appointments
+//     const doctorInfo = await DoctorInfo.findOne({ user: userId }).populate('appointments');
+//
+//     if (!doctorInfo) {
+//       return res.status(404).json({
+//         status: 'failed',
+//         message: 'Doctor information not found.',
+//       });
+//     }
+//
+//     // Calculate the total number of appointments and booked/unbooked counts
+//     const totalAppointments = doctorInfo.appointments.length;
+//     const totalAppointmentsScheduled = doctorInfo.appointments.filter(appointment => appointment.status === 'Scheduled').length;
+//     const totalAppointmentsBooked = doctorInfo.appointments.filter(appointment => appointment.status === 'Booked').length;
+//     const totalAppointmentsCompleted = doctorInfo.appointments.filter(appointment => appointment.status === 'Completed').length;
+//     const totalAppointmentsCancelled = doctorInfo.appointments.filter(appointment => appointment.status === 'Cancelled').length;
+//
+//     // Exclude the password field from the doctor's user data
+//     const doctorUserData = { ...doctorInfo.user._doc };
+//     delete doctorUserData.password;
+//
+//     // Return the doctorInfo with appointments and additional fields
+//     return res.status(200).json({
+//       status: 'success',
+//       message: 'Doctor information found.',
+//       data: {
+//         ...doctorInfo._doc,
+//         user: doctorUserData,
+//         appointments: doctorInfo.appointments,
+//         total_number_of_appointment: totalAppointments,
+//         total_number_of_appointment_scheduled: totalAppointmentsScheduled,
+//         total_number_of_appointment_booked: totalAppointmentsBooked,
+//         total_number_of_appointment_completed: totalAppointmentsCompleted,
+//         total_number_of_appointment_cancelled: totalAppointmentsCancelled,
+//       },
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       status: 'failed',
+//       message: 'An error occurred while processing your request.',
+//     });
+//   }
+// };
+
+
+//////// view full doctor;'s info for one doctor
+// const viewDoctorInfo = async (req, res) => {
+//   const { userId } = req.params;
+//
+//   try {
+//     // Check if the user exists and is a doctor
+//     const user = await User.findById(userId);
+//     if (!user || user.role !== 'isDoctor') {
+//       return res.status(404).json({
+//         status: 'failed',
+//         message: 'Doctor not found. Please enter a valid doctor userId.',
+//       });
+//     }
+//
+//     // Use the aggregate method to perform a lookup and merge data from both collections
+//     const doctorInfo = await User.aggregate([
+//       // Match the user with the specified userId
+//       { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+//
+//       // Perform a left outer join with the DoctorInfo collection
+//       {
+//         $lookup: {
+//           from: 'doctorinfos',
+//           localField: '_id',
+//           foreignField: 'user',
+//           as: 'doctorInfo',
+//         },
+//       },
+//
+//       // Unwind the doctorInfo array to get a single object
+//       { $unwind: { path: '$doctorInfo', preserveNullAndEmptyArrays: true } },
+//
+//       // Exclude the password field and include other fields
+//       {
+//         $addFields: {
+//           'password': '$$REMOVE', // Exclude the password field
+//           'disease': '$$REMOVE',
+//           'bookedAppointments': '$$REMOVE',
+//           'bookedAppointment': '$$REMOVE',
+//           'isValid': '$$REMOVE',
+//           'status': '$$REMOVE',
+//           'ownedDiseases': '$$REMOVE',
+//           'diseaseData': '$$REMOVE',
+//           //'status': '$$REMOVE',
+//
+//           /// remove from nestd array
+//           'doctorInfo.user.password': '$$REMOVE', // Exclude the password field from nested user
+//           'doctorInfo.user.disease': '$$REMOVE',
+//           'doctorInfo.user.bookedAppointments': '$$REMOVE',
+//           'doctorInfo.user.bookedAppointment': '$$REMOVE',
+//           'doctorInfo.placeOfWork': '$$REMOVE',
+//           //'doctorInfo.availableTimeSlots': '$$REMOVE',
+//           'doctorInfo.appointments': '$$REMOVE',
+//           // Include other fields you need
+//         },
+//       },
+//     ]);
+//
+//     if (!doctorInfo || doctorInfo.length === 0 || !doctorInfo[0].doctorInfo) {
+//       return res.status(404).json({
+//         status: 'failed',
+//         message: 'Doctor information not found.',
+//       });
+//     }
+//
+//     // Return the merged data
+//     return res.status(200).json({
+//       status: 'success',
+//       message: 'Doctor information found.',
+//       data: doctorInfo[0], // doctorInfo is an array, but we know there's only one element
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({
+//       status: 'failed',
+//       message: 'An error occurred while processing your request.',
+//     });
+//   }
+// };
 
 
 
@@ -594,8 +709,7 @@ const fetchDoctorsWithFullInfo = async (req, res) => {
   }
 };
 
-  
-   
+
 
 const removeDoctorRole = async (req, res) => {
   const { userId } = req.params;
@@ -692,5 +806,5 @@ module.exports = {
   updateDoctorInfo,
   updateDoctorAccountInfo,
   viewDoctorInfo,
-  removeDoctorRole
+  removeDoctorRole,
 };
