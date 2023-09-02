@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const doctorController = require("../controllers/doctorController");
+const {viewAllDoctors} = require("../controllers/doctorController");
+
 const { verifyToken, verifyDoctor } = require("../middleware/authMiddleware");
 
 router.get("/", verifyToken, verifyDoctor, (req, res) => {
@@ -27,6 +29,8 @@ router.delete('/delete/:userId', doctorController.deleteDoctor);
 
 ///////VIEW ALL DOCTOR viewDoctorInfo
 router.get("/viewone/:userId", doctorController.viewDoctorInfo);
+
+router.get('/doctors', viewAllDoctors);
 
 ////fetchDoctorsWithFullInfo
 router.get("/doctors", doctorController.fetchDoctorsWithFullInfo);

@@ -506,66 +506,32 @@ const viewDoctorInfo = async (req, res) => {
   }
 };
 
+const viewAllDoctors = async (req, res) => {
+  try {
+    // Find all users with the role 'isDoctor'
+    const doctors = await User.find({ role: 'isDoctor' }).select('-password');
 
-// const viewDoctorInfo = async (req, res) => {
-//   const { userId } = req.params;
-//
-//   try {
-//     // Check if the user exists and is a doctor
-//     const user = await User.findById(userId);
-//
-//     if (!user || user.role !== 'isDoctor') {
-//       return res.status(404).json({
-//         status: 'failed',
-//         message: 'Doctor not found. Please enter a valid doctor userId.',
-//       });
-//     }
-//
-//     // Retrieve the doctor's information along with populated appointments
-//     const doctorInfo = await DoctorInfo.findOne({ user: userId }).populate('appointments');
-//
-//     if (!doctorInfo) {
-//       return res.status(404).json({
-//         status: 'failed',
-//         message: 'Doctor information not found.',
-//       });
-//     }
-//
-//     // Calculate the total number of appointments and booked/unbooked counts
-//     const totalAppointments = doctorInfo.appointments.length;
-//     const totalAppointmentsScheduled = doctorInfo.appointments.filter(appointment => appointment.status === 'Scheduled').length;
-//     const totalAppointmentsBooked = doctorInfo.appointments.filter(appointment => appointment.status === 'Booked').length;
-//     const totalAppointmentsCompleted = doctorInfo.appointments.filter(appointment => appointment.status === 'Completed').length;
-//     const totalAppointmentsCancelled = doctorInfo.appointments.filter(appointment => appointment.status === 'Cancelled').length;
-//
-//     // Exclude the password field from the doctor's user data
-//     const doctorUserData = { ...doctorInfo.user._doc };
-//     delete doctorUserData.password;
-//
-//     // Return the doctorInfo with appointments and additional fields
-//     return res.status(200).json({
-//       status: 'success',
-//       message: 'Doctor information found.',
-//       data: {
-//         ...doctorInfo._doc,
-//         user: doctorUserData,
-//         appointments: doctorInfo.appointments,
-//         total_number_of_appointment: totalAppointments,
-//         total_number_of_appointment_scheduled: totalAppointmentsScheduled,
-//         total_number_of_appointment_booked: totalAppointmentsBooked,
-//         total_number_of_appointment_completed: totalAppointmentsCompleted,
-//         total_number_of_appointment_cancelled: totalAppointmentsCancelled,
-//       },
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({
-//       status: 'failed',
-//       message: 'An error occurred while processing your request.',
-//     });
-//   }
-// };
+    if (!doctors || doctors.length === 0) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'No doctors found.',
+      });
+    }
 
+    // Return the list of doctors
+    return res.status(200).json({
+      status: 'success',
+      message: 'List of doctors found.',
+      data: doctors,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
 
 //////// view full doctor;'s info for one doctor
 // const viewDoctorInfo = async (req, res) => {
@@ -807,4 +773,5 @@ module.exports = {
   updateDoctorAccountInfo,
   viewDoctorInfo,
   removeDoctorRole,
+  viewAllDoctors
 };
