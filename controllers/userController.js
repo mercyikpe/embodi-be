@@ -307,6 +307,73 @@ const viewAllDoctors = async (req, res) => {
 };
 
 
+const viewDoctorAppointmentsByWeek = async (req, res) => {
+  const { doctorId } = req.params; // Get the doctor's ID from the request parameters
+  const { userId } = req.user; // Get the user's ID from the authenticated user (assuming you have user authentication middleware)
+
+  try {
+    // Check if the user exists and is a doctor
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'isUser') {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'User not found or not authorized.',
+      });
+    }
+
+    // Find the doctor's information
+    const doctorInfo = await DoctorInfo.findOne({ user: doctorId });
+    if (!doctorInfo) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'Doctor not found.',
+      });
+    }
+
+    // Calculate the start and end dates for the 7-day intervals
+    const currentDate = new Date();
+    const endDate = new Date(currentDate); // Use the current date as the end date
+    const startDate = new Date(currentDate);
+    startDate.setDate(currentDate.getDate() - 6); // Calculate the start date as 7 days ago
+
+    // Find the doctor's available appointments within the specified date range
+    const availableAppointments = await Appointment.find({
+      doctor: doctorId,
+      date: { $gte: startDate, $lte: endDate },
+      status: 'Scheduled', // Only retrieve available slots
+    });
+
+    // Construct the response with available appointment slots grouped by 7-day intervals
+    const response = {
+      doctorId: doctorInfo.user._id,
+      doctorName: doctorInfo.user.name, // Replace with the actual field for doctor's name
+      startDate,
+      endDate,
+      availableSlots: availableAppointments.map(appointment => ({
+        appointmentId: appointment._id,
+        date: appointment.date, // Add date to the response
+        startTime: appointment.startTime,
+        endTime: appointment.endTime,
+      })),
+    };
+
+    // Return the available appointment slots grouped by 7-day intervals to the user
+    return res.status(200).json({
+      status: 'success',
+      message: 'Doctor appointments found by 7-day intervals.',
+      data: response,
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'An error occurred while processing your request.',
+    });
+  }
+};
+
+
+
 const userController = {
   viewUser, //// route not created for this
   addDiseaseToUser, /////// route not created for this
@@ -330,5 +397,6 @@ module.exports = {
   getAllTheAppUsers,
   getAllUsers,
   getActiveUsers,
-  viewAllDoctors
+  viewAllDoctors,
+  viewDoctorAppointmentsByWeek
 };

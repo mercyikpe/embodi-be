@@ -8,13 +8,10 @@ const transporter = require("../utilities/transporter");
 const mongoose = require("mongoose");
 //const { populateDoctorFields, populatePatientFields } = require('../middleware/populateFields');
 
+
 const createAppointment = async (doctorId, appointments) => {
   try {
-    if (
-      !doctorId ||
-      !Array.isArray(appointments) ||
-      appointments.length === 0
-    ) {
+    if (!doctorId || !Array.isArray(appointments) || appointments.length === 0) {
       return { success: false, message: "Invalid input data" };
     }
 
@@ -35,48 +32,67 @@ const createAppointment = async (doctorId, appointments) => {
         return { success: false, message: "Invalid appointment data" };
       }
 
-      // Check if there's an existing appointment for the same date and time
+      // Check if there's an existing appointment for the same date
       const existingAppointment = await Appointment.findOne({
         doctor: doctorId,
         date,
-        "schedule.startTime": schedule[0].startTime,
       });
 
       if (existingAppointment) {
-        return {
-          success: false,
-          message: "Appointment date and time already exist",
-        };
+        // If an appointment for the same date exists, check for duplicate startTime
+        const duplicateStartTime = schedule.some((newSchedule) =>
+            existingAppointment.schedule.some(
+                (existingSchedule) =>
+                    existingSchedule.startTime === newSchedule.startTime
+            )
+        );
+
+        if (duplicateStartTime) {
+          return {
+            success: false,
+            message: "Duplicate startTime in the same schedule",
+          };
+        }
+
+        // Add the new schedule to the existing appointment
+        existingAppointment.schedule.push(...schedule);
+
+        // Save the updated appointment
+        await existingAppointment.save();
+
+        // Add the updated appointment to the createdAppointments array
+        createdAppointments.push(existingAppointment);
+      } else {
+        // If no appointment for the same date exists, create a new appointment
+        const newAppointment = new Appointment({
+          doctor: doctorId,
+          date,
+          schedule,
+        });
+
+        // Save the new appointment
+        const createdAppointment = await newAppointment.save();
+
+        // Add the appointment's _id to the doctor's appointments array
+        doctor.appointments.push(createdAppointment._id);
+        await doctor.save();
+
+        // Add the created appointment to the createdAppointments array
+        createdAppointments.push(createdAppointment);
       }
-
-      // Create a new appointment associated with the doctor
-      const newAppointment = new Appointment({
-        doctor: doctorId,
-        date,
-        schedule,
-      });
-
-      // Save the new appointment
-      const createdAppointment = await newAppointment.save();
-
-      // Add the appointment's _id to the doctor's appointments array
-      doctor.appointments.push(createdAppointment._id);
-      await doctor.save();
-
-      // Add the created appointment to the array
-      createdAppointments.push(createdAppointment);
     }
 
     return {
       success: true,
-      message: "Appointments created successfully",
+      message: "Appointments created/updated successfully",
       appointments: createdAppointments,
     };
   } catch (error) {
-    console.error("Error creating appointments:", error.message);
+    console.error("Error creating/updating appointments:", error.message);
     return { success: false, message: "Internal server error" };
   }
 };
+
 
 ////// i just suspended this this night 08 21 - 146am
 const createAppointments = async (doctorId, date, appointments) => {
