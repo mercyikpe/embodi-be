@@ -6,12 +6,18 @@ const Patient = require("../models/User");
 const transporter = require("../utilities/transporter");
 //const moment = require('moment');
 const mongoose = require("mongoose");
-//const { populateDoctorFields, populatePatientFields } = require('../middleware/populateFields');
 
+const createAppointmentNotification = require("./doctor/createAppointmentNotification");
+const generateBookingId = require("../utilities/bookingId");
+//const { populateDoctorFields, populatePatientFields } = require('../middleware/populateFields');
 
 const createAppointment = async (doctorId, appointments) => {
   try {
-    if (!doctorId || !Array.isArray(appointments) || appointments.length === 0) {
+    if (
+      !doctorId ||
+      !Array.isArray(appointments) ||
+      appointments.length === 0
+    ) {
       return { success: false, message: "Invalid input data" };
     }
 
@@ -41,10 +47,10 @@ const createAppointment = async (doctorId, appointments) => {
       if (existingAppointment) {
         // If an appointment for the same date exists, check for duplicate startTime
         const duplicateStartTime = schedule.some((newSchedule) =>
-            existingAppointment.schedule.some(
-                (existingSchedule) =>
-                    existingSchedule.startTime === newSchedule.startTime
-            )
+          existingAppointment.schedule.some(
+            (existingSchedule) =>
+              existingSchedule.startTime === newSchedule.startTime
+          )
         );
 
         if (duplicateStartTime) {
@@ -90,263 +96,6 @@ const createAppointment = async (doctorId, appointments) => {
   } catch (error) {
     console.error("Error creating/updating appointments:", error.message);
     return { success: false, message: "Internal server error" };
-  }
-};
-
-
-////// i just suspended this this night 08 21 - 146am
-const createAppointments = async (doctorId, date, appointments) => {
-  try {
-    const doctorInfo = await DoctorInfo.findById(doctorId).populate("user");
-
-    if (!doctorInfo) {
-      return { error: "Doctor not found" };
-    }
-
-    const startTimeFormatted = moment(
-      `${date} ${appointments[0].startTime}`,
-      "YYYY-MM-DD HH:mm"
-    ).toISOString();
-    const endTimeFormatted = moment(
-      `${date} ${appointments[0].endTime}`,
-      "YYYY-MM-DD HH:mm"
-    ).toISOString();
-
-    // Check if the new appointment conflicts with existing appointments
-    const existingAppointments = await Appointment.find({
-      doctor: doctorId,
-      date,
-      "appointments.startTime": { $lt: endTimeFormatted },
-      "appointments.endTime": { $gt: startTimeFormatted },
-    });
-
-    if (existingAppointments.length > 0) {
-      const errors = [];
-      for (const appointment of existingAppointments) {
-        const appointmentStartTime = moment(
-          appointment.appointments[0].startTime,
-          "HH:mm"
-        ).toISOString();
-        const appointmentEndTime = moment(
-          appointment.appointments[0].endTime,
-          "HH:mm"
-        ).toISOString();
-
-        const startTimeOverlaps =
-          moment(startTimeFormatted).isBefore(appointmentEndTime) &&
-          moment(startTimeFormatted).isSameOrAfter(appointmentStartTime);
-        const endTimeOverlaps =
-          moment(endTimeFormatted).isAfter(appointmentStartTime) &&
-          moment(endTimeFormatted).isSameOrBefore(appointmentEndTime);
-
-        if (startTimeOverlaps || endTimeOverlaps) {
-          errors.push({
-            type: "overlapping",
-            message:
-              "The requested time slot overlaps with another appointment.",
-          });
-        }
-      }
-
-      if (errors.length > 0) {
-        return {
-          error: "The requested time slot is not available.",
-          details: errors,
-        };
-      }
-    }
-
-    const appointment = await Appointment.findOneAndUpdate(
-      {
-        doctor: doctorId,
-        date,
-        $nor: [
-          {
-            "appointments.startTime": { $eq: startTimeFormatted },
-          },
-          {
-            "appointments.endTime": { $eq: endTimeFormatted },
-          },
-        ],
-      },
-      {
-        $push: { appointments: appointments[0] },
-      },
-      { new: true }
-    );
-
-    if (!appointment) {
-      const newAppointmentData = {
-        date,
-        doctor: doctorInfo.user,
-        appointments,
-      };
-
-      const newAppointment = new Appointment(newAppointmentData);
-      await newAppointment.save();
-
-      const appointmentId = newAppointment._id;
-
-      // Update the doctor's availableTimeSlots field
-      doctorInfo.availableTimeSlots.push({
-        date,
-        startTime: moment(startTimeFormatted).format("HH:mm"),
-        endTime: moment(endTimeFormatted).format("HH:mm"),
-        status: "Scheduled",
-        //patientId
-      });
-      await doctorInfo.save();
-
-      //// APPOINTMENT ID
-
-      // Get the doctor's email address from the User model
-      const doctorEmail = doctorInfo.user.email;
-      const doctorId = doctorInfo._id;
-      const doctorName = `${doctorInfo.user.firstName} ${doctorInfo.user.lastName}`;
-      const doctorPhone = doctorInfo.user.phoneNumber;
-      const doctorGender = doctorInfo.user.gender;
-      const doctorSpecialty = doctorInfo.specialty;
-      const doctorRate = doctorInfo.rate;
-
-      // Send email to doctor to confirm appointment creation
-      const doctorMailOptions = {
-        from: process.env.AUTH_EMAIL,
-        to: doctorEmail,
-        subject: `Appointment Created For ${doctorName}`,
-        html: `
-          <h1>Appointment Created </h1>
-          <p> Hi ${doctorName}, An appointment has been created for you on ${date} from ${moment(
-          startTimeFormatted
-        ).format("HH:mm")} to ${moment(endTimeFormatted).format("HH:mm")}.</p>
-        `,
-      };
-
-      transporter.sendMail(doctorMailOptions, (error, info) => {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log("Doctor email sent to: " + doctorName, "|", doctorEmail);
-        }
-      });
-
-      const doctorDetails = {
-        appointmentId,
-        doctorId,
-        doctorName,
-        doctorEmail,
-        doctorPhone,
-        doctorGender,
-        doctorSpecialty,
-        doctorRate,
-      };
-
-      return {
-        success: true,
-        appointmentId,
-        appointment: newAppointment,
-        doctorDetails,
-        appointmentId,
-      };
-      console.log(newAppointment, doctorDetails, appointmentId);
-    }
-
-    return { success: true, appointment };
-  } catch (error) {
-    console.error("Error:", error);
-    return {
-      error: "An error occurred while processing the appointment request.",
-    };
-  }
-};
-
-/// recent commentented to test something
-const createAppointmentddd = async (doctorId, date, appointments) => {
-  try {
-    const doctorInfo = await DoctorInfo.findOne({ user: doctorId });
-
-    if (!doctorInfo) {
-      return { error: "Doctor not found" };
-    }
-
-    const startTimeFormatted = moment(
-      `${date} ${appointments[0].startTime}`,
-      "YYYY-MM-DD HH:mm"
-    ).toISOString();
-    const endTimeFormatted = moment(
-      `${date} ${appointments[0].endTime}`,
-      "YYYY-MM-DD HH:mm"
-    ).toISOString();
-
-    // Check if the date already exists in the Appointment collection
-    const existingAppointments = await Appointment.find({
-      doctor: doctorId,
-      date,
-    });
-
-    if (existingAppointments.length === 0) {
-      // The date does not exist, create a new document
-      const newAppointmentData = {
-        date,
-        doctor: doctorInfo.user,
-        appointments,
-      };
-
-      const newAppointment = new Appointment(newAppointmentData);
-      await newAppointment.save();
-
-      // Add the new appointment to the doctor's available time slots
-      const updatedAvailableTimeSlots = doctorInfo.availableTimeSlots.concat({
-        date,
-        startTime: moment(startTimeFormatted).format("HH:mm"),
-        endTime: moment(endTimeFormatted).format("HH:mm"),
-      });
-
-      // Update the doctor's availableTimeSlots field
-      doctorInfo.availableTimeSlots = updatedAvailableTimeSlots;
-      await doctorInfo.save();
-
-      // Get the doctor's email address from the User model
-      const doctorEmail = doctorInfo.user.email;
-
-      // Send email to doctor to confirm appointment creation
-      const doctorMailOptions = {
-        from: process.env.AUTH_EMAIL,
-        to: doctorEmail,
-        subject: "Appointment Created",
-        html: `
-          <h1>Appointment Created</h1>
-          <p>An appointment has been created for you on ${date} from ${moment(
-          startTimeFormatted
-        ).format("HH:mm")} to ${moment(endTimeFormatted).format("HH:mm")}.</p>
-        `,
-      };
-
-      transporter.sendMail(doctorMailOptions, (error, info) => {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log("Doctor email sent: " + info.response);
-        }
-      });
-
-      return { success: true, appointment: newAppointment };
-    } else {
-      // The date exists, find the existing document
-      const existingAppointment = existingAppointments[0];
-
-      // Push the new appointment to the existing document
-      existingAppointment.appointments.push(appointments[0]);
-
-      // Save the updated document
-      await existingAppointment.save();
-
-      return { success: true, appointment: existingAppointment };
-    }
-  } catch (error) {
-    console.error("Error:", error);
-    return {
-      error: "An error occurred while processing the appointment request.",
-    };
   }
 };
 
@@ -421,59 +170,91 @@ const populatePatientFields = async (req, res, next) => {
 };
 
 
-
 const bookAppointment = async (req, res) => {
-  try {
-    const { doctorId, patientId } = req.params;
-    const { appointmentId, startTime } = req.body;
+  const { doctorId, patientId } = req.params;
+  const { appointmentId, startTime } = req.body;
 
-    // Check if the appointment exists
+  try {
+    // Find the doctor
+    const doctor = await User.findById(doctorId);
+
+    if (!doctor || doctor.role !== "isDoctor") {
+      return res.status(404).json({ message: `Doctor not found.` });
+    }
+
+    // Find the patient (user)
+    const patient = await User.findById(patientId).select("firstName lastName");
+
+    if (!patient) {
+      return res.status(404).json({ message: `Account not found.` });
+    }
+
+    // Find the appointment
     const appointment = await Appointment.findById(appointmentId);
 
     if (!appointment) {
-      return res.status(404).json({
-        message: `Appointment with ID ${appointmentId} not found.`,
-      });
+      return res.status(404).json({ message: `Appointment not found.` });
     }
 
-    // Find the schedule entry to book based on startTime
-    const scheduleToBook = appointment.schedule.find(
-        (entry) => entry.startTime === startTime
+    // Check if the specified startTime exists in the appointment's schedule
+    const scheduleSlot = appointment.schedule.find(
+      (slot) => slot.startTime === startTime
     );
 
-    if (!scheduleToBook) {
-      return res.status(404).json({
-        message: `Schedule with startTime ${startTime} not found.`,
-      });
+    if (!scheduleSlot) {
+      return res.status(400).json({ message: "Invalid appointment time." });
     }
 
-    // Check if the schedule is already booked
-    if (scheduleToBook.status === 'Booked') {
-      return res.status(400).json({
-        message: `This schedule is already booked.`,
-      });
+    // Check if the appointment is already booked
+    if (
+      appointment.schedule.some(
+        (slot) => slot.startTime === startTime && slot.status === "Booked"
+      )
+    ) {
+      return res
+        .status(400)
+        .json({ message: "This appointment is already booked." });
     }
 
-    // Update the schedule entry with patient details
-    scheduleToBook.status = 'Booked';
-    scheduleToBook.patient = patientId;
+        // Update the appointment status and assign patientId and bookingId
+    appointment.schedule.forEach((slot) => {
+      if (slot.startTime === startTime) {
+        slot.status = "Booked";
+        slot.patient = patientId;
+        slot.bookingId = generateBookingId();
+      }
+    });
 
-    // Save the appointment with the updated schedule
+        // Save the updated appointment
     await appointment.save();
 
-    // Return only the booked schedule
+    // Call the function to create a notification
+    await createAppointmentNotification(doctorId, patientId, {
+      date: appointment.date, // Pass the 'date' property
+      startTime: startTime, // Pass the appointment startTime
+    });
+
+    // Return the booked appointment details
+    const bookedAppointment = appointment.schedule.find(
+      (slot) => slot.startTime === startTime
+    );
+
     return res.status(200).json({
-      message: 'Appointment booked successfully.',
-      bookedSchedule: scheduleToBook,
+      message: "Appointment booked successfully.",
+      appointment: {
+        _id: appointment._id,
+        date: appointment.date,
+        doctorId: appointment.doctor,
+        bookedAppointment, // Return only the booked appointment details
+      },
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      message: `An error occurred while booking the appointment.`,
-    });
+    return res
+      .status(500)
+      .json({ message: "An error occurred while booking the appointment." });
   }
 };
-
 
 ///////UPDATE  PPOINTMENT
 const updateAppointment = async (req, res) => {

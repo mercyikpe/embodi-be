@@ -47,7 +47,7 @@ const UserSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["isActive", "isInactive", "isBlocked", "isSuspended", "isLimited"],
-      default: "isActive", 
+      default: "isActive",
     },
 
     // ... Other fields ...
@@ -119,6 +119,13 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    notifications: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Notification",
+      },
+    ],
 
     isValid: {
       type: Boolean,

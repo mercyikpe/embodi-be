@@ -16,6 +16,8 @@ const userRoute = require('./routes/user');
 const doctorRoute = require('./routes/doctorRoute');
 const appointmentRoute = require('./routes/appointment');
 const questionaireRoute = require('./routes/questionaire');
+const notificationRoute = require('./routes/notification');
+
 const diseaseRoute = require('./routes/disease');
 
 // Routes middlewares
@@ -27,6 +29,7 @@ app.use('/api/doctor', doctorRoute);
 app.use('/api/appointment', appointmentRoute);
 app.use('/api/questionnaire', questionaireRoute);
 app.use('/api/disease', diseaseRoute);
+app.use("/api/notification", notificationRoute);
 
 
 

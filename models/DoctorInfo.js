@@ -16,6 +16,12 @@ const DoctorInfoSchema = new mongoose.Schema(
         ref: "Appointment",
       },
     ],
+    // notifications: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "Notification",
+    //   },
+    // ],
 
     qualification: {
       type: String,

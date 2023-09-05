@@ -14,6 +14,9 @@ const ScheduleSchema = new mongoose.Schema({
     enum: ["Scheduled", "Booked", "Completed", "Cancelled"],
     default: "Scheduled",
   },
+  bookingId: {
+    type: String,
+  },
   patient: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
