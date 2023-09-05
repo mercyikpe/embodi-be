@@ -45,7 +45,6 @@ router.post("/create/:userId", async (req, res) => {
 
 router.post(
   "/book/:doctorId/:patientId",
-  verifyToken,
   appointmentController.bookAppointment
 );
 

@@ -2,17 +2,18 @@ const express = require("express");
 const router = express.Router();
 
 const { verifyToken, verifyDoctor } = require("../middleware/authMiddleware");
+
 const {singleDoctorNotification, getDoctorNotifications, updateNotificationStatus} = require("../controllers/notification");
 
-router.get("/", verifyToken, verifyDoctor, (req, res) => {
+router.get("/", verifyDoctor, (req, res) => {
   res.send(" Notification SIDE");
 });
 
-router.get("/:doctorId", verifyToken, verifyDoctor, getDoctorNotifications);
+router.get("/:doctorId", verifyDoctor, getDoctorNotifications);
 
-router.get("/:doctorId/:notificationId/details", verifyToken, verifyDoctor, singleDoctorNotification);
+router.get("/:doctorId/:notificationId/details", verifyDoctor, singleDoctorNotification);
 
-router.put("/:doctorId/:notificationId", verifyToken, verifyDoctor, updateNotificationStatus);
+router.put("/:doctorId/:notificationId", verifyDoctor, updateNotificationStatus);
 
 
 module.exports = router;
