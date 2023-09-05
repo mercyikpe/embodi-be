@@ -36,9 +36,9 @@ const verifyToken = async (req, res, next) => {
     });
   }
 
-  const bearer = bearerHeader.split(" ");
-  const bearerToken = bearer[1];
-  req.token = bearerToken;
+  // const bearer = bearerHeader.split(" ");
+  // const bearerToken = bearer[1];
+  req.token = bearerHeader;
 
   try {
     const user = jwt.verify(req.token, process.env.JWT_SEC_KEY);
