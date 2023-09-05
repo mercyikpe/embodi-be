@@ -420,20 +420,14 @@ const populatePatientFields = async (req, res, next) => {
   }
 };
 
+
+
 const bookAppointment = async (req, res) => {
-  const { appointmentId, appointments } = req.body;
-  const patientId = appointments[0].patientId;
-
-  // Generate a new bookingId using the generateBookingId function
-  function generateBookingId() {
-    const min = 1000000000; // Minimum 10-digit number
-    const max = 9999999999; // Maximum 10-digit number
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  const newBookingId = generateBookingId();
-
   try {
+    const { doctorId, patientId } = req.params;
+    const { appointmentId, startTime } = req.body;
+
+    // Check if the appointment exists
     const appointment = await Appointment.findById(appointmentId);
 
     if (!appointment) {
@@ -442,102 +436,36 @@ const bookAppointment = async (req, res) => {
       });
     }
 
-    const foundAppointment = appointment.appointments.find(
-      (appointment) => appointment.startTime === appointments[0].startTime
+    // Find the schedule entry to book based on startTime
+    const scheduleToBook = appointment.schedule.find(
+        (entry) => entry.startTime === startTime
     );
 
-    // Check if foundAppointment is defined
-    if (foundAppointment) {
-      // Check if appointment is already booked
-      if (!foundAppointment.bookingId) {
-        // Generate a new bookingId
-        foundAppointment.newBookingId = newBookingId;
-        foundAppointment.bookingId = newBookingId;
-        foundAppointment.status = "Booked";
-        foundAppointment.patient = patientId;
-
-        // Populate doctor and patient fields using middleware
-        await populateDoctorFields(req, res, async () => {
-          await populatePatientFields(req, res, async () => {
-            const doctorInfo = req.doctor; // Populated doctor details
-            const patient = req.patient;
-
-            // Update the appointment logic here, if needed
-
-            await appointment.save();
-
-            // Find the specific appointment index
-            const appointmentIndex = appointment.appointments.findIndex(
-              (appt) => appt.startTime === foundAppointment.startTime
-            );
-
-            /*
-            // Send email notifications to doctor and patient
-    const doctorMailOptions = {
-      from: process.env.AUTH_EMAIL,
-      to: doctorEmail,
-      subject: 'Appointment Booked',
-      html: `
-        <h1>Appointment Booked</h1>
-        <p> Hi, Dr. ${doctorName}, A Patient ${patient.firstName} ${patient.lastName} has booked an appointment with you  on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
-      `,
-    };
-
-    transporter.sendMail(doctorMailOptions, (error, info) => {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log('Doctor email sent: ' + info.response);
-      }
-    });
-
-    const patientMailOptions = {
-      from: process.env.AUTH_EMAIL,
-      to: patient.email,
-      subject: 'Appointment Booked',
-      html: `
-        <h1> Appointment Succesfully Booked</h1>
-        <p> Hi, ${patient.lastName} You have successfully booked an appointment with Dr. ${doctorName} on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
-      `,
-    };
-
-    transporter.sendMail(patientMailOptions, (error, info) => {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log('Patient email sent: ' + info.response);
-      }
-    });
-
-    */
-
-            // Return the updated appointment model
-            return res.status(200).json({
-              message: `Appointment booked successfully.`,
-              appointment: {
-                _id: appointment._id,
-                date: appointment.date,
-                doctorId: appointment.doctor,
-                appointments: appointment.appointments,
-              },
-              appointmentIndex, // Include the appointmentIndex
-              doctor: doctorInfo,
-              patient,
-            });
-          });
-        });
-      } else {
-        // Appointment is already booked
-        return res.status(400).json({
-          message: `This appointment is already booked.`,
-        });
-      }
-    } else {
-      // Appointment does not exist
+    if (!scheduleToBook) {
       return res.status(404).json({
-        message: `Appointment with startTime ${appointments[0].startTime} does not exist.`,
+        message: `Schedule with startTime ${startTime} not found.`,
       });
     }
+
+    // Check if the schedule is already booked
+    if (scheduleToBook.status === 'Booked') {
+      return res.status(400).json({
+        message: `This schedule is already booked.`,
+      });
+    }
+
+    // Update the schedule entry with patient details
+    scheduleToBook.status = 'Booked';
+    scheduleToBook.patient = patientId;
+
+    // Save the appointment with the updated schedule
+    await appointment.save();
+
+    // Return only the booked schedule
+    return res.status(200).json({
+      message: 'Appointment booked successfully.',
+      bookedSchedule: scheduleToBook,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -546,7 +474,6 @@ const bookAppointment = async (req, res) => {
   }
 };
 
-// ... other code ...
 
 ///////UPDATE  PPOINTMENT
 const updateAppointment = async (req, res) => {

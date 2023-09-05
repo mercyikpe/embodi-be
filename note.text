@@ -1,3 +1,47 @@
+
+// Send email notifications to doctor and patient
+    const doctorMailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: doctorEmail,
+      subject: 'Appointment Booked',
+      html: `
+        <h1>Appointment Booked</h1>
+        <p> Hi, Dr. ${doctorName}, A Patient ${patient.firstName} ${patient.lastName} has booked an appointment with you  on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
+      `,
+    };
+
+    transporter.sendMail(doctorMailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Doctor email sent: ' + info.response);
+      }
+    });
+
+    const patientMailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: patient.email,
+      subject: 'Appointment Booked',
+      html: `
+        <h1> Appointment Succesfully Booked</h1>
+        <p> Hi, ${patient.lastName} You have successfully booked an appointment with Dr. ${doctorName} on ${appointment.date} from ${appointment.timeSlot.startTime} to ${appointment.timeSlot.endTime}.</p>
+      `,
+    };
+
+    transporter.sendMail(patientMailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Patient email sent: ' + info.response);
+      }
+    });
+
+
+
+
+
+
+
 ''  '''''''''''''''''''''''''''''''                                                                                                                                                                                              ' {
     "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
   }
