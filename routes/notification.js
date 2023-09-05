@@ -10,7 +10,7 @@ router.get("/", verifyToken, verifyDoctor, (req, res) => {
 
 router.get("/:doctorId", verifyToken, verifyDoctor, getDoctorNotifications);
 
-router.get("/:doctorId/details", verifyToken, verifyDoctor, singleDoctorNotification);
+router.get("/:doctorId/:notificationId/details", verifyToken, verifyDoctor, singleDoctorNotification);
 
 router.put("/:doctorId/:notificationId", verifyToken, verifyDoctor, updateNotificationStatus);
 

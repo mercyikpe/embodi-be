@@ -2,10 +2,11 @@ const Notification = require("../../models/Notification");
 const User = require("../../models/User");
 const res = require("express");
 
+
 const createAppointmentNotification = async (
-  doctorId,
-  userId,
-  appointmentDetails
+    doctorId,
+    userId,
+    appointmentDetails
 ) => {
   try {
     // Find the doctor and user using their IDs
@@ -16,16 +17,15 @@ const createAppointmentNotification = async (
       return res.status(404).json({ message: "Doctor or user not found" });
     }
 
-    // Construct the notification message with user's first name and last name
-    const message = `${user.firstName} ${user.lastName} has booked an appointment with you.`;
-
-    // Create the notification with appointment date and time
+    // Create the notification with appointment date and time, including sender's and recipient's names
     const notification = new Notification({
-      message,
-      sender: userId, // ID of the user who booked the appointment
-      recipient: doctorId, // ID of the doctor
-      appointmentDate: appointmentDetails.date, // Set the appointment date
-      appointmentTime: appointmentDetails.startTime, // Set the appointment time
+      recipient: doctorId,
+      sender: userId,
+      recipientName: `${doctor.firstName} ${doctor.lastName}`, // Include recipient's name
+      senderName: `${user.firstName} ${user.lastName}`, // Include sender's name
+      status: "unread",
+      appointmentDate: appointmentDetails.date,
+      appointmentTime: appointmentDetails.startTime,
     });
 
     // Save the notification
@@ -41,5 +41,6 @@ const createAppointmentNotification = async (
     throw error;
   }
 };
+
 
 module.exports = createAppointmentNotification;

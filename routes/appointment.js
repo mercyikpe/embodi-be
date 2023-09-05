@@ -3,7 +3,7 @@ const router = express.Router();
 const appointmentController = require("../controllers/appointmentController");
 const {
   createAppointment,
-  bookAppointment,
+  bookAppointment, deleteAppointmentByID,
 } = require("../controllers/appointmentController");
 const {
   verifyToken,
@@ -78,7 +78,7 @@ router.get(
 );
 
 ///DELELTE APPOINTM
-router.delete("/delete/:appointmentId");
+router.delete("/delete/:doctoId/:scheduleId", deleteAppointmentByID);
 
 //FETCH ALL THE  APPOINTMENT FOR ALL THE DOCTORS
 router.get("/viewAll");

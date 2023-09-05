@@ -169,7 +169,6 @@ const populatePatientFields = async (req, res, next) => {
   }
 };
 
-
 const bookAppointment = async (req, res) => {
   const { doctorId, patientId } = req.params;
   const { appointmentId, startTime } = req.body;
@@ -198,34 +197,29 @@ const bookAppointment = async (req, res) => {
 
     // Check if the specified startTime exists in the appointment's schedule
     const scheduleSlot = appointment.schedule.find(
-      (slot) => slot.startTime === startTime
+        (slot) => slot.startTime === startTime
     );
 
     if (!scheduleSlot) {
       return res.status(400).json({ message: "Invalid appointment time." });
     }
 
-    // Check if the appointment is already booked
-    if (
-      appointment.schedule.some(
-        (slot) => slot.startTime === startTime && slot.status === "Booked"
-      )
-    ) {
+    // Check if the appointment slot is already booked
+    if (scheduleSlot.status === "Booked") {
       return res
-        .status(400)
-        .json({ message: "This appointment is already booked." });
+          .status(400)
+          .json({ message: "This appointment slot is already booked." });
     }
 
-        // Update the appointment status and assign patientId and bookingId
-    appointment.schedule.forEach((slot) => {
-      if (slot.startTime === startTime) {
-        slot.status = "Booked";
-        slot.patient = patientId;
-        slot.bookingId = generateBookingId();
-      }
-    });
+    // Create a copy of the original schedule slot status
+    const originalStatus = scheduleSlot.status;
 
-        // Save the updated appointment
+    // Update the schedule slot status, assign patientId and bookingId
+    scheduleSlot.status = "Booked";
+    scheduleSlot.patient = patientId;
+    scheduleSlot.bookingId = generateBookingId();
+
+    // Save the updated appointment
     await appointment.save();
 
     // Call the function to create a notification
@@ -234,10 +228,11 @@ const bookAppointment = async (req, res) => {
       startTime: startTime, // Pass the appointment startTime
     });
 
-    // Return the booked appointment details
-    const bookedAppointment = appointment.schedule.find(
-      (slot) => slot.startTime === startTime
-    );
+    // Only update the appointment status if the booking was successful
+    if (originalStatus !== "Booked") {
+      appointment.status = "Booked";
+      await appointment.save();
+    }
 
     return res.status(200).json({
       message: "Appointment booked successfully.",
@@ -245,16 +240,39 @@ const bookAppointment = async (req, res) => {
         _id: appointment._id,
         date: appointment.date,
         doctorId: appointment.doctor,
-        bookedAppointment, // Return only the booked appointment details
+        bookedAppointment: scheduleSlot, // Return the booked appointment slot
       },
     });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return res
-      .status(500)
-      .json({ message: "An error occurred while booking the appointment." });
+        .status(500)
+        .json({ message: "An error occurred while booking the appointment." });
   }
 };
+
+
+const deleteAppointmentByID = async (req, res) => {
+  const { scheduleId } = req.params;
+
+  try {
+    // Find and delete the appointment by schedule ID
+    const deletedAppointment = await Appointment.findOneAndDelete({ "schedule._id": scheduleId });
+
+    if (!deletedAppointment) {
+      return res.status(404).json({ message: "Appointment not found." });
+    }
+
+    res.status(200).json({ message: "Appointment deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting appointment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+
 
 ///////UPDATE  PPOINTMENT
 const updateAppointment = async (req, res) => {
@@ -736,10 +754,9 @@ module.exports = {
   fetchBookedAppointments,
   fetchCompletedAppointments,
   fetchBookedAppointmentsByDoctor,
-
-  bookAppointment,
   populateDoctorFields,
   populatePatientFields,
+  deleteAppointmentByID
 
   //deleteAppointment,
   //viewAppointments,

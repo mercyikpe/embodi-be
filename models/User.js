@@ -69,16 +69,26 @@ const UserSchema = new mongoose.Schema(
     },
     dob: {
       type: Date,
+      default: "",
     },
     address: {
       type: String,
+      default: "",
     },
     gender: {
       type: String,
+      default: "",
     },
     allergies: {
       type: [String],
     },
+
+    pastAppointments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Appointment", // Reference the Appointment model
+      },
+    ],
 
     disease: [
       {
