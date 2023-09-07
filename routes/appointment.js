@@ -77,7 +77,7 @@ router.get(
 );
 
 ///DELELTE APPOINTM
-router.delete("/delete/:doctoId/:scheduleId", deleteAppointmentByID);
+router.delete("/delete/:doctorId/:scheduleId", deleteAppointmentByID);
 
 //FETCH ALL THE  APPOINTMENT FOR ALL THE DOCTORS
 router.get("/viewAll");
