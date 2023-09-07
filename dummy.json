@@ -1,0 +1,366 @@
+[
+    {
+        "id": 1,
+        "role": "isDoctor",
+        "data": [
+            {
+                "id": 1,
+                "role": "isDoctor",
+                "fullname": "Dr. Benjamin John",
+                "firstName": "Benjamin",
+                "lastName": "John",
+                "title": "Dr",
+                "email": "benjamindurex@gmail.com",
+                "phone": "0812345689",
+                "avatar": "img.png",
+                "qualification": "bsc medi scicene",
+                "medical_specialty": "neurosurgeon",
+                "totalRating": "4.5",
+                "total_number_of_appointment": 20,
+                "total_earnings": 2850,
+                "ratings": {
+                    "5_stars": 32,
+                    "4_Stars": 29,
+                    "3_stars": 32,
+                    "2_Stars": 29,
+                    "1_Stars": 2
+                },
+                "year_of_experinces": 12,
+                "patients": 35,
+                "rate": 67,
+                "account": {
+                    "bankname": "Zenith",
+                    "account_name": "Benjamin Dan",
+                    "Account_Number": "123900883"
+                },
+                "about": "i am doctor benjamin a professor of medicine",
+                "appointment": {
+                    "total_number_of_appointment": 20,
+                    "total_number_of_appointment_book": 15,
+                    "total_number_of_appointment_unbook": 5,
+                    "results": [
+                        {
+                            "id": 1,
+                            "date": "may 12, 2020",
+                            "isCompleted": false,
+                            "schedule": [
+                                {
+                                    "id": 1,
+                                    "startTime": "12 am",
+                                    "endTime": "12 am",
+                                    "isBook": false
+                                },
+                                {
+                                    "id": 2,
+                                    "startTime": "12 am",
+                                    "endTime": "12 am",
+                                    "isBook": true
+                                }
+                            ]
+                        },
+                        {
+                            "id": 2,
+                            "date": "may 12, 2020",
+                            "isCompleted": true,
+                            "schedule": [
+                                {
+                                    "id": 1,
+                                    "startTime": "12 am",
+                                    "endTime": "12 am",
+                                    "isBook": true
+                                }
+                            ]
+                        },
+                        {
+                            "id": 3,
+                            "date": "may 12, 2020",
+                            "isCompleted": true,
+                            "schedule": [
+                                {
+                                    "id": 1,
+                                    "startTime": "12 am",
+                                    "endTime": "12 am",
+                                    "isBook": true
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "notification": {
+                    "notify": true,
+                    "results": [
+                        {
+                            "id": 1,
+                            "date": "may 12, 2020",
+                            "detail": [
+                                {
+                                    "id": 1,
+                                    "title": "Andrew book and appiontment",
+                                    "time": "8 am",
+                                    "patient": {
+                                        "name": "samuel",
+                                        "sex": "male",
+                                        "bob": "20 may, 2030",
+                                        "allergies": [
+                                            "fire",
+                                            "mango"
+                                        ],
+                                        "past_appointment": [
+                                            "depression",
+                                            "insomia"
+                                        ]
+                                    },
+                                    "questionaire": [
+                                        {
+                                            "id": 1,
+                                            "question": "When did it start?",
+                                            "answer": "june 15 2023"
+                                        },
+                                        {
+                                            "id": 2,
+                                            "question": "Most of the time I feel?",
+                                            "answer": "june 15 2023"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "id": 2,
+                            "date": "may 12, 2020",
+                            "detail": [
+                                {
+                                    "id": 1,
+                                    "title": "Andrew book and appiontment",
+                                    "time": "8 am",
+                                    "patient": {
+                                        "name": "samuel",
+                                        "sex": "male",
+                                        "bob": "20 may, 2030",
+                                        "allergies": [
+                                            "fire",
+                                            "mango"
+                                        ],
+                                        "past_appointment": [
+                                            "depression",
+                                            "insomia"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "earnings": {
+                    "total_earnings": 2850,
+                    "results": [
+                        {
+                            "id": 1,
+                            "client": "Andrew Sam",
+                            "dateTime": "5th August 2022 5:30pm",
+                            "amount": 500
+                        },
+                        {
+                            "id": 2,
+                            "client": "David Sam",
+                            "dateTime": "5th August 2022 5:30pm",
+                            "amount": 500
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "id": 1,
+        "role": "isUser",
+        "data": [
+            {
+                "id": 1,
+                "role": "isUser",
+                "fullname": "Allen John",
+                "firstName": "Allen",
+                "lastName": "John",
+                "email": "benjamindurex@gmail.com",
+                "phone": "0812345689",
+                "sex": "male",
+                "dob": "23 march 2020",
+                "avatar": "img.png",
+                "address": "45 obo stry",
+                "allergies": [
+                    "fire",
+                    "mango"
+                ],
+                "past_appointment": [
+                    "insomia",
+                    "depression"
+                ],
+                "number_of_uncompleted_appointment": 2,
+                "number_of_completed_appointment": 2,
+                "isSubriber": true,
+                "subsquire": {
+                    "isSubquire": true,
+                    "plan": "monthly",
+                    "package": "family",
+                    "amount": 200,
+                    "startTime": "12 JAN, 2023",
+                    "expired": "12 Feb, 2023"
+                },
+                "notification": {
+                    "notify": true,
+                    "results": [
+                        {
+                            "id": 1,
+                            "title": "Andrew book and appiontment",
+                            "time": "8 am"
+                        },
+                        {
+                            "id": 2,
+                            "title": "Remember you have an appointment with Dr. Jacob Jones tommorow.",
+                            "time": "8 am"
+                        }
+                    ]
+                },
+                "orders": [
+                    {
+                        "id": 1,
+                        "date": "may 12, 2020",
+                        "schedule": [
+                            {
+                                "id": 1,
+                                "title": "Erectile Dysfunction medication has been prescribed for you"
+                            },
+                            {
+                                "id": 2,
+                                "title": "Remember you have an appointment with Dr. Jacob Jones tommorow."
+                            }
+                        ]
+                    },
+                    {
+                        "id": 2,
+                        "date": "may 12, 2020",
+                        "schedule": [
+                            {
+                                "id": 1,
+                                "title": "Erectile Dysfunction medication has been prescribed for you"
+                            }
+                        ]
+                    },
+                    {
+                        "id": 3,
+                        "date": "may 12, 2020",
+                        "schedule": [
+                            {
+                                "id": 1,
+                                "title": "Depression medication has been prescribed for you"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": 1,
+        "role": "isAdmin",
+        "data": [
+            {
+                "id": 1,
+                "role": "isAdmin",
+                "fullname": "Dr. Benjamin John",
+                "firstName": "Benjamin",
+                "lastName": "John",
+                "email": "benjamindurex@gmail.com",
+                "phone": "0812345689",
+                "avatar": "img.png",
+                "appointment": {
+                    "total_number_of_appointment": 20,
+                    "total_number_of_appointment_book": 15,
+                    "total_number_of_appointment_unbook": 5,
+                    "results": [
+                        {
+                            "id": 1,
+                            "date": "may 12, 2020",
+                            "isCompleted": false,
+                            "title": "Jane Adanna booked an appointment"
+                        },
+                        {
+                            "id": 2,
+                            "date": "may 12, 2020",
+                            "isCompleted": true,
+                            "title": "Jane Adanna booked an appointment"
+                        }
+                        
+                    ]
+                },
+                "questionnaires": {
+                    "total_number_of_questionnaires": 20,
+                    "total_number_of_completed_questionnaires": 15,
+                    "total_number_of_uncompleted_questionnaires": 5,
+                    "results": [
+                        {
+                            "id": 1,
+                            "date": "may 12, 2020",
+                            "isCompleted": false,
+                            "title": "Jane Adanna booked an appointment",
+                            "from": "sam dav"
+                        },
+                        {
+                            "id": 2,
+                            "date": "may 12, 2020",
+                            "isCompleted": true,
+                            "title": "Jane Adanna booked an appointment",
+                            "from": "sam dav"
+                        }
+                        
+                    ]
+                },
+                "doctors":{
+                    "total_number_of_doctors": 10,
+                    "total_number_of_verify_doctors": 10,
+                    "total_number_of_unverify_doctors": 10,
+                    "result": [
+                        {
+                            "id":1,
+                            "fullname":"Dr. Benjamin John",
+                            "email":"benjamindurex@gmail.com",
+                            "phoneNumber": "09345567",
+                            "qualification":"bsc medi scicene",
+                            "specialisation": "Demealogy",
+                            "years_of_experience": 5,
+                            "rate": 67,
+                            "patients":35,
+                            "earnings": 1500
+                        }
+
+                    ]
+
+                },
+                "users":{
+                    "total_number_of_users": 10,
+                    "total_number_of_verify_users": 10,
+                    "total_number_of_unverify_users": 10,
+                    "result": [
+                        {
+                            "id":1,
+                            "fullname":"Dr. Benjamin John",
+                            "email":"benjamindurex@gmail.com",
+                            "phoneNumber": "09345567",
+                            
+                            "address":"24 mbo lane",
+                            "sex": "male",
+                            "dob": "23 march 2020",
+                            "allergies": ["fire", "mango"],
+                            "past_appointment": ["depression", "insomia"]
+                           
+                        }
+
+                    ]
+
+                }
+
+
+            }
+        ]
+    }
+]

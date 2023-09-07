@@ -1,42 +1,53 @@
-// models/Appointment.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+
+const ScheduleSchema = new mongoose.Schema({
+  startTime: {
+    type: String,
+    // required: true,
+  },
+  endTime: {
+    type: String,
+    // required: true,
+  },
+  status: {
+    type: String,
+    enum: ["Scheduled", "Booked", "Completed", "Cancelled"],
+    default: "Scheduled",
+  },
+  bookingId: {
+    type: String,
+  },
+  patient: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    // required: true,
+  },
+});
 
 const AppointmentSchema = new mongoose.Schema(
   {
-    date: {
-      type: Date,
-      required: true,
-    },
-    patient: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "DoctorInfo",
       required: true,
     },
-    timeSlot: {
-      startTime: {
-        type: String,
-        required: true,
-      },
-      endTime: {
-        type: String,
-        required: true,
-      },
+    date: {
+      type: Date,
+      // required: true,
     },
-    status: {
-      type: String,
-      enum: ['scheduled', 'completed', 'cancelled'],
-      default: 'scheduled',
+    schedule: [ScheduleSchema],
+
+    sendAppointmentEmail: {
+      type: Boolean,
+      default: true,
     },
-    // Add more fields as needed for your appointment data
   },
   { timestamps: true }
 );
 
-const Appointment = mongoose.model('Appointment', AppointmentSchema);
+// Add a compound unique index to prevent overlapping appointments on the same date and time
+AppointmentSchema.index({ date: 1, "schedule.startTime": 1 }, { unique: true });
+
+const Appointment = mongoose.model("Appointment", AppointmentSchema);
 
 module.exports = Appointment;

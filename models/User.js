@@ -1,8 +1,19 @@
-
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema(
   {
+    ///// for front end use
+    name: {
+      type: String,
+      //required: true,
+    },
+
+    //////// for user profile update
+    avatar: {
+      type: String,
+      //required: true,
+    },
+
     firstName: {
       type: String,
       required: true,
@@ -19,64 +30,122 @@ const UserSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: String,
-      required: true,
       unique: true,
+      required: true,
+      // sparse: true,
     },
     password: {
       type: String,
       required: true,
     },
-
-    isAdmin: {
-      type: Boolean,
-      default: false,
-    },
-    isDoctor: {
-      type: Boolean,
-      default: false,
+    role: {
+      type: String,
+      enum: ["isUser", "isAdmin", "isDoctor", "isOthers"],
+      default: "isUser", // Default to 'isUser'
     },
 
-    // Additional field to reference DoctorInfo model
-    doctorInfo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'DoctorInfo',
-    },
-    
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
     status: {
       type: String,
-      enum: ['verified', 'unverified'],
-      default: 'unverified',
+      enum: ["isActive", "isInactive", "isBlocked", "isSuspended", "isLimited"],
+      default: "isActive",
+    },
+
+    // ... Other fields ...
+
+    doctorInfo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DoctorInfo",
+    },
+    verifyBadge: {
+      type: Boolean,
+      default: true,
     },
     verified: {
       type: Boolean,
       default: false,
     },
     image: {
-      type: String,  
+      type: String,
     },
     dob: {
-      type: Date
-
+      type: Date,
+      default: "",
     },
     address: {
-      type: String,  
+      type: String,
+      default: "",
     },
     gender: {
-      type: String,  
+      type: String,
+      default: "",
     },
     allergies: {
-      type: [String ] 
+      type: [String],
     },
 
+    pastAppointments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Appointment", // Reference the Appointment model
+      },
+    ],
 
+    disease: [
+      {
+        disease: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Disease",
+        },
+        data: {
+          // Fields to store data specific to the disease
+          // For example: symptoms, treatment, notes, etc.
+        },
+      },
+    ],
+
+    questionaire: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Questionaire",
+    },
+
+    bookedAppointments: [
+      {
+        appointment: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Appointment",
+        },
+        doctorInfo: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "DoctorInfo",
+        },
+        startTime: String,
+        endTime: String,
+        status: String,
+        doctorName: String,
+      },
+    ],
+    ////
+    sendAppointmentEmails: {
+      type: Boolean,
+      default: true,
+    },
+
+    notifications: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Notification",
+      },
+    ],
+
+    isValid: {
+      type: Boolean,
+      default: true,
+    },
   },
+
   { timestamps: true }
 );
 
-const User = mongoose.model('User', UserSchema);
+const User = mongoose.model("User", UserSchema);
 
 module.exports = User;

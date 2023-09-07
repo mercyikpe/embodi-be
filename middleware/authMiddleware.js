@@ -1,168 +1,143 @@
-const express = require('express');
+const express = require("express");
 const app = express();
-const jwt = require('jsonwebtoken');
-const User = require('../models/User')
-const OtpCode = require('../models/OtpCode');
-const cookieParser = require ('cookie-parser');
-const bodyParser = require('body-parser');
-const cookie = require('cookie');
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const User = require("../models/User");
+//onst { AppError } = require('../utilities/createError');
+const OtpCode = require("../models/OtpCode");
+const bodyParser = require("body-parser");
+const cookie = require("cookie");
 //const createError = require('http-errors');
-const createError = require('../utilities/createError');
-const AppError = require('../utilities/createError');
-app.use(cookieParser());
-const dotenv = require('dotenv');
+const createError = require("../utilities/createError");
+const dotenv = require("dotenv");
+
 dotenv.config();
 
+app.use(cookieParser());
+app.use(express.json()); // Middleware to parse JSON request bodies
 
-/*
-const verifyToken = (req, res, next) => {
-  //const token = req.cookies.access_token;  //////// stores cookie in browser
-  const token = req.headers.authorization; /////// Incase of third party request
+class AppError extends Error {
+  constructor(message, statusCode) {
+    super(message);
+    this.statusCode = statusCode;
+    this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
+    this.isOperational = true;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
 
-  if (!token) {
-    return next(createError(401, 'This user is not authenticated'));
+const verifyToken = async (req, res, next) => {
+  const bearerHeader = req.headers["authorization"];
+
+  if (typeof bearerHeader === "undefined") {
+    return res.status(403).json({
+      status: 403,
+      message: "You are not authenticated",
+    });
   }
 
-  jwt.verify(token, process.env.JWT_SEC_KEY, (err, user) => {
-    if (err) {
-      return next(createError(403, 'Token is not valid or expired'));
-    }
+  const bearer = bearerHeader.split(" ");
+  const bearerToken = bearer[1];
+  req.token = bearerToken;
 
+  try {
+    const user = jwt.verify(req.token, process.env.JWT_SEC_KEY);
     req.user = user;
+
     next();
-  });
-};
-*/
-
-
-const verifyToken = (req, res, next) => {
-  const token = req.cookies.access_token;  //////// stores cookie in browser
-  //const token = req.headers.authorization; /////// Incase of third party request
-
-  if (!token) {
-    return next(new AppError(401, 'This user is not authenticated'));
+  } catch (err) {
+    return next(new createError("Token is not valid or expired", 403));
   }
-
-  jwt.verify(token, process.env.JWT_SEC_KEY, (err, user) => {
-    if (err) {
-      return next(new AppError(403, 'Token is not valid or expired'));
-    }
-
-    req.user = user;
-    next();
-  });
 };
 
+const verifyDoctor = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId);
 
-const verifyUser = (req, res, next) => {
-  verifyToken(req, res, (err) => {
-    if (req.user.id === req.params.id || req.user.isAdmin || req.user.isDoctor) {
+    if (user && user.role === "isDoctor") {
+      req.doctorId = user._id; // Save the doctorId as a new request object
       next();
     } else {
-      return next(createError(401, 'You are not authorized'));
+      return next(new AppError("You are not a verified DOCTOR", 401));
     }
-  });
+  } catch (error) {
+    console.error("Middleware Error:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while processing the request." });
+  }
 };
 
-const verifyAdmin = (req, res, next) => {
-  verifyToken(req, res, (err) => {
-    if (req.user.isAdmin) {
+// const verifyAdmin = (req, res, next) => {
+//   verifyToken(req, res, async (err) => {
+//     if (err) {
+//       return next(err);
+//     }
+//
+//     const user = await User.findById(req.user.id);
+//
+//     if (user && (user.role === "isAdmin" || user.role === "isUser")) {
+//       // Use === for strict equality
+//       next();
+//     } else {
+//       return next(new AppError("You are not an ADMIN or USER", 401));
+//     }
+//   });
+// };
+
+const verifyAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId);
+
+    if (user && (user.role === 'isAdmin' || user.role === 'isUser')) {
+      // Use === for strict equality
       next();
     } else {
-      return next(createError(401, 'You are not an ADMIN'));
+      return next(new AppError('You are not an ADMIN or USER', 401));
     }
-  });
+  } catch (error) {
+    console.error('Middleware Error:', error);
+    res.status(500).json({ error: 'An error occurred while processing the request.' });
+  }
 };
 
-const verifyDoctor = (req, res, next) => {
-  verifyToken(req, res, (err) => {
-    if (req.user.isDoctor) {
+const verifyUser = async (req, res, next) => {
+  try {
+    // const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.userId);
+
+    if (user.role === 'isUser') {
+      // Use === for strict equality
       next();
     } else {
-      return next(createError(401, 'You are not a verified DOCTOR'));
+      return next(new AppError('You are not a verified USER', 401));
     }
-  });
+  } catch (error) {
+    console.error("Middleware Error:", error);
+    res.status(500).json({ error: 'An error occurred while processing the request.' });
+  }
 };
+
+// const verifyUser = (req, res, next) => {
+//   verifyToken(req, res, async (err) => {
+//     if (err) {
+//       return next(err);
+//     }
+//
+//     const user = await User.findById(req.user.id);
+//
+//     if (user && user.role === "isUser") {
+//       next();
+//     } else {
+//       return next(new AppError("You are not a verified USER", 401));
+//     }
+//   });
+// };
 
 module.exports = {
+  AppError,
   verifyToken,
   verifyUser,
   verifyAdmin,
   verifyDoctor,
 };
-
-
-
-/**** 
-// Generate a cookie value
-const cookieOptions = {
-  httpOnly: true, // The cookie is accessible only through the HTTP protocol
-  secure: false, // The cookie is sent only over HTTPS
-  maxAge: 3600, // The maximum age of the cookie in seconds (1 hour in this example)
-  sameSite: 'strict', // The cookie is sent only for requests to the same site
-};
-
-const accessToken =  process.env.JWT_SEC_KEY   // token saved on env process.env.JWT_SEC_KEY
-const cookieValue = cookie.serialize('access_token', accessToken, cookieOptions);
-//console.log(cookieValue);
-
-
-const verifyToken = (req, res, next) => {
-  const token = cookieValue;
-
-  if (!token) {
-    return next(createError(401, 'This user is not authenticated'));
-  }
-
-  jwt.verify(token, process.env.JWT_TOKEN, (err, user) => {
-    if (err) {
-      return next(createError(403, 'Token is not valid or expired'));
-    }
-
-    req.user = user;
-    next();
-  });
-};
-
-const verifyUser = (req, res, next) => {
-  verifyToken(req, res, (err) => {
-    if (req.user.id === req.params.id || req.user.isAdmin || req.user.isDoctor) {
-      next();
-    } else {
-      return next(createError(401, 'You are not authorized'));
-    }
-  });
-};
-
-const verifyAdmin = (req, res, next) => {
-  verifyToken(req, res, (err) => {
-    isAdmin = req.body.isAdmin
-    console.log(isAdmin)
-    if (isAdmin = true) {
-      next();
-    } else {
-      return next(createError(401, 'You are not an ADMIN'));
-    }
-  });
-};
-
-const verifyDoctor = (req, res, next) => {
-  verifyToken(req, res, (err) => {
-    if (req.user.isDoctor) {
-      next();
-    } else {
-      return next(createError(401, 'You are not a verified DOCTOR'));
-    }
-  });
-};
-
-
-
-module.exports = {
-  verifyToken,
-  verifyUser,
-  verifyAdmin,
-  verifyDoctor,
-};
-
-*/
