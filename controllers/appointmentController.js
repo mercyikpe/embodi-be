@@ -56,7 +56,7 @@ const createAppointment = async (doctorId, appointments) => {
         if (duplicateStartTime) {
           return {
             success: false,
-            message: "Duplicate startTime in the same schedule",
+            message: "Duplicate startTime in the same day",
           };
         }
 
@@ -94,80 +94,11 @@ const createAppointment = async (doctorId, appointments) => {
       appointments: createdAppointments,
     };
   } catch (error) {
-    console.error("Error creating/updating appointments:", error.message);
-    return { success: false, message: "Internal server error" };
+    // console.error("Error creating/updating appointments:", error.message);
+    return { success: false, message: "Error creating/updating appointments", error };
   }
 };
 
-///////// USER TO BOOK APPOINTMENT
-//const { populateDoctorFields, populatePatientFields } = require('../middleware/populateFields');
-// Middleware to populate doctor and patient details
-const populateDoctorFields = async (req, res, next) => {
-  const { doctorId } = req.params;
-
-  try {
-    const doctor = await DoctorInfo.findById(doctorId).populate("user");
-    if (!doctor) {
-      return res
-        .status(404)
-        .json({ message: `Doctor with ID ${doctorId} not found.` });
-    }
-
-    req.doctor = {
-      id: doctor._id,
-      userIdOfDoctor: doctor.user._id,
-      firstName: doctor.user.firstName,
-      lastName: doctor.user.lastName,
-      doctorEmail: doctor.user.email,
-      gender: doctor.user.gender,
-      role: doctor.user.role,
-      status: doctor.user.status,
-      specialty: doctor.specialty,
-      rate: doctor.rate,
-      // ... add more fields as needed
-    };
-
-    next();
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ message: "An error occurred while populating doctor fields." });
-  }
-};
-
-const populatePatientFields = async (req, res, next) => {
-  const { patientId } = req.params;
-
-  try {
-    const patient = await User.findById(patientId).select(
-      "firstName lastName dob phone email allergies phoneNumber role"
-    );
-    if (!patient) {
-      return res
-        .status(404)
-        .json({ message: `Patient with ID ${patientId} not found.` });
-    }
-
-    req.patient = {
-      id: patient._id,
-      patientName: `${patient.firstName} ${patient.lastName}`,
-      dob: patient.dob,
-      phoneNumber: patient.phone,
-      patientEmail: patient.email,
-      allergies: patient.allergies,
-      role: patient.role,
-      // ... add more fields as needed
-    };
-
-    next();
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ message: "An error occurred while populating patient fields." });
-  }
-};
 
 const bookAppointment = async (req, res) => {
   const { doctorId, patientId } = req.params;
@@ -253,22 +184,103 @@ const bookAppointment = async (req, res) => {
 
 
 const deleteAppointmentByID = async (req, res) => {
-  const { scheduleId } = req.params;
+  const { doctorId, scheduleId } = req.params;
 
   try {
-    // Find and delete the appointment by schedule ID
-    const deletedAppointment = await Appointment.findOneAndDelete({ "schedule._id": scheduleId });
+    // Find the appointment that contains the schedule
+    const appointment = await Appointment.findOne({
+      doctor: doctorId,
+      "schedule._id": scheduleId,
+    });
 
-    if (!deletedAppointment) {
+    if (!appointment) {
       return res.status(404).json({ message: "Appointment not found." });
     }
 
-    res.status(200).json({ message: "Appointment deleted successfully." });
+    // Use the $pull operator to remove the schedule entry by _id
+    await Appointment.updateOne(
+        { _id: appointment._id },
+        { $pull: { schedule: { _id: scheduleId } } }
+    );
+
+    res.status(200).json({ message: "Schedule entry deleted successfully." });
   } catch (error) {
-    console.error("Error deleting appointment:", error);
+    console.error("Error deleting schedule entry:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+///////// USER TO BOOK APPOINTMENT
+//const { populateDoctorFields, populatePatientFields } = require('../middleware/populateFields');
+// Middleware to populate doctor and patient details
+const populateDoctorFields = async (req, res, next) => {
+  const { doctorId } = req.params;
+
+  try {
+    const doctor = await DoctorInfo.findById(doctorId).populate("user");
+    if (!doctor) {
+      return res
+        .status(404)
+        .json({ message: `Doctor with ID ${doctorId} not found.` });
+    }
+
+    req.doctor = {
+      id: doctor._id,
+      userIdOfDoctor: doctor.user._id,
+      firstName: doctor.user.firstName,
+      lastName: doctor.user.lastName,
+      doctorEmail: doctor.user.email,
+      gender: doctor.user.gender,
+      role: doctor.user.role,
+      status: doctor.user.status,
+      specialty: doctor.specialty,
+      rate: doctor.rate,
+      // ... add more fields as needed
+    };
+
+    next();
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred while populating doctor fields." });
+  }
+};
+
+const populatePatientFields = async (req, res, next) => {
+  const { patientId } = req.params;
+
+  try {
+    const patient = await User.findById(patientId).select(
+      "firstName lastName dob phone email allergies phoneNumber role"
+    );
+    if (!patient) {
+      return res
+        .status(404)
+        .json({ message: `Patient with ID ${patientId} not found.` });
+    }
+
+    req.patient = {
+      id: patient._id,
+      patientName: `${patient.firstName} ${patient.lastName}`,
+      dob: patient.dob,
+      phoneNumber: patient.phone,
+      patientEmail: patient.email,
+      allergies: patient.allergies,
+      role: patient.role,
+      // ... add more fields as needed
+    };
+
+    next();
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred while populating patient fields." });
+  }
+};
+
 
 
 
