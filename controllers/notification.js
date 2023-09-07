@@ -2,11 +2,14 @@ const Notification = require("../models/Notification");
 const User = require("../models/User");
 
 const getDoctorNotifications = async (req, res) => {
-  const { doctorId } = req.params;
+  const doctorUserId = req.params.doctorId;
 
   try {
+    if (!doctorUserId) {
+      return res.status(404).json({ message: "Account not a verified doctor." });
+    }
     // Fetch all notifications for the doctor
-    const notifications = await Notification.find({ recipient: doctorId }).sort(
+    const notifications = await Notification.find({ recipient: doctorUserId }).sort(
       { appointmentDate: 1, timestamp: 1 }
     );
 

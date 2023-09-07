@@ -7,7 +7,8 @@ const transporter = require("../utilities/transporter");
 //const moment = require('moment');
 const mongoose = require("mongoose");
 
-const createAppointmentNotification = require("./doctor/createAppointmentNotification");
+const createAppointmentNotification = require("./notifications/doctor/createAppointmentNotification");
+
 const generateBookingId = require("../utilities/bookingId");
 //const { populateDoctorFields, populatePatientFields } = require('../middleware/populateFields');
 
