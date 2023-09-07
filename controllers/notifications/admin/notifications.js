@@ -1,4 +1,3 @@
-const Notifications = require("../../../models/Notification");
 const User = require("../../../models/User");
 
 const getAdminNotifications = async (req, res) => {
