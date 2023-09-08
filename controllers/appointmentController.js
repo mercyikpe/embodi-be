@@ -106,33 +106,44 @@ const bookAppointment = async (req, res) => {
   const { appointmentId, startTime } = req.body;
 
   try {
+    // Find the doctor
     const doctor = await User.findById(doctorId);
+
     if (!doctor || doctor.role !== "isDoctor") {
-      return res.status(404).json({ message: "Doctor not found." });
+      return res.status(404).json({ message: `Doctor not found.` });
     }
 
+    // Find the patient (user)
     const patient = await User.findById(patientId).select("firstName lastName");
+
     if (!patient) {
-      return res.status(404).json({ message: "Patient not found." });
+      return res.status(404).json({ message: `Account not found.` });
     }
 
+    // Find the appointment
     const appointment = await Appointment.findById(appointmentId);
+
     if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found." });
+      return res.status(404).json({ message: `Appointment not found.` });
     }
 
+    // Check if the specified startTime exists in the appointment's schedule
     const scheduleSlot = appointment.schedule.find(
         (slot) => slot.startTime === startTime
     );
 
-    if (!scheduleSlot || scheduleSlot.status === "Booked") {
-      return res.status(400).json({ message: "Invalid appointment slot." });
+    if (!scheduleSlot) {
+      return res.status(400).json({ message: "Invalid appointment time." });
     }
 
-    // Create a copy of the original status
-    const originalStatus = scheduleSlot.status;
+    // Check if the appointment slot is already booked
+    if (scheduleSlot.status === "Booked") {
+      return res
+          .status(400)
+          .json({ message: "This appointment slot is already booked." });
+    }
 
-    // Update the schedule slot
+    // Update the schedule slot status, assign patientId and bookingId
     scheduleSlot.status = "Booked";
     scheduleSlot.patient = patientId;
     scheduleSlot.bookingId = generateBookingId();
@@ -140,21 +151,11 @@ const bookAppointment = async (req, res) => {
     // Save the updated appointment
     await appointment.save();
 
-    // Create a notification
-    const notification = await createAppointmentNotification(
-        doctorId,
-        patientId,
-        {
-          date: appointment.date,
-          startTime: startTime,
-        }
-    );
-
-    // Update appointment status only if booking was successful
-    if (originalStatus !== "Booked") {
-      appointment.status = "Booked";
-      await appointment.save();
-    }
+    // Call the function to create a notification
+    await createAppointmentNotification(doctorId, patientId, {
+      date: appointment.date, // Pass the 'date' property
+      startTime: startTime, // Pass the appointment startTime
+    });
 
     return res.status(200).json({
       message: "Appointment booked successfully.",
@@ -162,14 +163,18 @@ const bookAppointment = async (req, res) => {
         _id: appointment._id,
         date: appointment.date,
         doctorId: appointment.doctor,
-        bookedAppointment: scheduleSlot,
+        bookedAppointment: scheduleSlot, // Return the booked appointment slot
       },
     });
   } catch (error) {
-    console.error("Error booking appointment:", error);
-    return res.status(500).json({ message: "An error occurred while booking the appointment." });
+    // Handle errors as needed
+    console.error(error);
+    return res
+        .status(500)
+        .json({ message: "An error occurred while booking the appointment." });
   }
 };
+
 
 
 const bookAppointments = async (req, res) => {

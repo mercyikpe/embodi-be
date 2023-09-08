@@ -24,8 +24,8 @@ const createAppointmentNotification = async (
 
     // Create the notification for the doctor
     const doctorNotification = new Notification({
-      // recipient: doctorId,
-      // sender: userId,
+      recipient: doctorId,
+      sender: userId,
       recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(
         doctor.lastName
       )}`,
@@ -54,8 +54,8 @@ const createAppointmentNotification = async (
     if (admin) {
       // Create the notification for the admin
       const adminNotification = new Notification({
-        // recipient: admin._id,
-        // sender: userId,
+        recipient: admin._id,
+        sender: userId,
         recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(doctor.lastName)}`,
         senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords( user.lastName )}`,
         message: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)} booked an appointment`,
@@ -73,8 +73,8 @@ const createAppointmentNotification = async (
     if (user) {
       // Create the notification for the user
       const userNotification = new Notification({
-        // recipient: user._id,
-        // sender: userId,
+        recipient: user._id,
+        sender: userId,
         recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(doctor.lastName)}`,
         senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)}`,
         message: `You have scheduled an appointment with Dr. ${capitalizeWords(doctor.firstName)} ${capitalizeWords(doctor.lastName)}`,
