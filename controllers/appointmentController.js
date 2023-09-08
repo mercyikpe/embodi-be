@@ -151,6 +151,7 @@ const bookAppointment = async (req, res) => {
     // Save the updated appointment
     await appointment.save();
 
+
     // Call the function to create a notification
     await createAppointmentNotification(doctorId, patientId, {
       date: appointment.date, // Pass the 'date' property
