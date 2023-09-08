@@ -106,6 +106,77 @@ const bookAppointment = async (req, res) => {
   const { appointmentId, startTime } = req.body;
 
   try {
+    const doctor = await User.findById(doctorId);
+    if (!doctor || doctor.role !== "isDoctor") {
+      return res.status(404).json({ message: "Doctor not found." });
+    }
+
+    const patient = await User.findById(patientId).select("firstName lastName");
+    if (!patient) {
+      return res.status(404).json({ message: "Patient not found." });
+    }
+
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found." });
+    }
+
+    const scheduleSlot = appointment.schedule.find(
+        (slot) => slot.startTime === startTime
+    );
+
+    if (!scheduleSlot || scheduleSlot.status === "Booked") {
+      return res.status(400).json({ message: "Invalid appointment slot." });
+    }
+
+    // Create a copy of the original status
+    const originalStatus = scheduleSlot.status;
+
+    // Update the schedule slot
+    scheduleSlot.status = "Booked";
+    scheduleSlot.patient = patientId;
+    scheduleSlot.bookingId = generateBookingId();
+
+    // Save the updated appointment
+    await appointment.save();
+
+    // Create a notification
+    const notification = await createAppointmentNotification(
+        doctorId,
+        patientId,
+        {
+          date: appointment.date,
+          startTime: startTime,
+        }
+    );
+
+    // Update appointment status only if booking was successful
+    if (originalStatus !== "Booked") {
+      appointment.status = "Booked";
+      await appointment.save();
+    }
+
+    return res.status(200).json({
+      message: "Appointment booked successfully.",
+      appointment: {
+        _id: appointment._id,
+        date: appointment.date,
+        doctorId: appointment.doctor,
+        bookedAppointment: scheduleSlot,
+      },
+    });
+  } catch (error) {
+    console.error("Error booking appointment:", error);
+    return res.status(500).json({ message: "An error occurred while booking the appointment." });
+  }
+};
+
+
+const bookAppointments = async (req, res) => {
+  const { doctorId, patientId } = req.params;
+  const { appointmentId, startTime } = req.body;
+
+  try {
     // Find the doctor
     const doctor = await User.findById(doctorId);
 
@@ -131,7 +202,6 @@ const bookAppointment = async (req, res) => {
     const scheduleSlot = appointment.schedule.find(
         (slot) => slot.startTime === startTime
     );
-
     if (!scheduleSlot) {
       return res.status(400).json({ message: "Invalid appointment time." });
     }
@@ -154,27 +224,56 @@ const bookAppointment = async (req, res) => {
     // Save the updated appointment
     await appointment.save();
 
-    // Call the function to create a notification
-    await createAppointmentNotification(doctorId, patientId, {
-      date: appointment.date, // Pass the 'date' property
-      startTime: startTime, // Pass the appointment startTime
-    });
+    // Check if the schedule slot status was successfully updated to "Booked"
+    if (scheduleSlot.status === "Booked") {
+      // Call the function to create a notification
+      await createAppointmentNotification(doctorId, patientId, {
+        date: appointment.date, // Pass the 'date' property
+        startTime: startTime, // Pass the appointment startTime
+      });
 
-    // Only update the appointment status if the booking was successful
-    if (originalStatus !== "Booked") {
+      // Update the appointment status to "Booked"
       appointment.status = "Booked";
+      // Save the updated appointment
       await appointment.save();
+
+      return res.status(200).json({
+        message: "Appointment booked successfully.",
+        appointment: {
+          _id: appointment._id,
+          date: appointment.date,
+          doctorId: appointment.doctor,
+          bookedAppointment: scheduleSlot, // Return the booked appointment slot
+        },
+      });
+    } else {
+      // Handle the case where the schedule slot status was not updated
+      return res.status(500).json({
+        message: "An error occurred while booking the appointment.",
+      });
     }
 
-    return res.status(200).json({
-      message: "Appointment booked successfully.",
-      appointment: {
-        _id: appointment._id,
-        date: appointment.date,
-        doctorId: appointment.doctor,
-        bookedAppointment: scheduleSlot, // Return the booked appointment slot
-      },
-    });
+    // // Call the function to create a notification
+    // await createAppointmentNotification(doctorId, patientId, {
+    //   date: appointment.date, // Pass the 'date' property
+    //   startTime: startTime, // Pass the appointment startTime
+    // });
+    //
+    // // Only update the appointment status if the booking was successful
+    // if (originalStatus !== "Booked") {
+    //   appointment.status = "Booked";
+    //   await appointment.save();
+    // }
+    //
+    // return res.status(200).json({
+    //   message: "Appointment booked successfully.",
+    //   appointment: {
+    //     _id: appointment._id,
+    //     date: appointment.date,
+    //     doctorId: appointment.doctor,
+    //     bookedAppointment: scheduleSlot, // Return the booked appointment slot
+    //   },
+    // });
   } catch (error) {
     // console.error(error);
     return res

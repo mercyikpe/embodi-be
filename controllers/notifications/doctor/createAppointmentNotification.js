@@ -1,30 +1,40 @@
 const Notification = require("../../../models/Notification");
 const User = require("../../../models/User");
 const res = require("express");
-const {capitalizeWords} = require("../../../utilities/format");
-
+const { capitalizeWords } = require("../../../utilities/format");
 
 const createAppointmentNotification = async (
-    doctorId,
-    userId,
-    appointmentDetails
+  doctorId,
+  userId,
+  appointmentDetails
 ) => {
   try {
     // Find the doctor and user using their IDs
     const doctor = await User.findById(doctorId);
-    const user = await User.findById(userId);
 
-    if (!doctor || !user) {
-      return res.status(404).json({ message: "Doctor or user not found" });
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Create the notification for the doctor
     const doctorNotification = new Notification({
-      recipient: doctorId,
-      sender: userId,
-      recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(doctor.lastName)}`,
-      senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)}`,
-      message: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)} booked an appointment`,
+      // recipient: doctorId,
+      // sender: userId,
+      recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(
+        doctor.lastName
+      )}`,
+      senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(
+        user.lastName
+      )}`,
+      message: `${capitalizeWords(user.firstName)} ${capitalizeWords(
+        user.lastName
+      )} booked an appointment`,
       status: "unread",
       appointmentDate: appointmentDetails.date,
       appointmentTime: appointmentDetails.startTime,
@@ -37,17 +47,18 @@ const createAppointmentNotification = async (
     doctor.notifications.push(doctorNotification._id);
     await doctor.save();
 
-    // Find the admin user (you'll need to define how to identify the admin user)
+
+    // Find the admin user
     const admin = await User.findOne({ role: "isAdmin" });
 
     if (admin) {
       // Create the notification for the admin
       const adminNotification = new Notification({
-        recipient: admin._id,
-        sender: userId,
-        recipientName: "Admin", // You can customize this as needed
-        senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)}`,
-        message: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)} performed an action`,
+        // recipient: admin._id,
+        // sender: userId,
+        recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(doctor.lastName)}`,
+        senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords( user.lastName )}`,
+        message: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)} booked an appointment`,
         status: "unread",
       });
 
@@ -59,35 +70,29 @@ const createAppointmentNotification = async (
       await admin.save();
     }
 
-    return doctorNotification;
+    if (user) {
+      // Create the notification for the user
+      const userNotification = new Notification({
+        // recipient: user._id,
+        // sender: userId,
+        recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(doctor.lastName)}`,
+        senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)}`,
+        message: `You have scheduled an appointment with Dr. ${capitalizeWords(doctor.firstName)} ${capitalizeWords(doctor.lastName)}`,
+        status: "unread",
+      });
 
-    // Create the notification with appointment date and time, including sender's and recipient's names
-    // const notification = new Notification({
-    //   recipient: doctorId,
-    //   sender: userId,
-    //   recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(doctor.lastName)}`, // Include recipient's name
-    //   senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)}`, // Include sender's name
-    //   // recipientName: `${doctor.firstName} ${doctor.lastName}`, // Include recipient's name
-    //   // senderName: `${user.firstName} ${user.lastName}`, // Include sender's name
-    //   message: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)} booked an appointment`,
-    //   status: "unread",
-    //   appointmentDate: appointmentDetails.date,
-    //   appointmentTime: appointmentDetails.startTime,
-    // });
-    //
-    // // Save the notification
-    // await notification.save();
-    //
-    // // Update the doctor's notifications array
-    // doctor.notifications.push(notification._id);
-    // await doctor.save();
-    //
-    // return notification;
+      // Save the notification for the user
+      await userNotification.save();
+
+      // Update the user's notifications array
+      user.notifications.push(userNotification._id);
+      await user.save();
+    }
+
+    return doctorNotification;
   } catch (error) {
-    // Handle errors as needed
     throw error;
   }
 };
-
 
 module.exports = createAppointmentNotification;
