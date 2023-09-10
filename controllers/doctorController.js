@@ -1,12 +1,10 @@
-const User = require('../models/User');
-const DoctorInfo = require('../models/DoctorInfo');
-const transporter = require('../utilities/transporter');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const mongoose = require('mongoose');
+const User = require("../models/User");
+const DoctorInfo = require("../models/DoctorInfo");
+const transporter = require("../utilities/transporter");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
 //const DoctorInfo = require('../models/DoctorInfo');
-
-
 
 // Function to sign up a user as a doctor
 const signUpAsDoctors = async (req, res) => {
@@ -16,10 +14,10 @@ const signUpAsDoctors = async (req, res) => {
     // Check if the user making the request is an admin
     const adminUser = await User.findById(adminUserId);
 
-    if (!adminUser || adminUser.role !== 'isAdmin') {
+    if (!adminUser || adminUser.role !== "isAdmin") {
       return res.status(403).json({
-        status: 'failed',
-        message: 'You do not have permission to sign up doctors.',
+        status: "failed",
+        message: "You do not have permission to sign up doctors.",
       });
     }
 
@@ -28,34 +26,34 @@ const signUpAsDoctors = async (req, res) => {
 
     if (user) {
       // If the user exists, update their role to 'isDoctor' and save the user
-      user.role = 'isDoctor';
+      user.role = "isDoctor";
       await user.save();
 
       // Send an email notifying the user that they are now a doctor
       const mailOptions = {
-        from: 'Your Email <youremail@gmail.com>',
+        from: "Your Email <youremail@gmail.com>",
         to: email,
-        subject: 'Congratulations! You are now a doctor',
-        html: '<p>You have been verified as a doctor.</p>',
+        subject: "Congratulations! You are now a doctor",
+        html: "<p>You have been verified as a doctor.</p>",
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          console.log('Error sending verification email:', error);
+          console.log("Error sending verification email:", error);
         } else {
-          console.log('Verification email sent:', info.response);
+          console.log("Verification email sent:", info.response);
         }
       });
 
       return res.json({
         status: 200,
-        message: 'Doctor created successfully.',
+        message: "Doctor created successfully.",
       });
     } else {
       // If the user does not exist, create a new user with role 'isDoctor'
       const doctor = new User({
         email,
-        role: 'isDoctor',
+        role: "isDoctor",
       });
 
       await doctor.save();
@@ -64,41 +62,39 @@ const signUpAsDoctors = async (req, res) => {
       const verificationToken = jwt.sign(
         { email },
         process.env.JWT_SEC_KEY, // mine is stored in env
-        { expiresIn: '10h' }
+        { expiresIn: "10h" }
       );
 
       const verificationLink = `http://emboimentapp.com/verify-doctor?token=${verificationToken}`;
 
       const mailOptions = {
-        from: 'Your Email <youremail@gmail.com>',
+        from: "Your Email <youremail@gmail.com>",
         to: email,
-        subject: 'Verify Your Doctor Account',
+        subject: "Verify Your Doctor Account",
         html: `<p>Please click the link below to verify your doctor account:</p><a href="${verificationLink}">${verificationLink}</a>`,
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          console.log('Error sending verification email:', error);
+          console.log("Error sending verification email:", error);
         } else {
-          console.log('Verification email sent:', info.response);
+          console.log("Verification email sent:", info.response);
         }
       });
 
       return res.json({
         status: 200,
-        message: 'Verification email sent. Please verify your doctor account.',
+        message: "Verification email sent. Please verify your doctor account.",
       });
     }
   } catch (error) {
-    console.log('Error signing up as doctor:', error);
+    console.log("Error signing up as doctor:", error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while processing your request.',
+      status: "failed",
+      message: "An error occurred while processing your request.",
     });
   }
 };
-
-
 
 /////SIGNIN DOCTOR
 const doctorSignin = async (req, res, next) => {
@@ -209,7 +205,6 @@ const doctorSignin = async (req, res, next) => {
   }
 };
 
-
 /////////SIGN UP DOCTOR. This is not in use
 const signUpAsDoctor = async (req, res) => {
   const { email, adminUserId } = req.body;
@@ -217,8 +212,8 @@ const signUpAsDoctor = async (req, res) => {
   // Check if the request body contains the required fields
   if (!email || !adminUserId) {
     return res.status(400).json({
-      status: 'failed',
-      message: 'Please provide the email and adminUserId in the request body.',
+      status: "failed",
+      message: "Please provide the email and adminUserId in the request body.",
     });
   }
 
@@ -227,10 +222,10 @@ const signUpAsDoctor = async (req, res) => {
     const adminUser = await User.findById(adminUserId);
 
     // Check if the user exists and is an admin
-    if (!adminUser || !adminUser.role.includes('isAdmin')) {
+    if (!adminUser || !adminUser.role.includes("isAdmin")) {
       return res.status(403).json({
-        status: 'failed',
-        message: 'You do not have permission to sign up doctors.',
+        status: "failed",
+        message: "You do not have permission to sign up doctors.",
       });
     }
 
@@ -239,42 +234,42 @@ const signUpAsDoctor = async (req, res) => {
 
     if (user) {
       // If the user exists, check if they are already a doctor
-      if (user.role.includes('isDoctor')) {
+      if (user.role.includes("isDoctor")) {
         return res.json({
           status: 200,
-          message: 'The user is already registered as a doctor.',
+          message: "The user is already registered as a doctor.",
         });
       } else {
         // If the user exists but is not a doctor, update their role to 'isDoctor' and save the user
-        user.role.push('isDoctor');
+        user.role.push("isDoctor");
         await user.save();
 
         // Send an email notifying the user that they are now a doctor
         const mailOptions = {
           from: process.env.AUTH_EMAIL,
           to: email,
-          subject: 'Congratulations! You are now a doctor',
-          html: '<p>You have been verified as a doctor. Kindly login to your account to update your information.</p>',
+          subject: "Congratulations! You are now a doctor",
+          html: "<p>You have been verified as a doctor. Kindly login to your account to update your information.</p>",
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
-            console.log('Error sending verification email:', error);
+            console.log("Error sending verification email:", error);
           } else {
-            console.log('Verification email sent:', info.response);
+            console.log("Verification email sent:", info.response);
           }
         });
 
         return res.json({
           status: 200,
-          message: 'Doctor created successfully.',
+          message: "Doctor created successfully.",
         });
       }
     } else {
       // If the user does not exist, create a new user and set their role to 'isDoctor'
       const doctor = new User({
         email,
-        role: ['isDoctor'],
+        role: ["isDoctor"],
       });
 
       await doctor.save();
@@ -283,7 +278,7 @@ const signUpAsDoctor = async (req, res) => {
       const verificationToken = jwt.sign(
         { email },
         process.env.JWT_SEC_KEY, // Replace with secret key// mine is stored in .env
-        { expiresIn: '1h' }
+        { expiresIn: "1h" }
       );
 
       const verificationLink = `http://https://embodie.vercel.app//verifyDoctor?token=${verificationToken}`;
@@ -291,28 +286,28 @@ const signUpAsDoctor = async (req, res) => {
       const mailOptions = {
         from: process.env.AUTH_EMAIL,
         to: email,
-        subject: 'Verify Your Doctor Account',
+        subject: "Verify Your Doctor Account",
         html: `<p>Please click the link below to verify your doctor account:</p><a href="${verificationLink}">${verificationLink}</a>`,
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          console.log('Error sending verification email:', error);
+          console.log("Error sending verification email:", error);
         } else {
-          console.log('Verification email sent:', info.response);
+          console.log("Verification email sent:", info.response);
         }
       });
 
       return res.json({
         status: 200,
-        message: 'Verification email sent. Please verify your doctor account.',
+        message: "Verification email sent. Please verify your doctor account.",
       });
     }
   } catch (error) {
-    console.log('Error signing up as doctor:', error);
+    console.log("Error signing up as doctor:", error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while processing your request.',
+      status: "failed",
+      message: "An error occurred while processing your request.",
     });
   }
 };
@@ -323,10 +318,10 @@ const updateDoctorInfo = async (req, res, next) => {
 
   try {
     const user = await User.findById(userId);
-    if (!user || user.role !== 'isDoctor') {
+    if (!user || user.role !== "isDoctor") {
       return res.status(403).json({
-        status: 'failed',
-        message: 'User not found or is not authorized as a doctor.',
+        status: "failed",
+        message: "User not found or is not authorized as a doctor.",
       });
     }
 
@@ -341,11 +336,9 @@ const updateDoctorInfo = async (req, res, next) => {
       allergies: req.body.allergies,
     };
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      userUpdateData,
-      { new: true }
-    );
+    const updatedUser = await User.findByIdAndUpdate(userId, userUpdateData, {
+      new: true,
+    });
 
     const doctorUpdateData = {
       qualification: req.body.qualification,
@@ -363,19 +356,18 @@ const updateDoctorInfo = async (req, res, next) => {
     );
 
     return res.status(200).json({
-      status: 'success',
-      message: 'DoctorInfo and User updated successfully.',
+      status: "success",
+      message: "DoctorInfo and User updated successfully.",
       data: { doctorInfo: updatedDoctorInfo, user: updatedUser },
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while processing your request.',
+      status: "failed",
+      message: "An error occurred while processing your request.",
     });
   }
 };
-
 
 ////// update doctors account information
 const updateDoctorAccountInfo = async (req, res, next) => {
@@ -383,10 +375,10 @@ const updateDoctorAccountInfo = async (req, res, next) => {
 
   try {
     const user = await User.findById(userId);
-    if (!user || user.role !== 'isDoctor') {
+    if (!user || user.role !== "isDoctor") {
       return res.status(403).json({
-        status: 'failed',
-        message: 'User not found or is not authorized as a doctor.',
+        status: "failed",
+        message: "User not found or is not authorized as a doctor.",
       });
     }
 
@@ -403,19 +395,18 @@ const updateDoctorAccountInfo = async (req, res, next) => {
     );
 
     return res.status(200).json({
-      status: 'success',
-      message: 'Doctor Account information updated successfully.',
+      status: "success",
+      message: "Doctor Account information updated successfully.",
       data: updatedDoctorAccountInfo,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while processing your request.',
+      status: "failed",
+      message: "An error occurred while processing your request.",
     });
   }
 };
-
 
 ///// view doctorinfo only using userId
 const viewDoctor = async (req, res, next) => {
@@ -423,17 +414,17 @@ const viewDoctor = async (req, res, next) => {
 
   try {
     // Find the user by ID and check if they have the 'isDoctor' role
-    const user = await User.findById(userId).populate('doctorInfo');
-    if (!user || user.role !== 'isDoctor') {
+    const user = await User.findById(userId).populate("doctorInfo");
+    if (!user || user.role !== "isDoctor") {
       return res.status(403).json({
-        status: 'failed',
-        message: 'User not found or is not authorized as a doctor.',
+        status: "failed",
+        message: "User not found or is not authorized as a doctor.",
       });
     }
 
     return res.status(200).json({
-      status: 'success',
-      message: 'Doctor information found.',
+      status: "success",
+      message: "Doctor information found.",
       data: {
         user,
         doctorInfo: user.doctorInfo || null,
@@ -442,12 +433,11 @@ const viewDoctor = async (req, res, next) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while processing your request.',
+      status: "failed",
+      message: "An error occurred while processing your request.",
     });
   }
 };
-
 
 const viewDoctorInfo = async (req, res) => {
   const { userId } = req.params;
@@ -456,36 +446,44 @@ const viewDoctorInfo = async (req, res) => {
     // Check if the user exists and is a doctor
     const user = await User.findById(userId);
 
-    if (!user || user.role !== 'isDoctor') {
+    if (!user || user.role !== "isDoctor") {
       return res.status(404).json({
-        status: 'failed',
-        message: 'Doctor not found. Please enter a valid doctor userId.',
+        status: "failed",
+        message: "Doctor not found. Please enter a valid doctor userId.",
       });
     }
 
     // Retrieve the doctor's information along with populated appointments and user data
     const doctorInfo = await DoctorInfo.findOne({ user: userId })
-        .populate('appointments')
-        .populate('user', '-password'); // Exclude the password field from the user data
+      .populate("appointments")
+      .populate("user", "-password"); // Exclude the password field from the user data
 
     if (!doctorInfo) {
       return res.status(404).json({
-        status: 'failed',
-        message: 'Doctor information not found.',
+        status: "failed",
+        message: "Doctor information not found.",
       });
     }
 
     // Calculate the total number of appointments and booked/unbooked counts
     const totalAppointments = doctorInfo.appointments.length;
-    const totalAppointmentsScheduled = doctorInfo.appointments.filter(appointment => appointment.status === 'Scheduled').length;
-    const totalAppointmentsBooked = doctorInfo.appointments.filter(appointment => appointment.status === 'Booked').length;
-    const totalAppointmentsCompleted = doctorInfo.appointments.filter(appointment => appointment.status === 'Completed').length;
-    const totalAppointmentsCancelled = doctorInfo.appointments.filter(appointment => appointment.status === 'Cancelled').length;
+    const totalAppointmentsScheduled = doctorInfo.appointments.filter(
+      (appointment) => appointment.status === "Scheduled"
+    ).length;
+    const totalAppointmentsBooked = doctorInfo.appointments.filter(
+      (appointment) => appointment.status === "Booked"
+    ).length;
+    const totalAppointmentsCompleted = doctorInfo.appointments.filter(
+      (appointment) => appointment.status === "Completed"
+    ).length;
+    const totalAppointmentsCancelled = doctorInfo.appointments.filter(
+      (appointment) => appointment.status === "Cancelled"
+    ).length;
 
     // Return the doctorInfo with appointments and additional fields
     return res.status(200).json({
-      status: 'success',
-      message: 'Doctor information found.',
+      status: "success",
+      message: "Doctor information found.",
       data: {
         ...doctorInfo._doc,
         user: doctorInfo.user,
@@ -500,8 +498,70 @@ const viewDoctorInfo = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while processing your request.',
+      status: "failed",
+      message: "An error occurred while processing your request.",
+    });
+  }
+};
+
+
+// Controller to add or update a user's rating for a doctor
+const rateDoctor = async (req, res) => {
+  const { doctorId, userId } = req.params;
+  const { starRating } = req.body;
+
+  try {
+    // Find the user
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Find the doctor
+    const doctor = await DoctorInfo.findById(doctorId);
+
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found." });
+    }
+
+    // Check if the user has already rated this doctor
+    const existingRating = doctor.ratings.find(
+      (rating) => rating.user.toString() === userId
+    );
+
+    if (existingRating) {
+      // User has already rated the doctor, update the rating
+      existingRating.rating = starRating;
+    } else {
+      // User is rating the doctor for the first time
+      doctor.ratings.push({ user: userId, rating: starRating });
+    }
+
+    // Recalculate the average rating
+    const totalRatings = doctor.ratings.length;
+    const totalRatingSum = doctor.ratings.reduce(
+      (sum, rating) => sum + rating.rating,
+      0
+    );
+    const averageRating = totalRatingSum / (totalRatings || 1); // Avoid division by zero
+
+    // Update the doctor's ratings fields
+    doctor.averageRating = averageRating;
+    doctor.totalRatings = totalRatings;
+    doctor.totalRatingSum = totalRatingSum;
+
+    // Save the updated doctor info
+    await doctor.save();
+
+    return res.status(200).json({
+      message: "Doctor rated successfully.",
+      rating: averageRating,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "An error occurred while rating the doctor.",
     });
   }
 };
@@ -587,34 +647,29 @@ const viewDoctorInfo = async (req, res) => {
 //   }
 // };
 
-
-
-
-
-
 const fetchDoctorsWithFullInfo = async (req, res) => {
   try {
     // Use the aggregate pipeline to perform a lookup between User and DoctorInfo models
     const doctors = await User.aggregate([
       {
         // Match only users with the role 'isDoctor'
-        $match: { role: 'isDoctor' }
+        $match: { role: "isDoctor" },
       },
       {
         // Perform a left outer join with DoctorInfo model using the 'user' field
         $lookup: {
-          from: 'doctorinfos', // The collection name for DoctorInfo model
-          localField: '_id',
-          foreignField: 'user',
-          as: 'doctorInfo'
-        }
+          from: "doctorinfos", // The collection name for DoctorInfo model
+          localField: "_id",
+          foreignField: "user",
+          as: "doctorInfo",
+        },
       },
       {
         // Unwind the 'doctorInfo' array to get individual doctor information
         $unwind: {
-          path: '$doctorInfo',
-          preserveNullAndEmptyArrays: true // Handle the case where a doctor may not have DoctorInfo
-        }
+          path: "$doctorInfo",
+          preserveNullAndEmptyArrays: true, // Handle the case where a doctor may not have DoctorInfo
+        },
       },
       {
         // Project only the fields you need from both User and DoctorInfo models
@@ -624,32 +679,30 @@ const fetchDoctorsWithFullInfo = async (req, res) => {
           lastName: 1,
           email: 1,
           phoneNumber: 1,
-          qualification: { $ifNull: ['$doctorInfo.qualification', null] },
-          placeOfWork: { $ifNull: ['$doctorInfo.placeOfWork', null] },
-          specialty: { $ifNull: ['$doctorInfo.specialty', null] },
-          yearOfExperience: { $ifNull: ['$doctorInfo.yearOfExperience', null] },
-          rate: { $ifNull: ['$doctorInfo.rate', null] },
-          bio: { $ifNull: ['$doctorInfo.bio', null] }
+          qualification: { $ifNull: ["$doctorInfo.qualification", null] },
+          placeOfWork: { $ifNull: ["$doctorInfo.placeOfWork", null] },
+          specialty: { $ifNull: ["$doctorInfo.specialty", null] },
+          yearOfExperience: { $ifNull: ["$doctorInfo.yearOfExperience", null] },
+          rate: { $ifNull: ["$doctorInfo.rate", null] },
+          bio: { $ifNull: ["$doctorInfo.bio", null] },
           // Add more fields as needed from both User and DoctorInfo models
-        }
-      }
+        },
+      },
     ]);
 
     return res.status(200).json({
-      status: 'success',
-      message: 'Doctors information fetched successfully.',
+      status: "success",
+      message: "Doctors information fetched successfully.",
       data: doctors,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while fetching doctors information.',
+      status: "failed",
+      message: "An error occurred while fetching doctors information.",
     });
   }
 };
-
-
 
 const removeDoctorRole = async (req, res) => {
   const { userId } = req.params;
@@ -660,37 +713,36 @@ const removeDoctorRole = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: 'failed',
-        message: 'User not found. Please enter a valid user ID.',
+        status: "failed",
+        message: "User not found. Please enter a valid user ID.",
       });
     }
 
     // Check if the user has the role 'isDoctor'
-    if (user.role === 'isDoctor') {
+    if (user.role === "isDoctor") {
       // Update the user's role to 'isUser'
-      user.role = 'isUser';
+      user.role = "isUser";
       await user.save();
 
       return res.status(200).json({
-        status: 'success',
-        message: 'Doctor role removed successfully.',
+        status: "success",
+        message: "Doctor role removed successfully.",
         data: user,
       });
     } else {
       return res.status(400).json({
-        status: 'failed',
-        message: 'The user is not a doctor.',
+        status: "failed",
+        message: "The user is not a doctor.",
       });
     }
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while processing your request.',
+      status: "failed",
+      message: "An error occurred while processing your request.",
     });
   }
 };
-
 
 ///// DELETE DOCTOR TOTALLY FROM THE SYSTEM
 const deleteDoctor = async (req, res) => {
@@ -702,13 +754,13 @@ const deleteDoctor = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: 'failed',
-        message: 'User not found. Please enter a valid user ID.',
+        status: "failed",
+        message: "User not found. Please enter a valid user ID.",
       });
     }
 
     // Check if the user has the role 'isDoctor'
-    if (user.role === 'isDoctor') {
+    if (user.role === "isDoctor") {
       // Delete the user and associated DoctorInfo
       await Promise.all([
         User.findByIdAndDelete(userId),
@@ -716,25 +768,23 @@ const deleteDoctor = async (req, res) => {
       ]);
 
       return res.status(200).json({
-        status: 'success',
-        message: 'Doctor user and associated DoctorInfo deleted successfully.',
+        status: "success",
+        message: "Doctor user and associated DoctorInfo deleted successfully.",
       });
     } else {
       return res.status(400).json({
-        status: 'failed',
-        message: 'The user is not a doctor.',
+        status: "failed",
+        message: "The user is not a doctor.",
       });
     }
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while processing your request.',
+      status: "failed",
+      message: "An error occurred while processing your request.",
     });
   }
 };
-
-    
 
 module.exports = {
   fetchDoctorsWithFullInfo,
@@ -746,5 +796,6 @@ module.exports = {
   updateDoctorInfo,
   updateDoctorAccountInfo,
   viewDoctorInfo,
-  removeDoctorRole
+  removeDoctorRole,
+  rateDoctor,
 };

@@ -11,7 +11,8 @@ const UserSchema = new mongoose.Schema(
     //////// for user profile update
     avatar: {
       type: String,
-      //required: true,
+      // default: "public/images/default.png",
+      default: "",
     },
 
     firstName: {
@@ -50,12 +51,6 @@ const UserSchema = new mongoose.Schema(
       default: "isActive",
     },
 
-    // ... Other fields ...
-
-    doctorInfo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "DoctorInfo",
-    },
     verifyBadge: {
       type: Boolean,
       default: true,
@@ -83,6 +78,10 @@ const UserSchema = new mongoose.Schema(
       type: [String],
     },
 
+    doctorInfo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DoctorInfo",
+    },
     pastAppointments: [
       {
         type: mongoose.Schema.Types.ObjectId,

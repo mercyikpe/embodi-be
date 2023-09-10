@@ -36,6 +36,11 @@ router.get("/doctors", doctorController.fetchDoctorsWithFullInfo);
 //// remove doctor and keep as user removeDoctorRole
 router.put("/removedoctor/:userId", doctorController.removeDoctorRole);
 
+//// rate a doctor
+router.put("/:doctorId/rate/:userId", doctorController.rateDoctor);
+
+
+
 ////fetchDoctor detils by id
 const { populateDoctorFields } = require("../middleware/populateFields");
 

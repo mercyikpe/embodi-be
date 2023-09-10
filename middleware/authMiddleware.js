@@ -52,7 +52,9 @@ const verifyToken = async (req, res, next) => {
 
 const verifyDoctor = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.userId);
+    const user = req.params.id;
+
+    // const user = await User.findById(req.user.userId);
 
     if (user && user.role === "isDoctor") {
       req.doctorId = user._id; // Save the doctorId as a new request object

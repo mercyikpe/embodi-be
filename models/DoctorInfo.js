@@ -16,12 +16,6 @@ const DoctorInfoSchema = new mongoose.Schema(
         ref: "Appointment",
       },
     ],
-    // notifications: [
-    //   {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "Notification",
-    //   },
-    // ],
 
     qualification: {
       type: String,
@@ -39,6 +33,8 @@ const DoctorInfoSchema = new mongoose.Schema(
       type: Number,
       // required: true,
     },
+
+    // rate fee of the doctor
     rate: {
       type: Number,
       // required: true,
@@ -47,6 +43,32 @@ const DoctorInfoSchema = new mongoose.Schema(
       type: String,
       //required: true,
     },
+
+    // Fields for calculating ratings
+    ratings: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        rating: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
+
+    totalRatings: {
+      type: Number,
+      default: 0,
+    },
+
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
+
     // Bank information fields for doctors
     bankName: {
       type: String,
