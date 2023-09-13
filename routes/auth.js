@@ -25,13 +25,13 @@ router.post('/requestotp', authController.requestOTP);
 router.post('/verifyotp', authController.verifyOTP);
 
 // Protected route that requires token verification
-router.get('/protected', verifyToken, (req, res) => {
+router.get('/protected', (req, res) => {
     // This route will only be accessible if the token is valid
     // The user's information is available in req.user
     res.json({ message: 'You have access to this protected route!', user: req.user });
   });
 
-  router.post('/logout', verifyToken, async (req, res) => {
+  router.post('/logout', async (req, res) => {
     try {
       // Invalidate the access token and refresh token
       await User.findByIdAndUpdate(req.user.id, {
@@ -47,7 +47,7 @@ router.get('/protected', verifyToken, (req, res) => {
     }
   });
 
-  router.post('/refresh', verifyToken, async (req, res) => {
+  router.post('/refresh', async (req, res) => {
     try {
       // Get the refresh token from the request body
       const refreshToken = req.body.refreshToken;

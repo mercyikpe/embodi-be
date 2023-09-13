@@ -45,7 +45,7 @@ router.get('/doctors', viewAllDoctors);
 
 
 ///// UPDATE USER  PASSWORD
-router.post('/changePassword', verifyToken,  requestNewPassword.changePassword);
+router.post('/changePassword',  requestNewPassword.changePassword);
 
 
 ///////USER RESET PASSWORD STARTS HERE
