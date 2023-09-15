@@ -31,20 +31,20 @@ const DiseaseSchema = new mongoose.Schema({
   // },
 
   // Array of questionnaires related to the disease
-  questionnaire: [{
-    _id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Questionnaire',
-    },
-    question: {
-      type: String,
-      required: true,
-    },
-    answer: {
-      type: String,
-      required: true,
-    },
-  }],
+  // questionnaire: [{
+  //   _id: {
+  //     type: mongoose.Schema.Types.ObjectId,
+  //     ref: 'Questionnaire',
+  //   },
+  //   question: {
+  //     type: String,
+  //     required: true,
+  //   },
+  //   answer: {
+  //     type: String,
+  //     required: true,
+  //   },
+  // }],
 
   // Reference to the User who has this disease
   //  user: {

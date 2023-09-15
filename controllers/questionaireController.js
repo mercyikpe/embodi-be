@@ -1,15 +1,17 @@
-const Disease = require('../models/Disease');
-const Questionnaire = require('../models/Questionnaire.js'); // Make sure the filename is correct
-const mongoose = require('mongoose');
-const validateBeforeSave = require('../middleware/validate')
+const Disease = require("../models/Disease");
+const User = require("../models/User.js"); // Make sure the filename is correct
+const Questionnaire = require("../models/Questionnaire.js"); // Make sure the filename is correct
+const questionnaireNotification = require("./notifications/admin/questionnaireNotification");
 
-/*
+///////CREATE QUESTIONNAIRE USING DISEASE ID
 const createQuestionnaireForDisease = async (req, res) => {
   try {
-    const {question, answer, diseaseId} = req.body;
+    const { diseaseId, questionsAndAnswers } = req.body;
+    const { userId } = req.params;
 
-    // First, check if the diseaseId exists
+    // Find the disease based on the provided diseaseId
     const disease = await Disease.findById(diseaseId);
+
     if (!disease) {
       return res.status(404).json({
         status: 'failed',
@@ -17,55 +19,79 @@ const createQuestionnaireForDisease = async (req, res) => {
       });
     }
 
-    // Create a new questionnaire instance
-    const questionnaire = new Questionnaire({
-      question,
-      answer,
+    const questionnaireData = {
       diseaseId,
-    });
+      questionsAndAnswers,
+      user: userId, // Associate the questionnaire with the user
+    };
 
-    // Validate the questionnaire
-    if (!questionnaire.validate()) {
-      return res.status(400).json({
-        status: 'failed',
-        message: 'Questionnaire is not valid.',
-      });
-    }
-
-    // Save the questionnaire to the database
+    const questionnaire = new Questionnaire(questionnaireData);
     await questionnaire.save();
 
-    // Append the questionnaire to the disease
-    disease.questionnaire.push(questionnaire._id);
+    // Use the disease title in the notification
+    const diseaseTitle = disease.title;
 
-    // Save the disease to the database
-    await disease.save();
+    // Call the function to create a notification for all admin users
+    await questionnaireNotification(userId, { diseaseTitle });
 
-    // Return the `data` object
-    const data = {
-      _id: questionnaire._id,
-      questionnaire: [],
-      "__v": 0
-    };
+    // Add the questionnaire to the user's past consultations
+    const user = await User.findById(userId);
+    if (user) {
+      user.pastConsultation.push(questionnaire._id);
+      await user.save();
+    }
 
     return res.status(201).json({
       status: 'success',
       message: 'Questionnaire created successfully.',
-      data,
+      data: questionnaire, // Include the questionnaire data in the response
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({
       status: 'failed',
       message: 'An error occurred while creating the questionnaire.',
     });
   }
 };
-*/
-///////CREATE QUESTIONNAIRE USING DISEASE ID
-const createQuestionnaireForDisease = async (req, res) => {
+
+
+
+// const createQuestionnaireForDisease = async (req, res) => {
+//   try {
+//     const { diseaseId, questionsAndAnswers } = req.body;
+//
+//     const questionnaireData = {
+//       diseaseId,
+//       questionsAndAnswers,
+//     };
+//
+//     const questionnaire = new Questionnaire(questionnaireData);
+//     await questionnaire.save();
+//
+//     // Call the function to create a notification
+//     await questionnaireNotification(adminId, userId, {
+//       diseaseName: diseaseTitle, // Pass the disease title
+//     });
+//
+//     return res.status(201).json({
+//       status: 'success',
+//       message: 'Questionnaire created successfully.',
+//       data: questionnaire, // Include the questionnaire data in the response
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       status: 'failed',
+//       message: 'An error occurred while creating the questionnaire.',
+//     });
+//   }
+// };
+
+
+const createQuestionnaireForDiseases = async (req, res) => {
   try {
-    const {question, answer, diseaseId} = req.body;
+    const { question, answer, diseaseId } = req.body;
 
     // First, create a new questionnaire instance
     const questionnaire = new Questionnaire({
@@ -81,23 +107,22 @@ const createQuestionnaireForDisease = async (req, res) => {
     const data = {
       _id: questionnaire._id,
       questionnaire: [],
-      "__v": 0
+      __v: 0,
     };
 
     return res.status(201).json({
-      status: 'success',
-      message: 'Questionnaire created successfully.',
+      status: "success",
+      message: "Questionnaire created successfully.",
       data,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while creating the questionnaire.',
+      status: "failed",
+      message: "An error occurred while creating the questionnaire.",
     });
   }
 };
-
 
 ///// VIEW QUESIONNAIRE AND DISEASE
 // controllers/questionnaireController.js
@@ -112,8 +137,9 @@ const viewQuestionnaireWithDisease = async (req, res) => {
     // Check if the questionnaire exists
     if (!questionnaire) {
       return res.status(404).json({
-        status: 'failed',
-        message: 'Questionnaire not found. Please enter a valid questionnaireId.',
+        status: "failed",
+        message:
+          "Questionnaire not found. Please enter a valid questionnaireId.",
       });
     }
 
@@ -122,8 +148,8 @@ const viewQuestionnaireWithDisease = async (req, res) => {
 
     // Return the questionnaire and associated disease data
     return res.status(200).json({
-      status: 'success',
-      message: 'Questionnaire and associated disease retrieved successfully.',
+      status: "success",
+      message: "Questionnaire and associated disease retrieved successfully.",
       data: {
         questionnaire,
         disease,
@@ -132,8 +158,9 @@ const viewQuestionnaireWithDisease = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while retrieving the questionnaire and associated disease.',
+      status: "failed",
+      message:
+        "An error occurred while retrieving the questionnaire and associated disease.",
     });
   }
 };
@@ -158,31 +185,21 @@ const viewAllDiseasesWithQuestionnaires = async (req, res) => {
     }));
 
     return res.status(200).json({
-      status: 'success',
-      message: 'Diseases and associated questionnaires retrieved successfully.',
+      status: "success",
+      message: "Diseases and associated questionnaires retrieved successfully.",
       data: diseasesWithQuestionnaires,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while fetching diseases and questionnaires.',
+      status: "failed",
+      message: "An error occurred while fetching diseases and questionnaires.",
     });
   }
 };
 
-
-
-
-
-
-
-
-
 module.exports = {
   createQuestionnaireForDisease,
   viewQuestionnaireWithDisease,
-  viewAllDiseasesWithQuestionnaires
-
- 
+  viewAllDiseasesWithQuestionnaires,
 };

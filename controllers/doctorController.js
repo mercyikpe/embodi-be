@@ -556,7 +556,7 @@ const rateDoctor = async (req, res) => {
 
     return res.status(200).json({
       message: "Doctor rated successfully.",
-      rating: averageRating,
+      // rating: averageRating,
     });
   } catch (error) {
     console.error(error);
@@ -565,87 +565,6 @@ const rateDoctor = async (req, res) => {
     });
   }
 };
-
-
-//////// view full doctor;'s info for one doctor
-// const viewDoctorInfo = async (req, res) => {
-//   const { userId } = req.params;
-//
-//   try {
-//     // Check if the user exists and is a doctor
-//     const user = await User.findById(userId);
-//     if (!user || user.role !== 'isDoctor') {
-//       return res.status(404).json({
-//         status: 'failed',
-//         message: 'Doctor not found. Please enter a valid doctor userId.',
-//       });
-//     }
-//
-//     // Use the aggregate method to perform a lookup and merge data from both collections
-//     const doctorInfo = await User.aggregate([
-//       // Match the user with the specified userId
-//       { $match: { _id: new mongoose.Types.ObjectId(userId) } },
-//
-//       // Perform a left outer join with the DoctorInfo collection
-//       {
-//         $lookup: {
-//           from: 'doctorinfos',
-//           localField: '_id',
-//           foreignField: 'user',
-//           as: 'doctorInfo',
-//         },
-//       },
-//
-//       // Unwind the doctorInfo array to get a single object
-//       { $unwind: { path: '$doctorInfo', preserveNullAndEmptyArrays: true } },
-//
-//       // Exclude the password field and include other fields
-//       {
-//         $addFields: {
-//           'password': '$$REMOVE', // Exclude the password field
-//           'disease': '$$REMOVE',
-//           'bookedAppointments': '$$REMOVE',
-//           'bookedAppointment': '$$REMOVE',
-//           'isValid': '$$REMOVE',
-//           'status': '$$REMOVE',
-//           'ownedDiseases': '$$REMOVE',
-//           'diseaseData': '$$REMOVE',
-//           //'status': '$$REMOVE',
-//
-//           /// remove from nestd array
-//           'doctorInfo.user.password': '$$REMOVE', // Exclude the password field from nested user
-//           'doctorInfo.user.disease': '$$REMOVE',
-//           'doctorInfo.user.bookedAppointments': '$$REMOVE',
-//           'doctorInfo.user.bookedAppointment': '$$REMOVE',
-//           'doctorInfo.placeOfWork': '$$REMOVE',
-//           //'doctorInfo.availableTimeSlots': '$$REMOVE',
-//           'doctorInfo.appointments': '$$REMOVE',
-//           // Include other fields you need
-//         },
-//       },
-//     ]);
-//
-//     if (!doctorInfo || doctorInfo.length === 0 || !doctorInfo[0].doctorInfo) {
-//       return res.status(404).json({
-//         status: 'failed',
-//         message: 'Doctor information not found.',
-//       });
-//     }
-//
-//     // Return the merged data
-//     return res.status(200).json({
-//       status: 'success',
-//       message: 'Doctor information found.',
-//       data: doctorInfo[0], // doctorInfo is an array, but we know there's only one element
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(500).json({
-//       status: 'failed',
-//       message: 'An error occurred while processing your request.',
-//     });
-//   }
-// };
 
 const fetchDoctorsWithFullInfo = async (req, res) => {
   try {

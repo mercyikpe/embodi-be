@@ -16,7 +16,6 @@ const createAppointmentNotification = async (
       return res.status(404).json({ message: "Doctor not found" });
     }
 
-
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -38,6 +37,7 @@ const createAppointmentNotification = async (
       status: "unread",
       appointmentDate: appointmentDetails.date,
       appointmentTime: appointmentDetails.startTime,
+      notificationType: "appointment",
     });
 
     // Save the notification for the doctor
@@ -47,19 +47,26 @@ const createAppointmentNotification = async (
     doctor.notifications.push(doctorNotification._id);
     await doctor.save();
 
-
     // Find the admin user
-    const admin = await User.findOne({ role: "isAdmin" });
+    // Find all users with the role "admin"
+    const admin = await User.find({ role: "isAdmin" });
 
     if (admin) {
       // Create the notification for the admin
       const adminNotification = new Notification({
         recipient: admin._id,
         sender: userId,
-        recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(doctor.lastName)}`,
-        senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords( user.lastName )}`,
-        message: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)} booked an appointment`,
+        recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(
+          doctor.lastName
+        )}`,
+        senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(
+          user.lastName
+        )}`,
+        message: `${capitalizeWords(user.firstName)} ${capitalizeWords(
+          user.lastName
+        )} booked an appointment`,
         status: "unread",
+        notificationType: "appointment",
       });
 
       // Save the notification for the admin
@@ -75,10 +82,17 @@ const createAppointmentNotification = async (
       const userNotification = new Notification({
         recipient: user._id,
         sender: userId,
-        recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(doctor.lastName)}`,
-        senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(user.lastName)}`,
-        message: `You have scheduled an appointment with Dr. ${capitalizeWords(doctor.firstName)} ${capitalizeWords(doctor.lastName)}`,
+        recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(
+          doctor.lastName
+        )}`,
+        senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(
+          user.lastName
+        )}`,
+        message: `You have scheduled an appointment with Dr. ${capitalizeWords(
+          doctor.firstName
+        )} ${capitalizeWords(doctor.lastName)}`,
         status: "unread",
+        notificationType: "appointment",
       });
 
       // Save the notification for the user

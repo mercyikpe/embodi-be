@@ -8,7 +8,7 @@ router.get('/', (req, res)=>{
 })
 
 // // Add questions to a questionnaire using disease id
-router.post('/add/:diseaseId', diseaseController.createQuestionnaireForDisease);
+router.post('/add/:userId/:diseaseId', diseaseController.createQuestionnaireForDisease);
 
 
 /////// view for full information for disease and questionaire using questionre id

@@ -7,7 +7,7 @@ const NotificationSchema = new mongoose.Schema({
     required: true,
   },
   recipientName: {
-    type: String, // Add a field for recipient's name
+    type: String,
   },
   message: {
     type: String,
@@ -19,7 +19,16 @@ const NotificationSchema = new mongoose.Schema({
     required: true,
   },
   senderName: {
-    type: String, // Add a field for sender's name
+    type: String,
+  },
+  diseaseTitle: {
+    type: String,
+  },
+  notificationType: {
+    type: String,
+    enum: ["appointment", "questionnaire"],
+    default: 'appointment',
+    // required: true,
   },
   status: {
     type: String,

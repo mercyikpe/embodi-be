@@ -88,24 +88,30 @@ const UserSchema = new mongoose.Schema(
         ref: "Appointment", // Reference the Appointment model
       },
     ],
-
-    disease: [
+    pastConsultation: [
       {
-        disease: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Disease",
-        },
-        data: {
-          // Fields to store data specific to the disease
-          // For example: symptoms, treatment, notes, etc.
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Questionnaire", // Reference the Questionnaire model
       },
     ],
 
-    questionaire: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Questionaire",
-    },
+    // disease: [
+    //   {
+    //     disease: {
+    //       type: mongoose.Schema.Types.ObjectId,
+    //       ref: "Disease",
+    //     },
+    //     data: {
+    //       // Fields to store data specific to the disease
+    //       // For example: symptoms, treatment, notes, etc.
+    //     },
+    //   },
+    // ],
+
+    // questionaire: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Questionaire",
+    // },
 
     bookedAppointments: [
       {
