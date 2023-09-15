@@ -13,8 +13,10 @@ const {
   verifyAdmin,
 } = require("../middleware/authMiddleware");
 const patient = require("../models/User");
-const {markAppointmentAsCompleted} = require("../controllers/doctor/appointment");
-
+const {
+  markAppointmentAsCompleted,
+  completedAndUpcomingAppointments, getBookedAndCompletedAppointments,
+} = require("../controllers/doctor/appointment");
 
 router.use(express.json());
 
@@ -47,7 +49,10 @@ router.post("/create/:userId", async (req, res) => {
   }
 });
 
-router.post("/book/:doctorId/:patientId", appointmentController.bookAppointment);
+router.post(
+  "/book/:doctorId/:patientId",
+  appointmentController.bookAppointment
+);
 
 //FETCH ALL THE BOOKED APPOINTMENT FOR ALL THE DOCTORS
 router.get("/bookedAppointment", appointmentController.fetchBookedAppointments);
@@ -70,16 +75,19 @@ router.get(
 router.get("/getAppointmentById/:appointmentId");
 
 //// get scheduled appointmet getDoctorScheduledAppointments
-router.get("/scheduledAppointment/:doctorId", appointmentController.getDoctorScheduledAppointments);
+router.get(
+  "/scheduledAppointment/:doctorId",
+  appointmentController.getDoctorScheduledAppointments
+);
 
 router.delete("/delete/:doctorId/:scheduleId", deleteAppointmentByID);
 
-router.patch("/completed/:doctorId/:appointmentId/:scheduleId",  markAppointmentAsCompleted);
+router.patch(
+  "/completed/:doctorId/:appointmentId/:scheduleId",
+  markAppointmentAsCompleted
+);
 
-///// SORT APPOINTMENT BY DATE FOR INDIVIDUAL DOCTOR
-// router.get("/sortbydate/:doctorId");
-
-////// getCompletedAppointmentsForDoctor GET ALL COMPLETED APPOINTMENT FOR EACH DOCTOR (ASIN ONE DOTOR SEEING ALL HIS APPOINTMENT)
-// router.get("/viewCompleted/:doctorId");
+// router.get("/completed-upcoming/:doctorId", completedAndUpcomingAppointments);
+router.get("/completed-upcoming/:doctorId", getBookedAndCompletedAppointments);
 
 module.exports = router;
