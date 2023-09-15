@@ -6,6 +6,8 @@ const diseaseController = require('../controllers/diseaseController');
 const { createDisease } = require('../controllers/diseaseController')
 const { verifyToken, verifyDoctor , verifyUser, verifyAdmin} = require('../middleware/authMiddleware');
 
+const upload = require("../middleware/diseasePhoto");
+
 router.get('/', (req, res)=>{
     res.send('  DISEASES IS SHOWS UP HERE')
 }
@@ -14,7 +16,7 @@ router.get('/', (req, res)=>{
 
 
 // CREATE DISEASE 
-router.post('/createdisease', diseaseController.createDiseases);
+router.post('/createdisease', upload.single('photo'),  diseaseController.createDiseases);
 
 //UPDATE DISEASE   ///// put disease ID
 router.put('/update/:diseaseId', diseaseController.updateDisease);
@@ -25,12 +27,16 @@ router.get('/viewAll', diseaseController.getDiseases);
 /// view popular 
 router.get('/viewPopular', diseaseController.getPopularDiseases);
 
+router.delete('/delete/:diseaseId', diseaseController.handleDiseaseDelete);
 
-/////// view diseas  with hifgest enagement
+/////// view disease  with highest engagement
 router.get('/mostengaged', diseaseController.getDiseaseWithHighestEngagement);
 
 ///// get questionaire with questionnaire id viewQuestionnaireWithDisease
 router.get('/viewqandd', diseaseController.viewQuestionnaireWithDisease);
+
+//// VIEW ALL DISEASES
+router.get('/:diseaseId', diseaseController.updateDisease);
 
 
 

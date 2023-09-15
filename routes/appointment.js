@@ -3,7 +3,8 @@ const router = express.Router();
 const appointmentController = require("../controllers/appointmentController");
 const {
   createAppointment,
-  bookAppointment, deleteAppointmentByID,
+  bookAppointment,
+  deleteAppointmentByID,
 } = require("../controllers/appointmentController");
 const {
   verifyToken,
@@ -12,6 +13,9 @@ const {
   verifyAdmin,
 } = require("../middleware/authMiddleware");
 const patient = require("../models/User");
+const {markAppointmentAsCompleted} = require("../controllers/doctor/appointment");
+
+
 router.use(express.json());
 
 router.get("/", (req, res) => {
@@ -43,10 +47,7 @@ router.post("/create/:userId", async (req, res) => {
   }
 });
 
-router.post(
-  "/book/:doctorId/:patientId",
-  appointmentController.bookAppointment
-);
+router.post("/book/:doctorId/:patientId", appointmentController.bookAppointment);
 
 //FETCH ALL THE BOOKED APPOINTMENT FOR ALL THE DOCTORS
 router.get("/bookedAppointment", appointmentController.fetchBookedAppointments);
@@ -65,27 +66,20 @@ router.get(
   appointmentController.fetchBookedAppointmentsByDoctor
 );
 
-//// CHANGE APPOINTMENT STATUSff
-
 //// get complete appointment for each doctor getCompletedAppointments
 router.get("/getAppointmentById/:appointmentId");
 
 //// get scheduled appointmet getDoctorScheduledAppointments
-router.get(
-  "/scheduledAppointment/:doctorId",
-  appointmentController.getDoctorScheduledAppointments
-);
+router.get("/scheduledAppointment/:doctorId", appointmentController.getDoctorScheduledAppointments);
 
-///DELELTE APPOINTM
 router.delete("/delete/:doctorId/:scheduleId", deleteAppointmentByID);
 
-//FETCH ALL THE  APPOINTMENT FOR ALL THE DOCTORS
-router.get("/viewAll");
+router.patch("/completed/:doctorId/:appointmentId/:scheduleId",  markAppointmentAsCompleted);
 
 ///// SORT APPOINTMENT BY DATE FOR INDIVIDUAL DOCTOR
-router.get("/sortbydate/:doctorId");
+// router.get("/sortbydate/:doctorId");
 
 ////// getCompletedAppointmentsForDoctor GET ALL COMPLETED APPOINTMENT FOR EACH DOCTOR (ASIN ONE DOTOR SEEING ALL HIS APPOINTMENT)
-router.get("/viewCompleted/:doctorId");
+// router.get("/viewCompleted/:doctorId");
 
 module.exports = router;

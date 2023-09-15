@@ -177,7 +177,6 @@ const bookAppointment = async (req, res) => {
 };
 
 
-
 const bookAppointments = async (req, res) => {
   const { doctorId, patientId } = req.params;
   const { appointmentId, startTime } = req.body;
@@ -874,8 +873,7 @@ module.exports = {
   fetchBookedAppointmentsByDoctor,
   populateDoctorFields,
   populatePatientFields,
-  deleteAppointmentByID
-
+  deleteAppointmentByID,
   //deleteAppointment,
   //viewAppointments,
 };

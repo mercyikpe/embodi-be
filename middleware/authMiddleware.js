@@ -89,7 +89,8 @@ const verifyDoctor = async (req, res, next) => {
 
 const verifyAdmin = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.userId);
+    // const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.params.id);
 
     if (user && (user.role === 'isAdmin' || user.role === 'isUser')) {
       // Use === for strict equality
@@ -102,6 +103,7 @@ const verifyAdmin = async (req, res, next) => {
     res.status(500).json({ error: 'An error occurred while processing the request.' });
   }
 };
+
 
 const verifyUser = async (req, res, next) => {
   try {

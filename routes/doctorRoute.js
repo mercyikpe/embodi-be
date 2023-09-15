@@ -37,7 +37,7 @@ router.get("/doctors", doctorController.fetchDoctorsWithFullInfo);
 router.put("/removedoctor/:userId", doctorController.removeDoctorRole);
 
 //// rate a doctor
-router.put("/:doctorId/rate/:userId", doctorController.rateDoctor);
+router.patch("/:doctorId/rate/:userId", doctorController.rateDoctor);
 
 
 

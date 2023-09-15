@@ -1,69 +1,116 @@
-const Disease = require('../models/Disease');
-const Questionnaire = require('../models/Questionnaire')
+const Disease = require("../models/Disease");
+const Questionnaire = require("../models/Questionnaire");
+const fs = require("fs");
 
-
-
- 
 // Create a new disease
 const createDiseases = async (req, res) => {
   try {
-    const { title, category, photo,  detailTitle, detail } = req.body;
-    //const userId = req.user.id; // Assuming the user ID is available in req.user.id
+    const { title, category, detailTitle, detail } = req.body;
+    const photo = req.file;
 
-    // Create the disease object with user ID
+    // Create the disease object
     const diseaseData = {
       title,
       category,
-      photo,
+      photo: photo.path,
       detailTitle,
       detail,
-      ////// when loggin, picke user id on the active session///// change this when pushig to git
-      /*user: userId,*/ // Assign the user ID to the 'user' field
     };
 
     const disease = new Disease(diseaseData);
     await disease.save();
 
     return res.status(201).json({
-      status: 'success',
-      message: 'Disease created successfully.',
+      status: "success",
+      message: "Disease created successfully.",
       data: disease,
     });
   } catch (error) {
-    if (error.code === 11000 && error.keyPattern && error.keyPattern.user === 1) {
-      return res.status(400).json({
-        status: 'failed',
-        message: 'Disease with the same user already exists.',
-      });
-    }
-    console.log(error);
+    // console.error(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while creating the disease.',
+      status: "failed",
+      message: "An error occurred while creating the disease.",
     });
   }
 };
 
+// const createDiseases = async (req, res) => {
+//   try {
+//     const { title, category,  detailTitle, detail } = req.body;
+//     const { photo } = req.file;
+//
+//     //const userId = req.user.id; // Assuming the user ID is available in req.user.id
+//
+//     // Create the disease object with user ID
+//     const diseaseData = {
+//       title,
+//       category,
+//       photo,
+//       detailTitle,
+//       detail,
+//       ////// when loggin, picke user id on the active session///// change this when pushig to git
+//       /*user: userId,*/ // Assign the user ID to the 'user' field
+//     };
+//
+//     const disease = new Disease(diseaseData);
+//     await disease.save();
+//
+//     return res.status(201).json({
+//       status: 'success',
+//       message: 'Disease created successfully.',
+//       data: disease,
+//     });
+//   } catch (error) {
+//     if (error.code === 11000 && error.keyPattern && error.keyPattern.user === 1) {
+//       return res.status(400).json({
+//         status: 'failed',
+//         message: 'Disease with the same user already exists.',
+//       });
+//     }
+//     console.log(error);
+//     return res.status(500).json({
+//       status: 'failed',
+//       message: 'An error occurred while creating the disease.',
+//     });
+//   }
+// };
 
-// Get all diseases 
+// Get all diseases
 
 const getDiseases = async (req, res) => {
   try {
     const diseases = await Disease.find();
     return res.status(200).json({
-      status: 'success',
-      message: 'Diseases fetched successfully.',
+      status: "success",
+      message: "Diseases fetched successfully.",
       data: diseases,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while fetching diseases.',
+      status: "failed",
+      message: "An error occurred while fetching diseases.",
     });
   }
 };
 
+const getDiseaseDetails = async (req, res) => {
+  try {
+    const { diseaseId } = req.params;
+
+    // Find the disease by its ID
+    const disease = await Disease.findById(diseaseId);
+
+    if (!disease) {
+      return res.status(404).json({ message: 'Disease not found.' });
+    }
+
+    return res.status(200).json({ message: 'Disease details retrieved successfully.', data: disease });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred while retrieving disease details.' });
+  }
+};
 
 
 // Function to find diseases with at least 100 views per week
@@ -72,20 +119,26 @@ const getPopularDiseases = async (req, res) => {
     const ONE_WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000; // 1 week in milliseconds
     const cutoffDate = new Date(Date.now() - ONE_WEEK_IN_MS); // Calculate the date one week ago
 
-    const popularDiseases = await Disease.find({ views: { $gte: 100 }, createdAt: { $gte: cutoffDate } });
-    const totalViews = popularDiseases.reduce((acc, disease) => acc + disease.views, 0);
+    const popularDiseases = await Disease.find({
+      views: { $gte: 100 },
+      createdAt: { $gte: cutoffDate },
+    });
+    const totalViews = popularDiseases.reduce(
+      (acc, disease) => acc + disease.views,
+      0
+    );
 
     return res.status(200).json({
-      status: 'success',
-      message: 'Popular diseases fetched successfully.',
+      status: "success",
+      message: "Popular diseases fetched successfully.",
       totalViews: totalViews,
       popularDiseases: popularDiseases,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while fetching popular diseases.',
+      status: "failed",
+      message: "An error occurred while fetching popular diseases.",
     });
   }
 };
@@ -93,23 +146,29 @@ const getPopularDiseases = async (req, res) => {
 // Function to find the disease with the highest engagement
 const getDiseaseWithHighestEngagement = async (req, res) => {
   try {
-    const highestEngagementDisease = await Disease.findOne().sort('-engagement');
+    const highestEngagementDisease = await Disease.findOne().sort(
+      "-engagement"
+    );
 
     return res.status(200).json({
-      status: 'success',
-      message: 'Disease with highest engagement fetched successfully.',
-      highestEngagement: highestEngagementDisease ? highestEngagementDisease.engagement : 0,
+      status: "success",
+      message: "Disease with highest engagement fetched successfully.",
+      highestEngagement: highestEngagementDisease
+        ? highestEngagementDisease.engagement
+        : 0,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while fetching disease with highest engagement.',
+      status: "failed",
+      message:
+        "An error occurred while fetching disease with highest engagement.",
     });
   }
 };
 
 // controllers/diseaseController.js
+
 
 const updateDisease = async (req, res) => {
   try {
@@ -122,8 +181,8 @@ const updateDisease = async (req, res) => {
     // Check if the disease exists
     if (!disease) {
       return res.status(404).json({
-        status: 'failed',
-        message: 'Disease not found. Please enter a valid diseaseId.',
+        status: "failed",
+        message: "Disease not found. Please enter a valid diseaseId.",
       });
     }
 
@@ -137,28 +196,63 @@ const updateDisease = async (req, res) => {
     const updatedDisease = await disease.save();
 
     return res.status(200).json({
-      status: 'success',
-      message: 'Disease updated successfully.',
+      status: "success",
+      message: "Disease updated successfully.",
       data: updatedDisease,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while updating the disease.',
+      status: "failed",
+      message: "An error occurred while updating the disease.",
     });
   }
 };
 
+const handleDiseaseDelete = async (req, res) => {
+  try {
+    const { diseaseId } = req.params;
 
-/////GET ALL DISEASE ALONGSIDE QUESTINNAIRE
-const mongoose = require('mongoose');
+    // Find the disease by its ID
+    const disease = await Disease.findById(diseaseId);
+
+    if (!disease) {
+      return res.status(404).json({ message: 'Disease not found.' });
+    }
+
+    // Get the path to the disease photo
+    const diseasePhotoPath = disease.photo;
+
+    // Check if the disease has a photo
+    if (diseasePhotoPath) {
+      // Attempt to delete the disease photo
+      fs.unlink(diseasePhotoPath, (error) => {
+        if (error) {
+          console.error('Error deleting disease photo:', error);
+        } else {
+          console.log('Disease photo was deleted');
+        }
+      });
+    }
+
+    // Remove the disease from the database
+    await Disease.findByIdAndDelete(diseaseId);
+
+    return res.status(200).json({ message: 'Disease deleted successfully.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred while deleting the disease.' });
+  }
+};
+
+
+/////GET ALL DISEASE ALONGSIDE QUESTIONNAIRE
+const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 
 // Correct usage of ObjectId with 'new' keyword
 //const objectId = new ObjectId();
 //console.log(objectId); // Should print a new ObjectId
-
 
 const viewQuestionnaireWithDisease = async (req, res) => {
   try {
@@ -168,18 +262,20 @@ const viewQuestionnaireWithDisease = async (req, res) => {
     const validDiseaseId = new mongoose.Types.ObjectId(diseaseId);
 
     // Query the Questionnaire model with the valid ObjectId
-    const questionnaires = await Questionnaire.find({ diseaseId: validDiseaseId });
+    const questionnaires = await Questionnaire.find({
+      diseaseId: validDiseaseId,
+    });
 
     // Rest of the code...
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while fetching questionnaires for the disease.',
+      status: "failed",
+      message:
+        "An error occurred while fetching questionnaires for the disease.",
     });
   }
 };
-
 
 module.exports = {
   createDiseases,
@@ -187,6 +283,7 @@ module.exports = {
   getDiseases,
   getPopularDiseases,
   getDiseaseWithHighestEngagement,
-  viewQuestionnaireWithDisease
-    
+  viewQuestionnaireWithDisease,
+  handleDiseaseDelete,
+  getDiseaseDetails
 };
