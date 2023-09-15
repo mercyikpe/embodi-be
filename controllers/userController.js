@@ -209,15 +209,66 @@ const getUser = async (req, res, next) => {
       });
     }
 
+    // Populate the user's past consultations with disease titles
+    const populatedUser = await User.findOne({ _id: req.params.id, role: "isUser" })
+        .populate({
+          path: "pastConsultation",
+          populate: {
+            path: "diseaseId",
+            select: "title", // Select only the title field of the disease
+          },
+        })
+        .populate("notifications") // Populate the notifications
+        .populate("pastAppointments") // Populate the pastAppointments
+        .exec();
+
+    // Extract the disease titles from past consultations
+    const pastConsultations = populatedUser.pastConsultation.map((consultation) =>
+        consultation.diseaseId.title
+    );
+
+    // Format the "past consultation" field as a comma-separated list of disease titles
+    const pastConsultation = pastConsultations.join(", ");
+
     res.json({
       status: 200,
       message: `User with ID ${req.params.id} found`,
-      data: user,
+      data: {
+        ...populatedUser.toObject(),
+        pastConsultation, // Rename to "past consultation"
+      },
     });
   } catch (error) {
     next(error);
   }
 };
+
+
+
+
+
+
+
+// const getUser = async (req, res, next) => {
+//   try {
+//     const user = await User.findOne({ _id: req.params.id, role: "isUser" });
+//
+//     if (!user) {
+//       return res.status(404).json({
+//         status: "failed",
+//         message: "User not found or does not have the user role.",
+//       });
+//     }
+//
+//     res.json({
+//       status: 200,
+//       message: `User with ID ${req.params.id} found`,
+//       data: user,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 /////// get all users with pagination
 const getAllUsers = async (req, res, next) => {
