@@ -11,33 +11,34 @@ const questionnaireNotification = async (userId, questionnaireDetails) => {
     }
 
     // Find all users with the role "admin"
-    const adminUsers = await User.find({ role: "isAdmin" });
+    const admins = await User.find({ role: "isAdmin" });
 
-    for (const adminUser of adminUsers) {
-      // Create the notification for each admin user
-      const adminNotification = new Notification({
-        recipient: adminUser._id,
-        sender: userId,
-        recipientName: `${capitalizeWords(
-          adminUser.firstName
-        )} ${capitalizeWords(adminUser.lastName)}`,
-        senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(
-          user.lastName
-        )}`,
-        diseaseTitle: `${questionnaireDetails.diseaseTitle}`,
-        status: "unread",
-        notificationType: "questionnaire",
-      });
+    if (admins && admins.length > 0) {
+      // Create the notification for each admin
+      for (const admin of admins) {
+        const adminNotification = new Notification({
+          recipient: admin._id,
+          sender: userId,
+          recipientName: `${capitalizeWords(
+              admin.firstName
+          )} ${capitalizeWords(admin.lastName)}`,
+          senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(
+              user.lastName
+          )}`,
+          diseaseTitle: `${questionnaireDetails.diseaseTitle}`,
+          status: "unread",
+          notificationType: "questionnaire",
+        });
 
-      // Save the notification for the admin user
-      await adminNotification.save();
+        // Save the notification for the admin
+        await adminNotification.save();
 
-      // Update the admin user's notifications array
-      adminUser.notifications.push(adminNotification._id);
-      await adminUser.save();
+        // Update the admin's notifications array
+        admin.notifications.push(adminNotification._id);
+        await admin.save();
+      }
     }
-
-    return adminUsers; // Optionally, you can return a list of admin users to know who received the notification
+    return admins; // Optionally, you can return a list of admin users to know who received the notification
   } catch (error) {
     throw error;
   }

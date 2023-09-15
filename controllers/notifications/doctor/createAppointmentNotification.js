@@ -47,34 +47,37 @@ const createAppointmentNotification = async (
     doctor.notifications.push(doctorNotification._id);
     await doctor.save();
 
-    // Find the admin user
     // Find all users with the role "admin"
-    const admin = await User.find({ role: "isAdmin" });
+    const admins = await User.find({ role: "isAdmin" });
 
-    if (admin) {
-      // Create the notification for the admin
-      const adminNotification = new Notification({
-        recipient: admin._id,
-        sender: userId,
-        recipientName: `${capitalizeWords(doctor.firstName)} ${capitalizeWords(
-          doctor.lastName
-        )}`,
-        senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(
-          user.lastName
-        )}`,
-        message: `${capitalizeWords(user.firstName)} ${capitalizeWords(
-          user.lastName
-        )} booked an appointment`,
-        status: "unread",
-        notificationType: "appointment",
-      });
+    if (admins && admins.length > 0) {
+      // Create the notification for each admin
+      for (const admin of admins) {
+        const adminNotification = new Notification({
+          recipient: admin._id,
+          sender: userId,
+          recipientName: `${capitalizeWords(
+            doctor.firstName
+          )} ${capitalizeWords(doctor.lastName)}`,
+          senderName: `${capitalizeWords(user.firstName)} ${capitalizeWords(
+            user.lastName
+          )}`,
+          message: `${capitalizeWords(user.firstName)} ${capitalizeWords(
+            user.lastName
+          )} booked an appointment with Dr. ${capitalizeWords(
+            doctor.firstName
+          )} ${capitalizeWords(doctor.lastName)}`,
+          status: "unread",
+          notificationType: "appointment",
+        });
 
-      // Save the notification for the admin
-      await adminNotification.save();
+        // Save the notification for the admin
+        await adminNotification.save();
 
-      // Update the admin's notifications array
-      admin.notifications.push(adminNotification._id);
-      await admin.save();
+        // Update the admin's notifications array
+        admin.notifications.push(adminNotification._id);
+        await admin.save();
+      }
     }
 
     if (user) {

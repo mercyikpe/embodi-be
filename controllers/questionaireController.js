@@ -6,16 +6,16 @@ const questionnaireNotification = require("./notifications/admin/questionnaireNo
 ///////CREATE QUESTIONNAIRE USING DISEASE ID
 const createQuestionnaireForDisease = async (req, res) => {
   try {
-    const { diseaseId, questionsAndAnswers } = req.body;
-    const { userId } = req.params;
+    const { questionsAndAnswers } = req.body;
+    const { userId, diseaseId } = req.params;
 
     // Find the disease based on the provided diseaseId
     const disease = await Disease.findById(diseaseId);
 
     if (!disease) {
       return res.status(404).json({
-        status: 'failed',
-        message: 'Disease not found.',
+        status: "failed",
+        message: "Disease not found.",
       });
     }
 
@@ -42,81 +42,12 @@ const createQuestionnaireForDisease = async (req, res) => {
     }
 
     return res.status(201).json({
-      status: 'success',
-      message: 'Questionnaire created successfully.',
+      status: "success",
+      message: "Questionnaire created successfully.",
       data: questionnaire, // Include the questionnaire data in the response
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'An error occurred while creating the questionnaire.',
-    });
-  }
-};
-
-
-
-// const createQuestionnaireForDisease = async (req, res) => {
-//   try {
-//     const { diseaseId, questionsAndAnswers } = req.body;
-//
-//     const questionnaireData = {
-//       diseaseId,
-//       questionsAndAnswers,
-//     };
-//
-//     const questionnaire = new Questionnaire(questionnaireData);
-//     await questionnaire.save();
-//
-//     // Call the function to create a notification
-//     await questionnaireNotification(adminId, userId, {
-//       diseaseName: diseaseTitle, // Pass the disease title
-//     });
-//
-//     return res.status(201).json({
-//       status: 'success',
-//       message: 'Questionnaire created successfully.',
-//       data: questionnaire, // Include the questionnaire data in the response
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({
-//       status: 'failed',
-//       message: 'An error occurred while creating the questionnaire.',
-//     });
-//   }
-// };
-
-
-const createQuestionnaireForDiseases = async (req, res) => {
-  try {
-    const { question, answer, diseaseId } = req.body;
-
-    // First, create a new questionnaire instance
-    const questionnaire = new Questionnaire({
-      question,
-      answer,
-      diseaseId,
-    });
-
-    // Save the questionnaire to the database
-    await questionnaire.save();
-
-    // Return the `data` object
-    const data = {
-      _id: questionnaire._id,
-      questionnaire: [],
-      __v: 0,
-    };
-
-    return res.status(201).json({
-      status: "success",
-      message: "Questionnaire created successfully.",
-      data,
-    });
-  } catch (error) {
-    console.log(error);
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while creating the questionnaire.",
