@@ -55,82 +55,33 @@ const createQuestionnaireForDisease = async (req, res) => {
   }
 };
 
-///// VIEW QUESIONNAIRE AND DISEASE
-// controllers/questionnaireController.js
-
-const viewQuestionnaireWithDisease = async (req, res) => {
+const viewAllQuestionnaires = async (req, res, next) => {
   try {
-    const { questionnaireId } = req.params;
+    // Fetch all questionnaires and populate the 'user' field with selected user fields
+    const questionnaires = await Questionnaire.find()
+      .populate({
+        path: "user",
+        select: "firstName lastName pastConsultation email gender",
+      })
+      .populate("diseaseId", "title");
 
-    // Find the questionnaire by ID
-    const questionnaire = await Questionnaire.findById(questionnaireId);
+    // Calculate the count of questionnaires
+    const questionnaireCount = questionnaires.length;
 
-    // Check if the questionnaire exists
-    if (!questionnaire) {
-      return res.status(404).json({
-        status: "failed",
-        message:
-          "Questionnaire not found. Please enter a valid questionnaireId.",
-      });
-    }
-
-    // Retrieve the associated disease data using the `diseaseId` from the questionnaire
-    const disease = await Disease.findById(questionnaire.diseaseId);
-
-    // Return the questionnaire and associated disease data
-    return res.status(200).json({
-      status: "success",
-      message: "Questionnaire and associated disease retrieved successfully.",
+    res.json({
+      status: 200,
+      message: "All questionnaires retrieved successfully.",
       data: {
-        questionnaire,
-        disease,
+        questionnaireTotalCount: questionnaireCount,
+        questionnaires,
       },
     });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: "failed",
-      message:
-        "An error occurred while retrieving the questionnaire and associated disease.",
-    });
-  }
-};
-
-///// view all the questions and disease together
-const viewAllDiseasesWithQuestionnaires = async (req, res) => {
-  try {
-    // Fetch all diseases
-    const diseases = await Disease.find({});
-
-    // Fetch all questionnaires and associate them with their diseases
-    const questionnaires = await Questionnaire.find({});
-    const questionnairesMap = new Map();
-    questionnaires.forEach((questionnaire) => {
-      questionnairesMap.set(questionnaire.diseaseId.toString(), questionnaire);
-    });
-
-    // Combine diseases with their questionnaires
-    const diseasesWithQuestionnaires = diseases.map((disease) => ({
-      disease,
-      questionnaire: questionnairesMap.get(disease._id.toString()) || null,
-    }));
-
-    return res.status(200).json({
-      status: "success",
-      message: "Diseases and associated questionnaires retrieved successfully.",
-      data: diseasesWithQuestionnaires,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: "failed",
-      message: "An error occurred while fetching diseases and questionnaires.",
-    });
+    next(error);
   }
 };
 
 module.exports = {
   createQuestionnaireForDisease,
-  viewQuestionnaireWithDisease,
-  viewAllDiseasesWithQuestionnaires,
+  viewAllQuestionnaires,
 };
