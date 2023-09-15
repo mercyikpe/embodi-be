@@ -34,49 +34,8 @@ const createDiseases = async (req, res) => {
   }
 };
 
-// const createDiseases = async (req, res) => {
-//   try {
-//     const { title, category,  detailTitle, detail } = req.body;
-//     const { photo } = req.file;
-//
-//     //const userId = req.user.id; // Assuming the user ID is available in req.user.id
-//
-//     // Create the disease object with user ID
-//     const diseaseData = {
-//       title,
-//       category,
-//       photo,
-//       detailTitle,
-//       detail,
-//       ////// when loggin, picke user id on the active session///// change this when pushig to git
-//       /*user: userId,*/ // Assign the user ID to the 'user' field
-//     };
-//
-//     const disease = new Disease(diseaseData);
-//     await disease.save();
-//
-//     return res.status(201).json({
-//       status: 'success',
-//       message: 'Disease created successfully.',
-//       data: disease,
-//     });
-//   } catch (error) {
-//     if (error.code === 11000 && error.keyPattern && error.keyPattern.user === 1) {
-//       return res.status(400).json({
-//         status: 'failed',
-//         message: 'Disease with the same user already exists.',
-//       });
-//     }
-//     console.log(error);
-//     return res.status(500).json({
-//       status: 'failed',
-//       message: 'An error occurred while creating the disease.',
-//     });
-//   }
-// };
 
 // Get all diseases
-
 const getDiseases = async (req, res) => {
   try {
     const diseases = await Disease.find();
@@ -94,6 +53,7 @@ const getDiseases = async (req, res) => {
   }
 };
 
+// Get single diseases
 const getDiseaseDetails = async (req, res) => {
   try {
     const { diseaseId } = req.params;
