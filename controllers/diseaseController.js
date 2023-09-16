@@ -1,6 +1,8 @@
 const Disease = require("../models/Disease");
 const Questionnaire = require("../models/Questionnaire");
 const fs = require("fs");
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 
 // Create a new disease
 const createDiseases = async (req, res) => {
@@ -157,7 +159,7 @@ const updateDisease = async (req, res) => {
 
     return res.status(200).json({
       status: "success",
-      message: "Disease details returned successfully.",
+      message: "Disease updated successfully.",
       data: updatedDisease,
     });
   } catch (error) {
@@ -207,8 +209,7 @@ const handleDiseaseDelete = async (req, res) => {
 
 
 /////GET ALL DISEASE ALONGSIDE QUESTIONNAIRE
-const mongoose = require("mongoose");
-const ObjectId = mongoose.Types.ObjectId;
+
 
 // Correct usage of ObjectId with 'new' keyword
 //const objectId = new ObjectId();

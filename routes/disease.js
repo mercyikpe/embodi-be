@@ -36,7 +36,7 @@ router.get('/mostengaged', diseaseController.getDiseaseWithHighestEngagement);
 router.get('/viewqandd', diseaseController.viewQuestionnaireWithDisease);
 
 //// VIEW ALL DISEASES
-router.get('/:diseaseId', diseaseController.updateDisease);
+router.get('/:diseaseId', diseaseController.getDiseaseDetails);
 
 
 
