@@ -1,5 +1,6 @@
 const User = require("../../models/User");
 const Appointment = require("../../models/Appointment");
+const DoctorInfo = require("../../models/DoctorInfo");
 
 
 // Controller to mark an appointment as completed by a doctor
@@ -73,6 +74,13 @@ const markAppointmentAsCompleted = async (req, res) => {
     await doctor.save();
     // await patient.save();
 
+    // Update the patientCount in the doctorInfo model
+    const doctorInfo = await DoctorInfo.findOne({ user: doctorId });
+    if (doctorInfo) {
+      doctorInfo.patientCount += 1; // Increment the patientCount
+      await doctorInfo.save();
+    }
+
     // Respond with a success message
     return res
       .status(200)
@@ -83,6 +91,7 @@ const markAppointmentAsCompleted = async (req, res) => {
     });
   }
 };
+
 
 const getBookedAndCompletedAppointments = async (req, res) => {
   const { doctorId } = req.params;

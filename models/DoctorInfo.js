@@ -34,6 +34,11 @@ const DoctorInfoSchema = new mongoose.Schema(
       // required: true,
     },
 
+      patientCount: {
+          type: Number,
+          default: 0,
+      },
+
     // rate fee of the doctor
     rate: {
       type: Number,

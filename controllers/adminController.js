@@ -1,25 +1,25 @@
 ////// SCHEMA MODELS
-const User = require('../models/User');
-const DoctorInfo = require('../models/DoctorInfo')
-const OtpCode = require('../models/OtpCode')
-const Appointment = require('../models/Appointment')
-const Disease = require('../models/Disease')
-const Questionnaire = require('../models/Questionnaire')
-const EventLog = require('../models/EventLog')
+const User = require("../models/User");
+const DoctorInfo = require("../models/DoctorInfo");
+const OtpCode = require("../models/OtpCode");
+const Appointment = require("../models/Appointment");
+const Disease = require("../models/Disease");
+const Questionnaire = require("../models/Questionnaire");
+const EventLog = require("../models/EventLog");
 
 ///////  MIDDLEWARES
 
 //////  CONTROLLERS
-const userController = require('../controllers/userController');
+const userController = require("../controllers/userController");
 
 //////UPDATE ADMIN PROFILE
 const updateAdminProfile = async (userId, updateData) => {
   try {
     // Find the admin user with the given userId and role "isAdmin"
-    const admin = await User.findOne({ _id: userId, role: 'isAdmin' });
+    const admin = await User.findOne({ _id: userId, role: "isAdmin" });
 
     if (!admin) {
-      throw new Error('Admin user not found or not authorized.');
+      throw new Error("Admin user not found or not authorized.");
     }
 
     // Update the admin's profile
@@ -32,19 +32,17 @@ const updateAdminProfile = async (userId, updateData) => {
   }
 };
 
-
-
 /////// user by admin
 const updateUserByAdmin = async (userId, phoneNumber, firstName, lastName) => {
   try {
     const user = await User.findById(userId);
 
     if (!user) {
-      return { success: false, message: 'User not found.' };
+      return { success: false, message: "User not found." };
     }
 
-    if (!user.role === 'isAdmin') {
-      return { success: false, message: 'User is not authorized as an admin.' };
+    if (!user.role === "isAdmin") {
+      return { success: false, message: "User is not authorized as an admin." };
     }
 
     user.phoneNumber = phoneNumber || user.phoneNumber;
@@ -53,32 +51,100 @@ const updateUserByAdmin = async (userId, phoneNumber, firstName, lastName) => {
 
     await user.save();
 
-    return { success: true, message: 'User information updated successfully.', user };
+    return {
+      success: true,
+      message: "User information updated successfully.",
+      user,
+    };
   } catch (error) {
     console.log(error);
-    return { success: false, message: 'An error occurred while updating user information.' };
+    return {
+      success: false,
+      message: "An error occurred while updating user information.",
+    };
   }
 };
 
-
-
-
-
 const viewAllAdmins = async () => {
   try {
-    const admins = await User.find({ role: 'isAdmin' }).select('firstName lastName email');
+    const admins = await User.find({ role: "isAdmin" }).select(
+      "firstName lastName email"
+    );
     return admins;
   } catch (error) {
     throw error; // Rethrow the error to be caught in the calling function
   }
 };
 
+const viewDoctorDetails = async (req, res, next) => {
+  try {
+    const { doctorId } = req.params;
 
+    // Find the doctor by ID
+    const doctor = await User.findById(doctorId);
 
+    if (!doctor) {
+      return res.status(404).json({
+        status: 404,
+        message: "Doctor not found.",
+        data: null,
+      });
+    }
+
+    // Find the doctor's appointments
+    const doctorAppointments = await Appointment.find({ doctor: doctorId });
+
+    if (!doctorAppointments) {
+      return res.status(404).json({
+        status: 404,
+        message: "Doctor's appointments not found.",
+        data: null,
+      });
+    }
+
+    // Populate patient details if the patient field exists
+    await Appointment.populate(doctorAppointments, {
+      path: "schedule.patient",
+      select: "firstName lastName", // Select the fields you want to populate
+    });
+
+    // Extract and group schedule objects by status
+    const groupedSchedules = {
+      booked: [],
+      completed: [],
+    };
+
+    doctorAppointments.forEach((appointment) => {
+      appointment.schedule.forEach((schedule) => {
+        if (schedule.status === "Booked") {
+          groupedSchedules.booked.push(schedule);
+        } else if (schedule.status === "Completed") {
+          groupedSchedules.completed.push(schedule);
+        }
+      });
+    });
+
+    // Return the doctor's details and grouped schedules
+    res.status(200).json({
+      status: 200,
+      message: "Doctor details retrieved successfully.",
+      data: {
+        doctor: {
+          firstName: doctor.firstName,
+          lastName: doctor.lastName,
+          // Include other doctor details here
+        },
+        schedules: groupedSchedules,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
-    updateAdminProfile,
-    updateUserByAdmin,
-    viewAllAdmins
-  };
-  
+  updateAdminProfile,
+  updateUserByAdmin,
+  viewAllAdmins,
+  viewDoctorDetails,
+};

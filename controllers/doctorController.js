@@ -453,10 +453,13 @@ const viewDoctorInfo = async (req, res) => {
       });
     }
 
-    // Retrieve the doctor's information along with populated appointments and user data
+    // Retrieve the doctor's information along with populated scheduled appointments and user data
     const doctorInfo = await DoctorInfo.findOne({ user: userId })
-      .populate("appointments")
-      .populate("user", "-password"); // Exclude the password field from the user data
+      .populate({
+        path: "appointments",
+        match: { "schedule.status": "Scheduled" }, // Filter scheduled appointments
+      })
+      .populate("user", "-password -notifications"); // Exclude the password and notifications fields from the user data
 
     if (!doctorInfo) {
       return res.status(404).json({
@@ -465,36 +468,52 @@ const viewDoctorInfo = async (req, res) => {
       });
     }
 
-    // Calculate the total number of appointments and booked/unbooked counts
-    const totalAppointments = doctorInfo.appointments.length;
-    const totalAppointmentsScheduled = doctorInfo.appointments.filter(
-      (appointment) => appointment.status === "Scheduled"
-    ).length;
-    const totalAppointmentsBooked = doctorInfo.appointments.filter(
-      (appointment) => appointment.status === "Booked"
-    ).length;
-    const totalAppointmentsCompleted = doctorInfo.appointments.filter(
-      (appointment) => appointment.status === "Completed"
-    ).length;
-    const totalAppointmentsCancelled = doctorInfo.appointments.filter(
-      (appointment) => appointment.status === "Cancelled"
-    ).length;
+    // Calculate groupedSchedules
+    const groupedSchedules = {
+      booked: [],
+      completed: [],
+      scheduled: [],
+      cancelled: [],
+    };
 
-    // Return the doctorInfo with appointments and additional fields
-    return res.status(200).json({
+    doctorInfo.appointments.forEach((appointment) => {
+      appointment.schedule.forEach((schedule) => {
+        if (schedule.status === "Booked") {
+          groupedSchedules.booked.push(schedule);
+        } else if (schedule.status === "Completed") {
+          groupedSchedules.completed.push(schedule);
+        } else if (schedule.status === "Scheduled") {
+          groupedSchedules.scheduled.push(schedule);
+        } else if (schedule.status === "Cancelled") {
+          groupedSchedules.cancelled.push(schedule);
+        }
+      });
+    });
+
+    // Create a new response object with only the desired fields
+    const responseObject = {
       status: "success",
       message: "Doctor information found.",
       data: {
         ...doctorInfo._doc,
         user: doctorInfo.user,
-        appointments: doctorInfo.appointments,
-        total_number_of_appointment: totalAppointments,
-        total_number_of_appointment_scheduled: totalAppointmentsScheduled,
-        total_number_of_appointment_booked: totalAppointmentsBooked,
-        total_number_of_appointment_completed: totalAppointmentsCompleted,
-        total_number_of_appointment_cancelled: totalAppointmentsCancelled,
+        total_number_of_appointment: groupedSchedules.scheduled.length,
+        total_number_of_appointment_scheduled:
+          groupedSchedules.scheduled.length,
+        total_number_of_appointment_booked: groupedSchedules.booked.length,
+        total_number_of_appointment_completed:
+          groupedSchedules.completed.length,
+        total_number_of_appointment_cancelled:
+          groupedSchedules.cancelled.length,
+        groupedSchedules: groupedSchedules, // Include groupedSchedules in the response
       },
-    });
+    };
+
+    // Exclude the appointments array from the response
+    delete responseObject.data.appointments;
+
+    // Return the modified response object
+    return res.status(200).json(responseObject);
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -503,7 +522,6 @@ const viewDoctorInfo = async (req, res) => {
     });
   }
 };
-
 
 // Controller to add or update a user's rating for a doctor
 const rateDoctor = async (req, res) => {
