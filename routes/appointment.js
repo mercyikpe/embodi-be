@@ -15,7 +15,7 @@ const {
 const patient = require("../models/User");
 const {
   markAppointmentAsCompleted,
-  completedAndUpcomingAppointments, getBookedAndCompletedAppointments,
+  getBookedAndCompletedAppointments,
 } = require("../controllers/doctor/appointment");
 
 router.use(express.json());
@@ -87,7 +87,6 @@ router.patch(
   markAppointmentAsCompleted
 );
 
-// router.get("/completed-upcoming/:doctorId", completedAndUpcomingAppointments);
-router.get("/completed-upcoming/:doctorId", getBookedAndCompletedAppointments);
+router.get("/completed-upcoming/:doctorId", verifyDoctor, getBookedAndCompletedAppointments);
 
 module.exports = router;
