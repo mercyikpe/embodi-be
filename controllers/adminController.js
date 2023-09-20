@@ -142,9 +142,50 @@ const viewDoctorDetails = async (req, res, next) => {
   }
 };
 
+
+// Function to retrieve all appointments (both completed and scheduled)
+const getAllAppointments = async (req, res) => {
+  try {
+    // Retrieve all appointments
+    const appointments = await Appointment.find();
+
+    // Initialize empty arrays for scheduled and completed schedules
+    const scheduledSchedules = [];
+    const completedSchedules = [];
+
+    // Iterate through appointments and separate schedules based on their status
+    appointments.forEach((appointment) => {
+      appointment.schedule.forEach((schedule) => {
+        if (schedule.status === "Scheduled") {
+          scheduledSchedules.push(schedule);
+        } else if (schedule.status === "Completed") {
+          completedSchedules.push(schedule);
+        }
+      });
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "All appointments retrieved.",
+      data: {
+        scheduledSchedules,
+        completedSchedules,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while retrieving appointments.",
+    });
+  }
+};
+
+
 module.exports = {
   updateAdminProfile,
   updateUserByAdmin,
   viewAllAdmins,
   viewDoctorDetails,
+  getAllAppointments
 };

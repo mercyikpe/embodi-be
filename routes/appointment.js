@@ -17,6 +17,7 @@ const {
   markAppointmentAsCompleted,
   getBookedAndCompletedAppointments,
 } = require("../controllers/doctor/appointment");
+const { getAllAppointments } = require("../controllers/adminController");
 
 router.use(express.json());
 
@@ -74,6 +75,8 @@ router.get(
 //// get complete appointment for each doctor getCompletedAppointments
 router.get("/getAppointmentById/:appointmentId");
 
+
+
 //// get scheduled appointmet getDoctorScheduledAppointments
 router.get(
   "/scheduledAppointment/:doctorId",
@@ -87,6 +90,19 @@ router.patch(
   markAppointmentAsCompleted
 );
 
-router.get("/completed-upcoming/:doctorId", verifyDoctor, getBookedAndCompletedAppointments);
+router.get(
+  "/completed-upcoming/:doctorId",
+  verifyDoctor,
+  getBookedAndCompletedAppointments
+);
 
+
+
+// ADMIN
+//// get all appointment
+router.get(
+    "/view-all/:adminId",
+    verifyAdmin,
+    getAllAppointments
+);
 module.exports = router;
