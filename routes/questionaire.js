@@ -9,7 +9,10 @@ const {
 } = require("../middleware/authMiddleware");
 const {
   viewAllQuestionnaires,
+  markQuestionnaireCompleted,
 } = require("../controllers/questionaireController");
+const {
+} = require("../controllers/doctor/appointment");
 
 router.get("/", (req, res) => {
   res.send("questionnaire");
@@ -20,6 +23,11 @@ router.get("/questionnaires", viewAllQuestionnaires);
 router.post(
   "/add/:userId/:diseaseId",
   diseaseController.createQuestionnaireForDisease
+);
+router.patch(
+  "/completed/:adminId/:questionnaireId",
+  verifyAdmin,
+  markQuestionnaireCompleted
 );
 
 module.exports = router;

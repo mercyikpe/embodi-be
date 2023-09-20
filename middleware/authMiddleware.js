@@ -53,7 +53,6 @@ const verifyToken = async (req, res, next) => {
 const verifyDoctor = async (req, res, next) => {
   try {
     const user = req.params.id;
-
     // const user = await User.findById(req.user.userId);
 
     if (user && user.role === "isDoctor") {
@@ -89,14 +88,17 @@ const verifyDoctor = async (req, res, next) => {
 
 const verifyAdmin = async (req, res, next) => {
   try {
-    // const user = await User.findById(req.user.userId);
-    const user = await User.findById(req.params.id);
+    const { adminId } = req.params;
 
-    if (user && (user.role === 'isAdmin' || user.role === 'isUser')) {
+    const user = await User.findById(adminId);
+    // const user = await User.findById(req.params.id);
+
+    // if (user && (user.role === 'isAdmin' || user.role === 'isUser')) {
+    if (user && (user.role === 'isAdmin')) {
       // Use === for strict equality
       next();
     } else {
-      return next(new AppError('You are not an ADMIN or USER', 401));
+      return next(new AppError('You are not an ADMIN', 401));
     }
   } catch (error) {
     console.error('Middleware Error:', error);
