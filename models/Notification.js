@@ -45,7 +45,8 @@ const NotificationSchema = new mongoose.Schema({
   appointmentTime: {
     type: String,
   },
-});
+},
+{ timestamps: true });
 
 const Notification = mongoose.model("Notification", NotificationSchema);
 

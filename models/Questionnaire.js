@@ -21,7 +21,9 @@ const QuestionnaireSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Disease",
   },
-});
+},
+    { timestamps: true }
+);
 
 const Questionnaire = mongoose.model("Questionnaire", QuestionnaireSchema);
 
