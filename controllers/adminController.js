@@ -146,18 +146,25 @@ const viewDoctorDetails = async (req, res, next) => {
 // Function to retrieve all appointments (both completed and scheduled)
 const getAllAppointments = async (req, res) => {
   try {
+    // Retrieve all appointments with populated patient details
+    const appointments = await Appointment.find()
+        .populate({
+          path: "schedule.patient",
+          select: "firstName lastName", // Specify the fields you want to include
+        });
+
     // Retrieve all appointments
-    const appointments = await Appointment.find();
+    // const appointments = await Appointment.find();
 
     // Initialize empty arrays for scheduled and completed schedules
-    const scheduledSchedules = [];
+    const bookedSchedules = [];
     const completedSchedules = [];
 
     // Iterate through appointments and separate schedules based on their status
     appointments.forEach((appointment) => {
       appointment.schedule.forEach((schedule) => {
-        if (schedule.status === "Scheduled") {
-          scheduledSchedules.push(schedule);
+        if (schedule.status === "Booked") {
+          bookedSchedules.push(schedule);
         } else if (schedule.status === "Completed") {
           completedSchedules.push(schedule);
         }
@@ -168,7 +175,7 @@ const getAllAppointments = async (req, res) => {
       status: "success",
       message: "All appointments retrieved.",
       data: {
-        scheduledSchedules,
+        bookedSchedules,
         completedSchedules,
       },
     });
