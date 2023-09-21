@@ -138,7 +138,11 @@ const viewDoctorDetails = async (req, res, next) => {
       },
     });
   } catch (error) {
-    next(error);
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while retrieving doctor details.",
+    });
+    // next(error);
   }
 };
 
@@ -152,10 +156,6 @@ const getAllAppointments = async (req, res) => {
           path: "schedule.patient",
           select: "firstName lastName", // Specify the fields you want to include
         });
-
-    // Retrieve all appointments
-    // const appointments = await Appointment.find();
-
     // Initialize empty arrays for scheduled and completed schedules
     const bookedSchedules = [];
     const completedSchedules = [];
@@ -180,7 +180,6 @@ const getAllAppointments = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while retrieving appointments.",

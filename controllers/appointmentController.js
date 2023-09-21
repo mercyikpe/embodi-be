@@ -96,7 +96,7 @@ const createAppointment = async (doctorId, appointments) => {
     };
   } catch (error) {
     // console.error("Error creating/updating appointments:", error.message);
-    return { success: false, message: "Error creating/updating appointments", error };
+    return { success: false, message: "Error creating appointments", error };
   }
 };
 
@@ -280,7 +280,7 @@ const populatePatientFields = async (req, res, next) => {
 
 
 
-///////UPDATE  PPOINTMENT
+///////UPDATE  APPOINTMENT
 const updateAppointment = async (req, res) => {
   const { doctorId, appointmentId, bookingId } = req.params;
   const { startTime, endTime, status } = req.body;
