@@ -490,6 +490,119 @@ const viewDoctorInfo = async (req, res) => {
       });
     });
 
+    // Group scheduled appointments by date with their _id
+    const groupedScheduledAppointments = {};
+
+    doctorInfo.appointments.forEach((appointment) => {
+      appointment.schedule.forEach((schedule) => {
+        if (schedule.status === "Scheduled") {
+          const date = new Date(appointment.date).toISOString().split("T")[0]; // Extract the date part
+
+          if (!groupedScheduledAppointments[date]) {
+            groupedScheduledAppointments[date] = {
+              _id: appointment._id,
+              schedules: [],
+            };
+          }
+
+          groupedScheduledAppointments[date].schedules.push({
+            _id: schedule._id,
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+          });
+        }
+      });
+    });
+
+    // Extract the schedule objects with status "Scheduled" for availableTimeSlots
+    const availableTimeSlots = Object.entries(groupedScheduledAppointments).map(([date, data]) => ({
+      _id: data._id,
+      date,
+      schedules: data.schedules,
+    }));
+
+    // Create a new response object with the desired fields
+    const responseObject = {
+      status: "success",
+      message: "Doctor information returned.",
+      data: {
+        ...doctorInfo._doc,
+        user: doctorInfo.user,
+        total_number_of_appointment_scheduled: groupedSchedules.scheduled.length,
+        total_number_of_appointment_booked: groupedSchedules.booked.length,
+        total_number_of_appointment_completed: groupedSchedules.completed.length,
+        total_number_of_appointment_cancelled: groupedSchedules.cancelled.length,
+        groupedSchedules: groupedSchedules, // Include groupedSchedules in the response
+        availableTimeSlots: availableTimeSlots, // Include availableTimeSlots in the response
+      },
+    };
+
+    // Exclude the appointments array from the response
+    delete responseObject.data.appointments;
+
+    // Return the modified response object
+    return res.status(200).json(responseObject);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while displaying doctor info.",
+    });
+  }
+};
+
+
+const viewDoctorInfor = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Check if the user exists and is a doctor
+    const user = await User.findById(userId);
+
+    if (!user || user.role !== "isDoctor") {
+      return res.status(404).json({
+        status: "failed",
+        message: "Doctor not found. Please enter a valid doctor userId.",
+      });
+    }
+
+    // Retrieve the doctor's information along with populated scheduled appointments and user data
+    const doctorInfo = await DoctorInfo.findOne({ user: userId })
+        .populate({
+          path: "appointments",
+          match: { "schedule.status": "Scheduled" }, // Filter scheduled appointments
+        })
+        .populate("user", "-password -notifications"); // Exclude the password and notifications fields from the user data
+
+    if (!doctorInfo) {
+      return res.status(404).json({
+        status: "failed",
+        message: "Doctor information not found.",
+      });
+    }
+
+    // Calculate groupedSchedules
+    const groupedSchedules = {
+      booked: [],
+      completed: [],
+      scheduled: [],
+      cancelled: [],
+    };
+
+    doctorInfo.appointments.forEach((appointment) => {
+      appointment.schedule.forEach((schedule) => {
+        if (schedule.status === "Booked") {
+          groupedSchedules.booked.push(schedule);
+        } else if (schedule.status === "Completed") {
+          groupedSchedules.completed.push(schedule);
+        } else if (schedule.status === "Scheduled") {
+          groupedSchedules.scheduled.push(schedule);
+        } else if (schedule.status === "Cancelled") {
+          groupedSchedules.cancelled.push(schedule);
+        }
+      });
+    });
+
     // Group scheduled appointments by date
     const groupedScheduledAppointments = {};
 
@@ -516,7 +629,7 @@ const viewDoctorInfo = async (req, res) => {
     // Create a new response object with the desired fields
     const responseObject = {
       status: "success",
-      message: "Doctor information found.",
+      message: "Doctor information returned.",
       data: {
         ...doctorInfo._doc,
         user: doctorInfo.user,
@@ -539,7 +652,7 @@ const viewDoctorInfo = async (req, res) => {
     console.error(error);
     return res.status(500).json({
       status: "failed",
-      message: "An error occurred while processing your request.",
+      message: "An error occurred while displaying doctor info.",
     });
   }
 };
