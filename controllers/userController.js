@@ -3,6 +3,7 @@ const moment = require("moment");
 const createError = require("../utilities/createError");
 const User = require("../models/User");
 const Disease = require("../models/Disease");
+const Notification = require("../models/Notification");
 const { successResponse, errorResponse } = require("../utilities/apiResponse");
 
 /////// admin can create user//////
@@ -242,6 +243,7 @@ const getUser = async (req, res, next) => {
     next(error);
   }
 };
+
 
 
 

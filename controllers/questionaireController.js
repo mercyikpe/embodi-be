@@ -1,10 +1,10 @@
 const Disease = require("../models/Disease");
-const User = require("../models/User.js"); // Make sure the filename is correct
-const Questionnaire = require("../models/Questionnaire.js"); // Make sure the filename is correct
+const User = require("../models/User.js");
+const Questionnaire = require("../models/Questionnaire.js");
 const questionnaireNotification = require("./notifications/admin/questionnaireNotification");
-const Appointment = require("../models/Appointment");
-const DoctorInfo = require("../models/DoctorInfo");
-const createAppointmentNotification = require("./notifications/doctor/createAppointmentNotification");
+const {
+  questionnaireNotificationUser,
+} = require("./notifications/user/questionnaireNotification");
 
 ///////CREATE QUESTIONNAIRE USING DISEASE ID
 const createQuestionnaireForDisease = async (req, res) => {
@@ -98,8 +98,8 @@ const markQuestionnaireCompleted = async (req, res) => {
     // Check if the questionnaire is already marked as "Completed"
     if (questionnaire.status === "completed") {
       return res
-          .status(400)
-          .json({ message: "Questionnaire is already marked as completed." });
+        .status(400)
+        .json({ message: "Questionnaire is already marked as completed." });
     }
 
     // Update the status of the questionnaire to "Completed"
@@ -109,7 +109,7 @@ const markQuestionnaireCompleted = async (req, res) => {
     await questionnaire.save();
 
     // Get the user ID from the questionnaire
-    const userId = questionnaire.user; // Assuming the `user` field contains the user ID
+    const userId = questionnaire.user;
 
     // Fetch the disease document using the `diseaseId` from the questionnaire
     const disease = await Disease.findById(questionnaire.diseaseId);
@@ -120,61 +120,19 @@ const markQuestionnaireCompleted = async (req, res) => {
     };
 
     // Call the function to create a notification
-    const userNotification = await questionnaireNotification(
-        userId,
-        questionnaireDetails
-    );
+    // const userNotification = await questionnaireNotificationUser(
+    //     userId,
+    //     questionnaireDetails
+    // );
+
+    await questionnaireNotificationUser(userId, questionnaireDetails);
 
     // Respond with a success message and userNotification
     return res
-        .status(200)
-        .json({ message: "Questionnaire marked as completed.", userNotification });
+      .status(200)
+      .json({ message: "Questionnaire marked as completed." });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      message:
-          "An error occurred while marking the questionnaire as completed.",
-    });
-  }
-};
-
-
-
-const markQuestionnaireCompleteddd = async (req, res) => {
-  const { questionnaireId } = req.params;
-
-  try {
-    // Find the questionnaire based on the appointmentId
-    const questionnaire = await Questionnaire.findById(questionnaireId);
-
-    if (!questionnaire) {
-      return res.status(404).json({ message: "Questionnaire not found." });
-    }
-
-    // Check if the schedule is already marked as "Completed"
-    if (questionnaire.status === "completed") {
-      return res
-        .status(400)
-        .json({ message: "Questionnaire is already marked as completed." });
-    }
-
-    // Update the status of the schedule to "Completed"
-    questionnaire.status = "completed";
-
-    // Save the updated questionnaire
-    await questionnaire.save();
-
-    // Call the function to create a notification
-    await questionnaireNotification(userId, questionnaireDetails, {
-      // date: appointment.date, // Pass the 'date' property
-      // startTime: startTime, // Pass the appointment startTime
-    });
-
-    // Respond with a success message
-    return res
-      .status(200)
-      .json({ message: "questionnaire marked as completed." });
-  } catch (error) {
     return res.status(500).json({
       message:
         "An error occurred while marking the questionnaire as completed.",

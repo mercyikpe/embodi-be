@@ -1,5 +1,4 @@
 const Notification = require("../models/Notification");
-const User = require("../models/User");
 
 const getDoctorNotifications = async (req, res) => {
   const doctorUserId = req.params.doctorId;

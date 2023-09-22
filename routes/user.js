@@ -6,7 +6,7 @@ const requestNewPassword = require('../controllers/resetPasswordController');
 const userController = require('../controllers/userController')
 
 const {viewAllDoctors} = require("../controllers/userController");
-
+const {getUserOrders} = require("../controllers/notifications/user/questionnaireNotification");
 
 const { verifyToken } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadFile');
@@ -41,6 +41,8 @@ router.get('/active', userController.getActiveUsers);
 router.get('/viewsome', userController.viewUser);
 
 router.get('/doctors', viewAllDoctors);
+
+router.get('/orders/:userId', getUserOrders);
 
 
 
