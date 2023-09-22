@@ -6,7 +6,7 @@ const { capitalizeWords } = require("../../../utilities/format");
 const createAppointmentNotification = async (
   doctorId,
   userId,
-  appointmentDetails
+  appointmentDetails,
 ) => {
   try {
     // Find the doctor and user using their IDs
@@ -38,6 +38,8 @@ const createAppointmentNotification = async (
       appointmentDate: appointmentDetails.date,
       appointmentTime: appointmentDetails.startTime,
       notificationType: "appointment",
+      appointmentId: appointmentDetails.appointmentId,
+      scheduleId: appointmentDetails.scheduleId,
     });
 
     // Save the notification for the doctor
@@ -69,6 +71,8 @@ const createAppointmentNotification = async (
           )} ${capitalizeWords(doctor.lastName)}`,
           status: "unread",
           notificationType: "appointment",
+          appointmentId: appointmentId,
+          scheduleId: scheduleId,
         });
 
         // Save the notification for the admin
@@ -96,6 +100,8 @@ const createAppointmentNotification = async (
         )} ${capitalizeWords(doctor.lastName)}`,
         status: "unread",
         notificationType: "appointment",
+        appointmentId: appointmentId,
+        scheduleId: scheduleId,
       });
 
       // Save the notification for the user

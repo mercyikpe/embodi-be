@@ -21,7 +21,6 @@ const markAppointmentAsCompleted = async (req, res) => {
     );
 
     // console.log('scheduleToMarkAsCompleted', scheduleToMarkAsCompleted)
-
     if (!scheduleToMarkAsCompleted) {
       return res.status(404).json({ message: "Schedule not found." });
     }

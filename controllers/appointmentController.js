@@ -100,7 +100,6 @@ const createAppointment = async (doctorId, appointments) => {
   }
 };
 
-
 const bookAppointment = async (req, res) => {
   const { doctorId, patientId } = req.params;
   const { appointmentId, startTime } = req.body;
@@ -129,7 +128,7 @@ const bookAppointment = async (req, res) => {
 
     // Check if the specified startTime exists in the appointment's schedule
     const scheduleSlot = appointment.schedule.find(
-        (slot) => slot.startTime === startTime
+      (slot) => slot.startTime === startTime
     );
 
     if (!scheduleSlot) {
@@ -139,8 +138,8 @@ const bookAppointment = async (req, res) => {
     // Check if the appointment slot is already booked
     if (scheduleSlot.status === "Booked") {
       return res
-          .status(400)
-          .json({ message: "This appointment slot is already booked." });
+        .status(400)
+        .json({ message: "This appointment slot is already booked." });
     }
 
     // Update the schedule slot status, assign patientId and bookingId
@@ -151,11 +150,12 @@ const bookAppointment = async (req, res) => {
     // Save the updated appointment
     await appointment.save();
 
-
     // Call the function to create a notification
     await createAppointmentNotification(doctorId, patientId, {
       date: appointment.date, // Pass the 'date' property
       startTime: startTime, // Pass the appointment startTime
+      appointmentId,
+      scheduleId: scheduleSlot._id,
     });
 
     return res.status(200).json({
@@ -168,14 +168,11 @@ const bookAppointment = async (req, res) => {
       },
     });
   } catch (error) {
-    // Handle errors as needed
-    console.error(error);
     return res
-        .status(500)
-        .json({ message: "An error occurred while booking the appointment." });
+      .status(500)
+      .json({ message: "An error occurred while booking the appointment." });
   }
 };
-
 
 const deleteAppointmentByID = async (req, res) => {
   const { doctorId, scheduleId } = req.params;
@@ -193,8 +190,8 @@ const deleteAppointmentByID = async (req, res) => {
 
     // Use the $pull operator to remove the schedule entry by _id
     await Appointment.updateOne(
-        { _id: appointment._id },
-        { $pull: { schedule: { _id: scheduleId } } }
+      { _id: appointment._id },
+      { $pull: { schedule: { _id: scheduleId } } }
     );
 
     res.status(200).json({ message: "Schedule entry deleted successfully." });
@@ -203,7 +200,6 @@ const deleteAppointmentByID = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 ///////// USER TO BOOK APPOINTMENT
 //const { populateDoctorFields, populatePatientFields } = require('../middleware/populateFields');
@@ -274,11 +270,6 @@ const populatePatientFields = async (req, res, next) => {
       .json({ message: "An error occurred while populating patient fields." });
   }
 };
-
-
-
-
-
 
 ///////UPDATE  APPOINTMENT
 const updateAppointment = async (req, res) => {
