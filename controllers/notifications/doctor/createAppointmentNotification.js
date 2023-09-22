@@ -71,8 +71,8 @@ const createAppointmentNotification = async (
           )} ${capitalizeWords(doctor.lastName)}`,
           status: "unread",
           notificationType: "appointment",
-          appointmentId: appointmentId,
-          scheduleId: scheduleId,
+          appointmentId: appointmentDetails.appointmentId,
+          scheduleId: appointmentDetails.scheduleId,
         });
 
         // Save the notification for the admin
@@ -100,8 +100,8 @@ const createAppointmentNotification = async (
         )} ${capitalizeWords(doctor.lastName)}`,
         status: "unread",
         notificationType: "appointment",
-        appointmentId: appointmentId,
-        scheduleId: scheduleId,
+        appointmentId: appointmentDetails.appointmentId,
+        scheduleId: appointmentDetails.scheduleId,
       });
 
       // Save the notification for the user

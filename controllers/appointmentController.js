@@ -103,6 +103,101 @@ const createAppointment = async (doctorId, appointments) => {
 const bookAppointment = async (req, res) => {
   const { doctorId, patientId } = req.params;
   const { appointmentId, startTime } = req.body;
+  let notificationCreated = false; // Flag to track notification creation
+
+  try {
+    // Find the doctor
+    const doctor = await User.findById(doctorId);
+
+    if (!doctor || doctor.role !== "isDoctor") {
+      return res.status(404).json({ message: `Doctor not found.` });
+    }
+
+    // Find the patient (user)
+    const patient = await User.findById(patientId).select("firstName lastName");
+
+    if (!patient) {
+      return res.status(404).json({ message: `Account not found.` });
+    }
+
+    // Find the appointment
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      return res.status(404).json({ message: `Appointment not found.` });
+    }
+
+    // Check if the specified startTime exists in the appointment's schedule
+    const scheduleSlot = appointment.schedule.find(
+      (slot) => slot.startTime === startTime
+    );
+
+    if (!scheduleSlot) {
+      return res.status(400).json({ message: "Invalid appointment time." });
+    }
+
+    // Check if the appointment slot is already booked
+    if (scheduleSlot.status === "Booked") {
+      return res
+        .status(400)
+        .json({ message: "This appointment slot is already booked." });
+    }
+
+    // Update the schedule slot status, assign patientId, and bookingId
+    scheduleSlot.status = "Booked";
+    scheduleSlot.patient = patientId;
+    scheduleSlot.bookingId = generateBookingId();
+
+    // Save the updated appointment
+    await appointment.save();
+
+    try {
+      // Call the function to create a notification
+      await createAppointmentNotification(doctorId, patientId, {
+        date: appointment.date, // Pass the 'date' property
+        startTime: startTime, // Pass the appointment startTime
+        appointmentId,
+        scheduleId: scheduleSlot._id,
+      });
+
+      // Set the flag to indicate successful notification creation
+      notificationCreated = true;
+    } catch (notificationError) {
+      // Handle the notification error here (e.g., log it)
+      console.error(notificationError);
+    }
+
+    if (notificationCreated) {
+      return res.status(200).json({
+        message: "Appointment booked successfully.",
+        appointment: {
+          _id: appointment._id,
+          date: appointment.date,
+          doctorId: appointment.doctor,
+          bookedAppointment: scheduleSlot, // Return the booked appointment slot
+        },
+      });
+    } else {
+      // If notification creation fails, revert the schedule slot status
+      scheduleSlot.status = "Scheduled";
+      scheduleSlot.patient = undefined;
+      scheduleSlot.bookingId = undefined;
+      await appointment.save();
+
+      return res.status(500).json({
+        message: "An error occurred while booking the appointment.",
+      });
+    }
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "An error occurred while booking the appointment." });
+  }
+};
+
+const bookAppointmenttt = async (req, res) => {
+  const { doctorId, patientId } = req.params;
+  const { appointmentId, startTime } = req.body;
 
   try {
     // Find the doctor
