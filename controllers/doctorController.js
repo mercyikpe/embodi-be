@@ -454,10 +454,15 @@ const viewDoctorInfo = async (req, res) => {
     }
 
     // Retrieve the doctor's information along with populated scheduled appointments and user data
+    // const doctorInfo = await DoctorInfo.findOne({ user: userId })
+    //     .populate({
+    //       path: "appointments",
+    //       match: { "schedule.status": "Scheduled" }, // Filter scheduled appointments
+    //     })
     const doctorInfo = await DoctorInfo.findOne({ user: userId })
         .populate({
           path: "appointments",
-          match: { "schedule.status": "Scheduled" }, // Filter scheduled appointments
+          match: { "schedule.status": { $in: ["Scheduled", "Completed", "Booked"] } }, // Include all statuses
         })
         .populate("user", "-password -notifications"); // Exclude the password and notifications fields from the user data
 
@@ -552,7 +557,7 @@ const viewDoctorInfo = async (req, res) => {
 };
 
 
-const viewDoctorInfor = async (req, res) => {
+const viewDoctorInfoeeerr = async (req, res) => {
   const { userId } = req.params;
 
   try {
@@ -658,7 +663,7 @@ const viewDoctorInfor = async (req, res) => {
 };
 
 
-const viewDoctorInfoee = async (req, res) => {
+const viewDoctorInforr = async (req, res) => {
   const { userId } = req.params;
 
   try {

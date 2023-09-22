@@ -92,7 +92,6 @@ router.patch(
 
 router.get(
   "/completed-upcoming/:doctorId",
-  verifyDoctor,
   getBookedAndCompletedAppointments
 );
 
