@@ -17,7 +17,7 @@ const questionnaireNotification = async (userId, questionnaireDetails) => {
       diseaseTitle: `${questionnaireDetails.diseaseName}`,
       status: "unread",
       notificationType: "questionnaire",
-      message: "Depression medication has been prescribed for you",
+      message: `${questionnaireDetails.diseaseName} has been prescribed for you`,
     });
 
     // Save the notification for the user

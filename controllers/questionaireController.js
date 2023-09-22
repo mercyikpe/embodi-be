@@ -50,7 +50,6 @@ const createQuestionnaireForDisease = async (req, res) => {
       data: questionnaire, // Include the questionnaire data in the response
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while creating the questionnaire.",
@@ -132,7 +131,6 @@ const markQuestionnaireCompleted = async (req, res) => {
       .status(200)
       .json({ message: "Questionnaire marked as completed." });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       message:
         "An error occurred while marking the questionnaire as completed.",

@@ -91,7 +91,7 @@ const createAppointment = async (doctorId, appointments) => {
 
     return {
       success: true,
-      message: "Appointments created/updated successfully",
+      message: "Appointments created successfully",
       appointments: createdAppointments,
     };
   } catch (error) {
