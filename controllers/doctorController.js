@@ -470,7 +470,7 @@ const viewDoctorInfo = async (req, res) => {
           match: { "schedule.status": { $in: ["Scheduled", "Completed", "Booked"] } }, // Include all statuses
           populate: {
             path: "schedule.patient", // Populate the patient field
-            select: "firstName lastName", // Select only the first and last name of the patient
+            select: "_id firstName lastName", // Select only the first and last name of the patient
           },
         })
         .populate("user", "-password -notifications"); // Exclude the password and notifications fields from the user data
@@ -502,6 +502,7 @@ const viewDoctorInfo = async (req, res) => {
 
         if (schedule.patient) {
           // If patient information is available, include first and last name
+          scheduleObject.patientId = schedule.patient._id;
           scheduleObject.patientFirstName = schedule.patient.firstName;
           scheduleObject.patientLastName = schedule.patient.lastName;
         }
