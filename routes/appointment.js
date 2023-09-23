@@ -86,7 +86,7 @@ router.get(
 router.delete("/delete/:doctorId/:scheduleId", deleteAppointmentByID);
 
 router.patch(
-  "/completed/:doctorId/:appointmentId/:scheduleId",
+  "/completed/:doctorId/:scheduleId",
   markAppointmentAsCompleted
 );
 

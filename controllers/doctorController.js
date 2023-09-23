@@ -460,9 +460,18 @@ const viewDoctorInfo = async (req, res) => {
     //       match: { "schedule.status": "Scheduled" }, // Filter scheduled appointments
     //     })
     const doctorInfo = await DoctorInfo.findOne({ user: userId })
+        // .populate({
+        //   path: "appointments",
+        //   match: { "schedule.status": { $in: ["Scheduled", "Completed", "Booked"] } }, // Include all statuses
+        // })
+        //
         .populate({
           path: "appointments",
           match: { "schedule.status": { $in: ["Scheduled", "Completed", "Booked"] } }, // Include all statuses
+          populate: {
+            path: "schedule.patient", // Populate the patient field
+            select: "firstName lastName", // Select only the first and last name of the patient
+          },
         })
         .populate("user", "-password -notifications"); // Exclude the password and notifications fields from the user data
 
@@ -483,17 +492,45 @@ const viewDoctorInfo = async (req, res) => {
 
     doctorInfo.appointments.forEach((appointment) => {
       appointment.schedule.forEach((schedule) => {
+        const scheduleObject = {
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          status: schedule.status,
+          _id: schedule._id,
+          bookingId: schedule.bookingId,
+        };
+
+        if (schedule.patient) {
+          // If patient information is available, include first and last name
+          scheduleObject.patientFirstName = schedule.patient.firstName;
+          scheduleObject.patientLastName = schedule.patient.lastName;
+        }
+
         if (schedule.status === "Booked") {
-          groupedSchedules.booked.push(schedule);
+          groupedSchedules.booked.push(scheduleObject);
         } else if (schedule.status === "Completed") {
-          groupedSchedules.completed.push(schedule);
+          groupedSchedules.completed.push(scheduleObject);
         } else if (schedule.status === "Scheduled") {
-          groupedSchedules.scheduled.push(schedule);
+          groupedSchedules.scheduled.push(scheduleObject);
         } else if (schedule.status === "Cancelled") {
-          groupedSchedules.cancelled.push(schedule);
+          groupedSchedules.cancelled.push(scheduleObject);
         }
       });
     });
+
+    // doctorInfo.appointments.forEach((appointment) => {
+    //   appointment.schedule.forEach((schedule) => {
+    //     if (schedule.status === "Booked") {
+    //       groupedSchedules.booked.push(schedule);
+    //     } else if (schedule.status === "Completed") {
+    //       groupedSchedules.completed.push(schedule);
+    //     } else if (schedule.status === "Scheduled") {
+    //       groupedSchedules.scheduled.push(schedule);
+    //     } else if (schedule.status === "Cancelled") {
+    //       groupedSchedules.cancelled.push(schedule);
+    //     }
+    //   });
+    // });
 
     // Group scheduled appointments by date with their _id
     const groupedScheduledAppointments = {};

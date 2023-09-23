@@ -5,73 +5,49 @@ const DoctorInfo = require("../../models/DoctorInfo");
 
 // Controller to mark an appointment as completed by a doctor
 const markAppointmentAsCompleted = async (req, res) => {
-  const { doctorId, appointmentId, scheduleId } = req.params;
+  const { doctorId, scheduleId } = req.params;
 
   try {
-    // Find the appointment based on the appointmentId
-    const appointment = await Appointment.findById(appointmentId);
+    // Find the appointment that contains the schedule with the specified scheduleId
+    const appointment = await Appointment.findOne({
+      doctor: doctorId,
+      'schedule._id': scheduleId,
+    });
 
     if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found." });
-    }
-
-    // Find the schedule you want to mark as completed
-    const scheduleToMarkAsCompleted = appointment.schedule.find(
-      (schedule) => schedule._id.toString() === scheduleId
-    );
-
-    // console.log('scheduleToMarkAsCompleted', scheduleToMarkAsCompleted)
-    if (!scheduleToMarkAsCompleted) {
       return res.status(404).json({ message: "Schedule not found." });
     }
 
-    // Retrieve the doctor's information
-    const doctor = await User.findById(appointment.doctor);
+    // Retrieve the schedule within the appointment based on scheduleId
+    const scheduleToMarkAsCompleted = appointment.schedule.find(
+        (schedule) => schedule._id.toString() === scheduleId
+    );
 
-    if (!doctor) {
-      return res.status(404).json({ message: "Doctor not found." });
-    }
-
-    // Check if the authenticated doctor owns the appointment
-    if (appointment.doctor.toString() !== doctorId) {
-      return res
-        .status(403)
-        .json({ message: "Access denied. You do not own this appointment." });
+    if (!scheduleToMarkAsCompleted) {
+      return res.status(404).json({ message: "Schedule not found." });
     }
 
     // Check if the schedule is already marked as "Completed"
     if (scheduleToMarkAsCompleted.status === "Completed") {
       return res
-        .status(400)
-        .json({ message: "Schedule is already marked as completed." });
+          .status(400)
+          .json({ message: "Schedule is already marked as completed." });
     }
 
-    // // Retrieve the patient's information from the schedule
-    // const patientId = scheduleToMarkAsCompleted.patient;
-    //
-    // const patient = await User.findById(patientId);
-    //
-    // console.log('patient', patient)
-    //
-    // if (!patient) {
-    //   return res.status(404).json({ message: "Patient not found." });
-    // }
+    // Retrieve the doctor's information
+    const doctor = await User.findById(doctorId);
 
-    // Update the status of the schedule to "Completed"
-    scheduleToMarkAsCompleted.status = "Completed";
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found." });
+    }
 
-    // Save the updated appointment
-    await appointment.save();
-
-    // Add the completed appointment to the doctor's and patient's past appointments
-    const completedAppointment = appointment._id; // Use the ObjectId of the appointment
+    // Add the completed appointment to the doctor's past appointments
+    const completedAppointment = appointment._id;
 
     doctor.pastAppointments.push(completedAppointment);
-    // patient.pastAppointments.push(completedAppointment);
 
-    // Save the updated doctor and patient data
+    // Save the updated doctor data
     await doctor.save();
-    // await patient.save();
 
     // Update the patientCount in the doctorInfo model
     const doctorInfo = await DoctorInfo.findOne({ user: doctorId });
@@ -80,13 +56,18 @@ const markAppointmentAsCompleted = async (req, res) => {
       await doctorInfo.save();
     }
 
+    // Update the status of the schedule to "Completed"
+    scheduleToMarkAsCompleted.status = "Completed";
+
+    // Save the updated appointment
+    await appointment.save();
+
     // Respond with a success message
-    return res
-      .status(200)
-      .json({ message: "Appointment marked as completed." });
+    return res.status(200).json({ message: "Schedule marked as completed." });
   } catch (error) {
+    console.error("Error marking schedule as completed:", error);
     return res.status(500).json({
-      message: "An error occurred while marking the appointment as completed.",
+      message: "An error occurred while marking the schedule as completed.",
     });
   }
 };
