@@ -83,12 +83,12 @@ const handleUserProfileUpdate = async (req, res, next) => {
 
     // Check if avatar is included in the request
     if (req.file) {
-      if (req.file.size > Math.pow(1024, 2)) {
-        return errorResponse(res, {
-          statusCode: 400,
-          message: "image too large. It must be less than 1 mb in size",
-        });
-      }
+      // if (req.file.size > Math.pow(1024, 2)) {
+      //   return errorResponse(res, {
+      //     statusCode: 400,
+      //     message: "image too large. It must be less than 1 mb in size",
+      //   });
+      // }
       updates.avatar = req.file.path; // Update the avatar only if a file is provided
     }
 
