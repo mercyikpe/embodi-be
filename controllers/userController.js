@@ -54,10 +54,50 @@ const createUser = async (req, res, next) => {
 };
 
 const handleUserProfileUpdate = async (req, res, next) => {
+  console.log('req.file', req.file)
   try {
     const userId = req.params.id;
 
-    let updates = {};
+    const updates = {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      phoneNumber: req.body.phoneNumber,
+      dob: req.body.dob,
+      address: req.body.address,
+      gender: req.body.gender,
+      allergies: req.body.allergies,
+    };
+
+    // Update the avatar only if a file is provided
+    if (req.file) {
+      updates.image = req.file.path;
+    }
+
+    // const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updates, {
+      new: true,
+    }).select("-password");
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ message: `User with ID ${userId} not found` });
+    }
+
+    return res.status(200).json({
+      message: `User with ID ${userId} updated successfully`,
+      data: updatedUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const handleUserProfileUpdatess = async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+    const updates = {};
 
     if (req.body.firstName) {
       updates.firstName = req.body.firstName;
@@ -80,38 +120,22 @@ const handleUserProfileUpdate = async (req, res, next) => {
     if (req.body.allergies) {
       updates.allergies = req.body.allergies;
     }
-
-    // Check if avatar is included in the request
+    // Update the avatar only if a file is provided
     if (req.file) {
-      // if (req.file.size > Math.pow(1024, 2)) {
-      //   return errorResponse(res, {
-      //     statusCode: 400,
-      //     message: "image too large. It must be less than 1 mb in size",
-      //   });
-      // }
-      updates.avatar = req.file.path; // Update the avatar only if a file is provided
+      updates.image = req.file.path;
     }
 
-    // Update the user's information in the database
-    const updateOptions = { new: true };
+    // You can add more data validation/sanitization here as needed
 
-    const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        updates,
-        updateOptions
-    ).select("-password");
+    const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
 
     if (!updatedUser) {
-      return errorResponse(res, {
-        statusCode: 404,
-        message: "Account does not exist",
-      });
+      return res.status(404).json({ message: `User with ID ${userId} not found` });
     }
 
-    return successResponse(res, {
-      statusCode: 200,
-      message: "Account was updated successfully",
-      payload: updatedUser,
+    return res.status(200).json({
+      message: `User with ID ${userId} updated successfully`,
+      data: updatedUser,
     });
   } catch (error) {
     next(error);
@@ -211,21 +235,24 @@ const getUser = async (req, res, next) => {
     }
 
     // Populate the user's past consultations with disease titles
-    const populatedUser = await User.findOne({ _id: req.params.id, role: "isUser" })
-        .populate({
-          path: "pastConsultation",
-          populate: {
-            path: "diseaseId",
-            select: "title", // Select only the title field of the disease
-          },
-        })
-        .populate("notifications") // Populate the notifications
-        .populate("pastAppointments") // Populate the pastAppointments
-        .exec();
+    const populatedUser = await User.findOne({
+      _id: req.params.id,
+      role: "isUser",
+    })
+      .populate({
+        path: "pastConsultation",
+        populate: {
+          path: "diseaseId",
+          select: "title", // Select only the title field of the disease
+        },
+      })
+      .populate("notifications") // Populate the notifications
+      .populate("pastAppointments") // Populate the pastAppointments
+      .exec();
 
     // Extract the disease titles from past consultations
-    const pastConsultations = populatedUser.pastConsultation.map((consultation) =>
-        consultation.diseaseId.title
+    const pastConsultations = populatedUser.pastConsultation.map(
+      (consultation) => consultation.diseaseId.title
     );
 
     // Format the "past consultation" field as a comma-separated list of disease titles
@@ -243,13 +270,6 @@ const getUser = async (req, res, next) => {
     next(error);
   }
 };
-
-
-
-
-
-
-
 
 // const getUser = async (req, res, next) => {
 //   try {
@@ -520,5 +540,5 @@ module.exports = {
   getActiveUsers,
   viewAllDoctors,
   viewDoctorAppointmentsByWeek,
-  handleUserProfileUpdate
+  handleUserProfileUpdate,
 };
