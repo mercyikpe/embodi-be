@@ -20,8 +20,8 @@ router.get('/', verifyToken,  (req, res)=>{
 router.post('/create',  userController.createUser);
 
 // Update a user
-// router.put('/update/:id', userController.updateUser);
-router.put('/update/:id', upload.single('avatar'), userController.handleUserProfileUpdate);
+router.put('/update/:id', userController.handleUserProfileUpdate);
+// router.put('/update/:id', upload.single('avatar'), userController.handleUserProfileUpdate);
 
 // Delete a user
 router.delete('/delete/:id',  userController.deleteUser);

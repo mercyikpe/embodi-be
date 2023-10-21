@@ -54,47 +54,6 @@ const createUser = async (req, res, next) => {
 };
 
 const handleUserProfileUpdate = async (req, res, next) => {
-  console.log('req.file', req.file)
-  try {
-    const userId = req.params.id;
-
-    const updates = {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      phoneNumber: req.body.phoneNumber,
-      dob: req.body.dob,
-      address: req.body.address,
-      gender: req.body.gender,
-      allergies: req.body.allergies,
-    };
-
-    // Update the avatar only if a file is provided
-    if (req.file) {
-      updates.image = req.file.path;
-    }
-
-    // const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
-
-    const updatedUser = await User.findByIdAndUpdate(userId, updates, {
-      new: true,
-    }).select("-password");
-
-    if (!updatedUser) {
-      return res
-        .status(404)
-        .json({ message: `User with ID ${userId} not found` });
-    }
-
-    return res.status(200).json({
-      message: `User with ID ${userId} updated successfully`,
-      data: updatedUser,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const handleUserProfileUpdatess = async (req, res, next) => {
   try {
     const userId = req.params.id;
     const updates = {};
@@ -120,14 +79,13 @@ const handleUserProfileUpdatess = async (req, res, next) => {
     if (req.body.allergies) {
       updates.allergies = req.body.allergies;
     }
-    // Update the avatar only if a file is provided
-    if (req.file) {
-      updates.image = req.file.path;
+    if (req.body.avatar) {
+      updates.avatar = req.body.avatar;
     }
 
-    // You can add more data validation/sanitization here as needed
-
-    const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
+    const updatedUser = await User.findByIdAndUpdate(userId, updates, {
+      new: true,
+    }).select("-password");
 
     if (!updatedUser) {
       return res.status(404).json({ message: `User with ID ${userId} not found` });
@@ -141,7 +99,6 @@ const handleUserProfileUpdatess = async (req, res, next) => {
     next(error);
   }
 };
-
 
 const updateUser = async (req, res, next) => {
   const {
