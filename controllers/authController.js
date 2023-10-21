@@ -191,7 +191,8 @@ const loginUser = async (req, res, next) => {
       status: user.status,
       verifyBadge: user.verifyBadge,
       verified: user.verified,
-      image: user.image,
+      avatar: user.avatar,
+      // image: user.image,
       dob: user.dob,
       address: user.address,
       gender: user.gender,
@@ -417,6 +418,8 @@ const loginWithGoogle = async (req, res, next) => {
   }
 };
 */
+
+
 const authController = {
   registerUser,
   loginUser,
