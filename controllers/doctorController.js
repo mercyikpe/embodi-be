@@ -154,7 +154,8 @@ const doctorSignin = async (req, res, next) => {
       status: user.status,
       verifyBadge: user.verifyBadge,
       verified: user.verified,
-      image: user.image,
+      avatar: user.avatar,
+      // image: user.image,
       dob: user.dob,
       address: user.address,
       gender: user.gender,
@@ -192,7 +193,7 @@ const doctorSignin = async (req, res, next) => {
 
     return res.status(200).json({
       status: "success",
-      message: "Successfully signed in",
+      message: "Doctor successfully signed in",
       token,
       user: userDetails,
     });
@@ -333,12 +334,13 @@ const updateDoctorInfo = async (req, res, next) => {
       dob: req.body.dob,
       address: req.body.address,
       gender: req.body.gender,
+      avatar: req.body.avatar,
       allergies: req.body.allergies,
     };
 
     const updatedUser = await User.findByIdAndUpdate(userId, userUpdateData, {
       new: true,
-    });
+    }).select("-password");
 
     const doctorUpdateData = {
       qualification: req.body.qualification,
