@@ -80,10 +80,16 @@ const registerUser = async (req, res) => {
 
       await transporter.sendMail(mailOptions);
 
+      // Exclude the password field from the user object in the response
+      const userWithoutPassword = { ...user._doc };
+      delete userWithoutPassword.password;
+
+
       return res.status(200).json({
         status: 'success',
         message: 'Account already registered, new OTP sent for verification.',
-        user: user,
+        // user: user,
+        user: userWithoutPassword,
       });
     }
 
@@ -129,10 +135,16 @@ const registerUser = async (req, res) => {
 
     await transporter.sendMail(mailOptions);
 
+    // Exclude the password field from the user object in the response
+    const userWithoutPassword = { ...savedUser._doc };
+    delete userWithoutPassword.password;
+
+
     return res.status(200).json({
       status: 'success',
       message: 'Sign up successful, OTP sent for verification.',
-      user: savedUser,
+      // user: savedUser,
+      user: userWithoutPassword,
     });
   } catch (error) {
     console.error('Error while registering user:', error);
@@ -322,128 +334,17 @@ const verifyOTP = async (req, res) => {
       expiresIn: "24h",
     });
 
-    return res.status(200).json({
-      status: "success",
-      message: "Account verification successful.",
-      token,
-      user
-    });
-  } catch (error) {
-    console.error("Error while verifying the account:", error);
-    return res.status(500).json({
-      status: "failed",
-      message: "An error occurred while verifying the account.",
-    });
-  }
-};
+    // Exclude the password field from the user object in the response
+    const userWithoutPassword = { ...user._doc };
+    delete userWithoutPassword.password;
 
-
-
-const verifyOTrP = async (req, res) => {
-  // Extract the userId and the verification code from the request body
-  const { userId, verificationCode } = req.body;
-
-  try {
-    const otpCodeRecord = await OTPCode.findOne({ userId });
-
-    if (!otpCodeRecord) {
-      return res.status(400).json({
-        status: "failed",
-        message: "Invalid verification code.",
-      });
-    }
-
-    if (otpCodeRecord.expiresAt < Date.now()) {
-      await OTPCode.deleteOne({ userId });
-      return res.status(400).json({
-        status: "failed",
-        message: "Verification code has expired. Please request OTP again.",
-      });
-    }
-
-    const isMatch = verificationCode === otpCodeRecord.code;
-
-    if (!isMatch) {
-      return res.status(400).json({
-        status: "failed",
-        message: "Invalid verification code.",
-      });
-    }
-
-    // Mark the user as verified
-    await User.updateOne({ _id: userId }, { verified: true });
-
-    // Retrieve the user data after successful account verification
-    const user = await User.findOne({ _id: userId });
-
-    // Generate a JWT token for the user
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, {
-      expiresIn: "24h",
-    });
 
     return res.status(200).json({
       status: "success",
       message: "Account verification successful.",
       token,
-      user
-    });
-  } catch (error) {
-    console.error("Error while verifying the account:", error);
-    return res.status(500).json({
-      status: "failed",
-      message: "An error occurred while verifying the account.",
-    });
-  }
-};
-
-
-const verifyOTPp = async (req, res) => {
-  // Extract the userId and the verification code from the request body
-  const { userId, verificationCode } = req.body;
-
-  try {
-    const otpCodeRecord = await OTPCode.findOne({ userId });
-
-    if (!otpCodeRecord) {
-      return res.status(400).json({
-        status: "failed",
-        message: "Invalid verification code.",
-      });
-    }
-
-    if (otpCodeRecord.expiresAt < Date.now()) {
-      await OTPCode.deleteOne({ userId });
-      return res.status(400).json({
-        status: "failed",
-        message: "Verification code has expired. Please sign up again.",
-      });
-    }
-
-    const isMatch = verificationCode === otpCodeRecord.code;
-
-    if (!isMatch) {
-      return res.status(400).json({
-        status: "failed",
-        message: "Invalid verification code.",
-      });
-    }
-
-    // Mark the user as verified (you can add this field to your User model)
-    await User.updateOne({ _id: userId }, { verified: true });
-
-    // Retrieve the user data after successful account verification
-    const user = await User.findOne({ _id: userId });
-
-    // Generate JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, {
-      expiresIn: "24h",
-    });
-
-    return res.status(200).json({
-      status: "success",
-      message: "Account verification successful.",
-      token,
-      user
+      user: userWithoutPassword,
+      // user
     });
   } catch (error) {
     console.error("Error while verifying the account:", error);
