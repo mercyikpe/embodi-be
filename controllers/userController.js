@@ -96,11 +96,6 @@ const handleUserProfileUpdate = async (req, res, next) => {
       updates.avatar = req.body.avatar;
     }
 
-    if (res.headersSent) {
-      // If headers have already been sent due to a phone number error, do not continue.
-      return;
-    }
-
     const updatedUser = await User.findByIdAndUpdate(userId, updates, {
       new: true,
     }).select("-password");
