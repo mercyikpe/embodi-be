@@ -50,20 +50,38 @@ const registerUser = async (req, res) => {
       }
 
       // Resend OTP for account verification
-      // Generate a new OTP code
+      // // Generate a new OTP code
+      // const otpCode = generateOTPCode();
+      //
+      // // Set the expiration time to 10 minutes from now
+      // const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+      //
+      // // Save OTP code to database
+      // const otpCodeRecord = new OTPCode({
+      //   userId: user._id, // Use the user's ObjectId here
+      //   code: otpCode,
+      //   createdAt: Date.now(),
+      //   expiresAt: expirationTime,
+      // });
+      // await otpCodeRecord.save();
+
+
+
+      // Resend OTP for account verification
       const otpCode = generateOTPCode();
+      const expirationTime = new Date(Date.now() + 10 * 60 * 1000); // Set the expiration time to 10 minutes from now
 
-      // Set the expiration time to 10 minutes from now
-      const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
-
-      // Save OTP code to database
-      const otpCodeRecord = new OTPCode({
-        userId: user._id, // Use the user's ObjectId here
+      // Save the new OTP code to the database
+      const newOTPCode = new OTPCode({
+        userId: user._id,
         code: otpCode,
         createdAt: Date.now(),
         expiresAt: expirationTime,
       });
-      await otpCodeRecord.save();
+      await newOTPCode.save();
+
+
+
 
       // Prepare and send the email using the transporter and sendEmail function
       const mailOptions = {
@@ -107,19 +125,35 @@ const registerUser = async (req, res) => {
     const savedUser = await newUser.save();
 
     // Send OTP code to user's email
+    // const otpCode = generateOTPCode();
+    //
+    // // Set the expiration time to 10 minutes from now
+    // const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+    //
+    // // Save OTP code to database
+    // const otpCodeRecord = new OTPCode({
+    //   userId: savedUser._id, // Use the user's ObjectId here
+    //   code: otpCode,
+    //   createdAt: Date.now(),
+    //   expiresAt: expirationTime,
+    // });
+    // await otpCodeRecord.save();
+
+
+
+    // Resend OTP for account verification
     const otpCode = generateOTPCode();
+    const expirationTime = new Date(Date.now() + 10 * 60 * 1000); // Set the expiration time to 10 minutes from now
 
-    // Set the expiration time to 10 minutes from now
-    const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
-
-    // Save OTP code to database
-    const otpCodeRecord = new OTPCode({
-      userId: savedUser._id, // Use the user's ObjectId here
+    // Save the new OTP code to the database
+    const newOTPCode = new OTPCode({
+      userId: savedUser._id,
       code: otpCode,
       createdAt: Date.now(),
       expiresAt: expirationTime,
     });
-    await otpCodeRecord.save();
+    await newOTPCode.save();
+
 
     // Prepare and send the email using the transporter and sendEmail function
     const mailOptions = {
