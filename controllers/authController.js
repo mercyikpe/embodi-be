@@ -241,19 +241,6 @@ const requestOTP = async (req, res) => {
       });
     }
 
-    // // Regenerate a new OTP for the existing unverified user
-    // const otpCode = generateOTPCode();
-    // const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
-    //
-    // // Save the new OTP code to the database
-    // const newOTPCode = new OTPCode({
-    //   userId: existingUser._id,
-    //   code: otpCode,
-    //   createdAt: Date.now(),
-    //   expiresAt: expirationTime,
-    // });
-    // await newOTPCode.save();
-
     // Regenerate a new OTP for the existing unverified user
     const otpCode = generateOTPCode();
     const expirationTime = new Date(Date.now() + 10 * 60 * 1000); // Set the expiration time to 10 minutes from now
@@ -267,17 +254,16 @@ const requestOTP = async (req, res) => {
     });
     await newOTPCode.save();
 
-
     // Resend the OTP to the user's email
     const mailOptions = {
       from: process.env.AUTH_EMAIL,
       to: existingUser.email,
       subject: "Verify Your Email",
       html: `
-          <h1>Email Verification</h1>
-          <p><strong>${otpCode}</strong></p>
-          <p>Please enter the verification code in your account settings to verify your email. The code will expire after <em>10 minutes</em></p>
-        `,
+        <h1>Email Verification</h1>
+        <p><strong>${otpCode}</strong></p>
+        <p>Please enter the verification code in your account settings to verify your email. The code will expire after <em>10 minutes</em></p>
+      `,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -292,7 +278,7 @@ const requestOTP = async (req, res) => {
         return res.status(200).json({
           status: "success",
           message:
-            "Verification code has been resent. Please check your email.",
+              "Verification code has been resent. Please check your email.",
         });
       }
     });
