@@ -333,6 +333,11 @@ const updateDoctorInfo = async (req, res, next) => {
       });
     }
 
+    if (existingUserWithPhoneNumber) {
+      // A phone number already exists, so we return an error, and the rest of the code won't run.
+      return;
+    }
+
     const user = await User.findById(userId);
     if (!user || user.role !== "isDoctor") {
       return res.status(403).json({
