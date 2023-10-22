@@ -20,6 +20,12 @@ const createUser = async (req, res, next) => {
       delete req.body.status;
     }
 
+    // Check if the phone number already exists in the database
+    const existingUserWithPhoneNumber = await User.findOne({ phoneNumber });
+    if (existingUserWithPhoneNumber) {
+      return res.status(400).json({ status: 'failed', message: "Phone number already exists." });
+    }
+
     // Create a new user instance with the provided data
     const newUser = new User(req.body);
 

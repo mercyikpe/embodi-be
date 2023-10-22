@@ -16,7 +16,7 @@ router.get('/', verifyToken,  (req, res)=>{
     res.send(' USER SIDE')
 })
 
-// Create a new user
+// admin create new user or Create a new user request
 router.post('/create',  userController.createUser);
 
 // Update a user

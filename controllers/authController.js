@@ -45,14 +45,7 @@ const registerUser = async (req, res) => {
         return res.status(400).json({
           status: 'failed',
           message: 'User already exists and is verified.',
-          // user: user,
-          user: {
-            firstName: user.firstName,
-            lastName: user.lastName,
-            phoneNumber: user.phoneNumber,
-            email: user.email,
-            verified: user.verified,
-          },
+          user: user,
         });
       }
 
@@ -90,14 +83,7 @@ const registerUser = async (req, res) => {
       return res.status(200).json({
         status: 'success',
         message: 'Account already registered, new OTP sent for verification.',
-        // user: user,
-        user: {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          phoneNumber: user.phoneNumber,
-          email: user.email,
-          verified: user.verified,
-        },
+        user: user,
       });
     }
 
@@ -146,15 +132,7 @@ const registerUser = async (req, res) => {
     return res.status(200).json({
       status: 'success',
       message: 'Sign up successful, OTP sent for verification.',
-      user: {
-        _id: savedUser._id,
-        firstName: savedUser.firstName,
-        lastName: savedUser.lastName,
-        phoneNumber: savedUser.phoneNumber,
-        email: savedUser.email,
-        verified: savedUser.verified,
-      },
-      // user: savedUser,
+      user: savedUser,
     });
   } catch (error) {
     console.error('Error while registering user:', error);
@@ -348,14 +326,7 @@ const verifyOTP = async (req, res) => {
       status: "success",
       message: "Account verification successful.",
       token,
-      user: {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phoneNumber: user.phoneNumber,
-        email: user.email,
-        verified: user.verified,
-      },
+      user
     });
   } catch (error) {
     console.error("Error while verifying the account:", error);
