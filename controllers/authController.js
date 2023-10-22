@@ -667,8 +667,6 @@ const loginUser = async (req, res, next) => {
 };
 
 
-
-
 /*
 
 // Login with Google

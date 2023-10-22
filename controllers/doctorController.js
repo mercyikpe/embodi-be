@@ -327,7 +327,10 @@ const updateDoctorInfo = async (req, res, next) => {
       existingUserWithPhoneNumber &&
       existingUserWithPhoneNumber._id.toString() !== userId
     ) {
-      return res.status(400).json({ message: "Phone number already exists." });
+      return res.status(400).json({
+        status: "failed",
+        message: "Phone number already exists.",
+      });
     }
 
     const user = await User.findById(userId);
