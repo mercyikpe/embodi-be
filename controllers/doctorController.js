@@ -318,6 +318,18 @@ const updateDoctorInfo = async (req, res, next) => {
   const { userId } = req.params;
 
   try {
+    // Check if the provided phoneNumber already exists in the database
+    const existingUserWithPhoneNumber = await User.findOne({
+      phoneNumber: req.body.phoneNumber,
+    });
+
+    if (
+      existingUserWithPhoneNumber &&
+      existingUserWithPhoneNumber._id.toString() !== userId
+    ) {
+      return res.status(400).json({ message: "Phone number already exists." });
+    }
+
     const user = await User.findById(userId);
     if (!user || user.role !== "isDoctor") {
       return res.status(403).json({
@@ -354,7 +366,7 @@ const updateDoctorInfo = async (req, res, next) => {
     const updatedDoctorInfo = await DoctorInfo.findOneAndUpdate(
       { user: userId },
       doctorUpdateData,
-      { upsert: true, new: true } // Added 'new' option to get the updated document
+      { upsert: true, new: true }
     );
 
     return res.status(200).json({
@@ -462,20 +474,22 @@ const viewDoctorInfo = async (req, res) => {
     //       match: { "schedule.status": "Scheduled" }, // Filter scheduled appointments
     //     })
     const doctorInfo = await DoctorInfo.findOne({ user: userId })
-        // .populate({
-        //   path: "appointments",
-        //   match: { "schedule.status": { $in: ["Scheduled", "Completed", "Booked"] } }, // Include all statuses
-        // })
-        //
-        .populate({
-          path: "appointments",
-          match: { "schedule.status": { $in: ["Scheduled", "Completed", "Booked"] } }, // Include all statuses
-          populate: {
-            path: "schedule.patient", // Populate the patient field
-            select: "_id firstName lastName", // Select only the first and last name of the patient
-          },
-        })
-        .populate("user", "-password -notifications"); // Exclude the password and notifications fields from the user data
+      // .populate({
+      //   path: "appointments",
+      //   match: { "schedule.status": { $in: ["Scheduled", "Completed", "Booked"] } }, // Include all statuses
+      // })
+      //
+      .populate({
+        path: "appointments",
+        match: {
+          "schedule.status": { $in: ["Scheduled", "Completed", "Booked"] },
+        }, // Include all statuses
+        populate: {
+          path: "schedule.patient", // Populate the patient field
+          select: "_id firstName lastName", // Select only the first and last name of the patient
+        },
+      })
+      .populate("user", "-password -notifications"); // Exclude the password and notifications fields from the user data
 
     if (!doctorInfo) {
       return res.status(404).json({
@@ -560,11 +574,13 @@ const viewDoctorInfo = async (req, res) => {
     });
 
     // Extract the schedule objects with status "Scheduled" for availableTimeSlots
-    const availableTimeSlots = Object.entries(groupedScheduledAppointments).map(([date, data]) => ({
-      _id: data._id,
-      date,
-      schedules: data.schedules,
-    }));
+    const availableTimeSlots = Object.entries(groupedScheduledAppointments).map(
+      ([date, data]) => ({
+        _id: data._id,
+        date,
+        schedules: data.schedules,
+      })
+    );
 
     // Create a new response object with the desired fields
     const responseObject = {
@@ -573,10 +589,13 @@ const viewDoctorInfo = async (req, res) => {
       data: {
         ...doctorInfo._doc,
         user: doctorInfo.user,
-        total_number_of_appointment_scheduled: groupedSchedules.scheduled.length,
+        total_number_of_appointment_scheduled:
+          groupedSchedules.scheduled.length,
         total_number_of_appointment_booked: groupedSchedules.booked.length,
-        total_number_of_appointment_completed: groupedSchedules.completed.length,
-        total_number_of_appointment_cancelled: groupedSchedules.cancelled.length,
+        total_number_of_appointment_completed:
+          groupedSchedules.completed.length,
+        total_number_of_appointment_cancelled:
+          groupedSchedules.cancelled.length,
         groupedSchedules: groupedSchedules, // Include groupedSchedules in the response
         availableTimeSlots: availableTimeSlots, // Include availableTimeSlots in the response
       },

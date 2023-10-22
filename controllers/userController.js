@@ -64,9 +64,18 @@ const handleUserProfileUpdate = async (req, res, next) => {
     if (req.body.lastName) {
       updates.lastName = req.body.lastName;
     }
+    // if (req.body.phoneNumber) {
+    //   updates.phoneNumber = req.body.phoneNumber;
+    // }
     if (req.body.phoneNumber) {
+      // Check if the provided phoneNumber already exists in the database
+      const existingUser = await User.findOne({ phoneNumber: req.body.phoneNumber });
+      if (existingUser && existingUser._id.toString() !== userId) {
+        return res.status(400).json({ message: "Phone number already exists." });
+      }
       updates.phoneNumber = req.body.phoneNumber;
     }
+
     if (req.body.dob) {
       updates.dob = req.body.dob;
     }

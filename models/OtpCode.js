@@ -12,6 +12,10 @@ const OtpCodeSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  used: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     required: true,
