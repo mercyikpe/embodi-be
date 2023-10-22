@@ -71,7 +71,11 @@ const handleUserProfileUpdate = async (req, res, next) => {
       // Check if the provided phoneNumber already exists in the database
       const existingUser = await User.findOne({ phoneNumber: req.body.phoneNumber });
       if (existingUser && existingUser._id.toString() !== userId) {
-        return res.status(400).json({ message: "Phone number already exists." });
+        return res.status(400).json({
+          status: "failed",
+          message: "Phone number already exists.",
+        });
+        // return res.status(400).json({ message: "Phone number already exists." });
       }
       updates.phoneNumber = req.body.phoneNumber;
     }
@@ -90,6 +94,11 @@ const handleUserProfileUpdate = async (req, res, next) => {
     }
     if (req.body.avatar) {
       updates.avatar = req.body.avatar;
+    }
+
+    if (res.headersSent) {
+      // If headers have already been sent due to a phone number error, do not continue.
+      return;
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, updates, {
