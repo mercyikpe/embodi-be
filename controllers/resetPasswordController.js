@@ -42,7 +42,7 @@ const changePassword = async (req, res) => {
       message: 'Password changed successfully.',
     });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return res.status(500).json({
       status: 'failed',
       message: 'An error occurred while processing your request.',
@@ -124,9 +124,72 @@ const requestPasswordReset = async (req, res) => {
   }
 };
 
-// Verify otp and reset password
+
+// Verify OTP and Update User Password
 const verifyOTPAndPasswordReset = async (req, res) => {
-  console.log('req', req)
+  const { email, verificationCode, newPassword } = req.body;
+
+  try {
+    // Find the user by their email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found. Please enter a valid email address.",
+      });
+    }
+
+    // Find the OTP code record for the user
+    const otpCodeRecord = await OTPCode.findOne({ userId: user._id });
+
+    if (!otpCodeRecord) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Invalid OTP. Please request a new OTP.",
+      });
+    }
+
+    // Check if the OTP has expired
+    if (otpCodeRecord.expiresAt < Date.now()) {
+      await OTPCode.deleteOne({ userId: user._id });
+      return res.status(400).json({
+        status: "failed",
+        message: "OTP has expired. Please request a new OTP for password reset.",
+      });
+    }
+
+    // Check if the provided OTP code matches
+    if (verificationCode !== otpCodeRecord.code) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Invalid OTP code. Please enter a valid code.",
+      });
+    }
+
+    // Update the user's password with the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    // Remove the used OTP record
+    await OTPCode.deleteOne({ userId: user._id });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Password reset successful. You can now log in with your new password.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while resetting the password.",
+    });
+  }
+};
+
+
+// Verify otp and reset password
+const verifyOTPAndPasswordResettt = async (req, res) => {
   const { email, verificationCode, newPassword } = req.body;
 
   try {
@@ -143,10 +206,12 @@ const verifyOTPAndPasswordReset = async (req, res) => {
     // Check if there is a valid OTP record for the user
     const otpCodeRecord = await OTPCode.findOne({ userId: user._id });
 
+    // console.log('userid', otpCodeRecord)
+
     if (!otpCodeRecord) {
       return res.status(400).json({
         status: "failed",
-        message: "Invalid OTP or OTP has expired. Please request a new OTP.",
+        message: "Invalid OTP. Please request a new OTP.",
       });
     }
 
