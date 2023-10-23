@@ -140,7 +140,7 @@ const verifyOTPAndPasswordReset = async (req, res) => {
     }
 
     // Check if there is a valid OTP record for the user
-    const otpCodeRecord = await PasswordResetOTP.findOne({ userId: user._id });
+    const otpCodeRecord = await OTPCode.findOne({ userId: user._id });
 
     if (!otpCodeRecord) {
       return res.status(400).json({
@@ -151,7 +151,7 @@ const verifyOTPAndPasswordReset = async (req, res) => {
 
     // Check if the OTP is expired
     if (otpCodeRecord.expiresAt < Date.now()) {
-      await PasswordResetOTP.deleteOne({ userId: user._id });
+      await OTPCode.deleteOne({ userId: user._id });
       return res.status(400).json({
         status: "failed",
         message: "OTP has expired. Please request a new OTP for password reset.",
@@ -171,7 +171,7 @@ const verifyOTPAndPasswordReset = async (req, res) => {
     await user.save();
 
     // Remove the used OTP record
-    await PasswordResetOTP.deleteOne({ userId: user._id });
+    await OTPCode.deleteOne({ userId: user._id });
 
     return res.status(200).json({
       status: "success",
