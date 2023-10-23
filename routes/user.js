@@ -57,10 +57,12 @@ router.post('/changePassword',  requestNewPassword.changePassword);
 router.post('/requestPasswordReset', requestNewPassword.requestPasswordReset);
 
 ////// verify OTP sent to email
-router.post('/verifyPasswordOtp', requestNewPassword.verifyOTP);
+router.post('/verifyPasswordOtp', requestNewPassword.verifyOTPAndPasswordReset);
+
+// router.post('/verifyPasswordOtp', requestNewPassword.verifyOTP);
 
 ////// Update pasword
-router.put('/updatePassword', requestNewPassword.resetPassword);
+// router.put('/updatePassword', requestNewPassword.resetPassword);
 //
 ///////USER RESET PASSWORD ENDS HERE
 
@@ -73,10 +75,6 @@ router.get('/patient/:patientId', populatePatientFields, (req, res) => {
   const patient = req.patient;
   return res.status(200).json({ patient });
 });
-
-
-
-
 
 
 module.exports = router;
