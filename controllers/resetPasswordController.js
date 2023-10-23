@@ -8,8 +8,8 @@ const OTPCode = require('../models/OtpCode'); // Import the OTPCode model
 //////// CHANGE PASSWORD STARTS HERE
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 const changePassword = async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  const userId = req.user.userId; // Make sure 'userId' matches the property name in req.user
+  const { currentPassword, newPassword, userId } = req.body;
+  // const userId = req.user.userId; // Make sure 'userId' matches the property name in req.user
 
   try {
     const user = await User.findById(userId);
