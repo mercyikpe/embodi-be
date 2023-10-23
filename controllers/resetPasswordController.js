@@ -126,6 +126,7 @@ const requestPasswordReset = async (req, res) => {
 
 // Verify otp and reset password
 const verifyOTPAndPasswordReset = async (req, res) => {
+  console.log('req', req)
   const { email, verificationCode, newPassword } = req.body;
 
   try {

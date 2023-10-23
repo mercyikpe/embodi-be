@@ -57,7 +57,7 @@ router.post('/changePassword',  requestNewPassword.changePassword);
 router.post('/requestPasswordReset', requestNewPassword.requestPasswordReset);
 
 ////// verify OTP sent to email
-router.post('/verifyPasswordOtp', requestNewPassword.verifyOTPAndPasswordReset);
+router.post('/updatePassword', requestNewPassword.verifyOTPAndPasswordReset);
 
 // router.post('/verifyPasswordOtp', requestNewPassword.verifyOTP);
 
