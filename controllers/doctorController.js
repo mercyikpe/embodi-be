@@ -711,6 +711,7 @@ const fetchDoctorsWithFullInfo = async (req, res) => {
           lastName: 1,
           email: 1,
           phoneNumber: 1,
+          avatar: 1,
           qualification: { $ifNull: ["$doctorInfo.qualification", null] },
           placeOfWork: { $ifNull: ["$doctorInfo.placeOfWork", null] },
           specialty: { $ifNull: ["$doctorInfo.specialty", null] },
@@ -728,7 +729,7 @@ const fetchDoctorsWithFullInfo = async (req, res) => {
       data: doctors,
     });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while fetching doctors information.",
@@ -768,7 +769,7 @@ const removeDoctorRole = async (req, res) => {
       });
     }
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while processing your request.",
