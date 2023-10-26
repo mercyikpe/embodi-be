@@ -7,10 +7,7 @@ const Disease = require("../models/Disease");
 const Questionnaire = require("../models/Questionnaire");
 const EventLog = require("../models/EventLog");
 
-///////  MIDDLEWARES
 
-//////  CONTROLLERS
-const userController = require("../controllers/userController");
 
 //////UPDATE ADMIN PROFILE
 const updateAdminProfile = async (userId, updateData) => {
@@ -73,6 +70,27 @@ const viewAllAdmins = async () => {
     return admins;
   } catch (error) {
     throw error; // Rethrow the error to be caught in the calling function
+  }
+};
+
+const getAdminByID = async (req, res, next) => {
+  try {
+    const user = await User.findOne({ _id: req.params.id, role: "isAdmin" }).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "Admin not found or does not have the Admin role.",
+      });
+    }
+
+    res.json({
+      status: 200,
+      message: `Admin with ID ${req.params.id} found`,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -193,5 +211,6 @@ module.exports = {
   updateUserByAdmin,
   viewAllAdmins,
   viewDoctorDetails,
-  getAllAppointments
+  getAllAppointments,
+  getAdminByID
 };

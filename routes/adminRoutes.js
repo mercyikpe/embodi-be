@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const admin = require("../controllers/adminController");
+const adminController = require("../controllers/adminController");
 const userController = require("../controllers/adminController");
 const { verifyToken, verifyAdmin } = require("../middleware/authMiddleware");
 
@@ -76,5 +76,9 @@ router.get("/admins", async (req, res) => {
     });
   }
 });
+
+
+// Get admin by ID
+router.get('/:id', adminController.getAdminByID);
 
 module.exports = router;
