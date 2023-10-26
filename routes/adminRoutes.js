@@ -9,30 +9,6 @@ router.get("/", verifyToken, verifyAdmin, (req, res) => {
   res.send("admin MICROPHONE");
 });
 
-// Update admin profile
-router.patch("/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const updateData = req.body;
-
-    const updatedAdmin = await userController.updateAdminProfile(
-      userId,
-      updateData
-    );
-
-    return res.status(200).json({
-      status: "success",
-      message: "Admin profile updated successfully.",
-      updatedAdmin,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: "failed",
-      message: "An error occurred while processing the request.",
-    });
-  }
-});
-
 // Update user information by admin
 router.put("/updateUser/:userId", async (req, res) => {
   const { userId } = req.params;
@@ -77,6 +53,33 @@ router.get("/admins", async (req, res) => {
   }
 });
 
+
+// Get all users, doctors and admin
+router.get('/all-users', adminController.getAllUsersInDB);
+
+// Update admin profile
+router.patch("/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const updateData = req.body;
+
+    const updatedAdmin = await userController.updateAdminProfile(
+        userId,
+        updateData
+    );
+
+    return res.status(200).json({
+      status: "success",
+      message: "Admin profile updated successfully.",
+      updatedAdmin,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while processing the request.",
+    });
+  }
+});
 
 // Get admin by ID
 router.get('/:id', adminController.getAdminByID);

@@ -94,6 +94,30 @@ const getAdminByID = async (req, res, next) => {
   }
 };
 
+
+const getAllUsersInDB = async (req, res, next) => {
+  try {
+    const users = await User.find({}, { firstName: 1, lastName: 1, _id: 1, role: 1, avatar: 1, phoneNumber: 1 });
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({
+        status: "failed",
+        message: "No users found.",
+      });
+    }
+
+    res.json({
+      status: 200,
+      message: "Users found",
+      data: users,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
 const viewDoctorDetails = async (req, res, next) => {
   try {
     const { doctorId } = req.params;
@@ -212,5 +236,6 @@ module.exports = {
   viewAllAdmins,
   viewDoctorDetails,
   getAllAppointments,
-  getAdminByID
+  getAdminByID,
+  getAllUsersInDB
 };
