@@ -75,9 +75,9 @@ const viewAllAdmins = async () => {
 
 const getAdminByID = async (req, res, next) => {
   try {
-    const user = await User.findOne({ _id: req.params.id, role: "isAdmin" }).select("-password");
+    const admin = await User.findOne({ _id: req.params.id, role: "isAdmin" }).select("-password");
 
-    if (!user) {
+    if (!admin) {
       return res.status(404).json({
         status: "failed",
         message: "Admin not found or does not have the Admin role.",
@@ -87,7 +87,7 @@ const getAdminByID = async (req, res, next) => {
     res.json({
       status: 200,
       message: `Admin with ID ${req.params.id} found`,
-      data: user,
+      data: admin,
     });
   } catch (error) {
     next(error);

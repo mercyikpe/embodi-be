@@ -10,7 +10,7 @@ router.get("/", verifyToken, verifyAdmin, (req, res) => {
 });
 
 // Update admin profile
-router.patch("/updateAdmin/:userId", async (req, res) => {
+router.patch("/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const updateData = req.body;
