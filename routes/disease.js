@@ -19,7 +19,7 @@ router.get('/', (req, res)=>{
 router.post('/createdisease', upload.single('photo'),  diseaseController.createDiseases);
 
 //UPDATE DISEASE   ///// put disease ID
-router.put('/update/:diseaseId', diseaseController.updateDisease);
+router.put('/update/:diseaseId', upload.single('photo'), diseaseController.updateDisease);
 
 //// VIEW ALL DISEASES
 router.get('/viewAll', diseaseController.getDiseases);

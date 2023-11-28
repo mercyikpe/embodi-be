@@ -18,6 +18,9 @@ router.post('/register', authValidator, runValidation,  authController.registerU
 // User login route
 router.post('/login', authController.loginUser);
 
+// User Login - Register
+router.post('/auth/google', authController.googleAuth);
+
 // REQUEST FOR NEW OTP
 router.post('/requestotp', authController.requestOTP);
 

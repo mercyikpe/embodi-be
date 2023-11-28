@@ -7,18 +7,95 @@ const User = require("../models/User");
 const transporter = require("../utilities/transporter");
 const OTPCode = require("../models/OtpCode"); // Add this line to import the OtpCode model
 require("dotenv").config();
-const { createTransporter, sendEmail } = require("../utilities/transporter"); // Import the emailUtils module
+const { LoginTicket, OAuth2Client } = require('google-auth-library');
 
-//const { googleAuthConfig, getGoogleProfile } = require('../../utility/googleAuth'); // Import Google Auth utility functions
+const oAuth2Client = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    'postmessage'
+);
 
-// const generateOTPCode = () => {
-//   const digits = "0123456789";
-//   let otpCode = "";
-//   for (let i = 0; i < 6; i++) {
-//     otpCode += digits[Math.floor(Math.random() * 10)];
-//   }
-//   return otpCode;
-// };
+// POST api/users/auth/google
+// Auth user with google
+const googleAuth = async (req, res, next) => {
+  try {
+    if (!req.body.code) {
+      throw createError(400, 'No Google credential found. Please try again later.');
+    }
+    const { tokens } = await oAuth2Client.getToken(req.body.code);
+    const idToken = tokens.id_token;
+
+    // Ensure that idToken is not null or undefined
+    if (!idToken) {
+      throw createError(400, 'Invalid Google token');
+    }
+
+    // Verify the credential
+    const ticket = await oAuth2Client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    // access the payload using the getPayload method
+    const payload = ticket.getPayload();
+
+    if (!payload) {
+      throw createError(400, 'Invalid Google token payload');
+    }
+
+    const { email_verified, given_name, family_name, name, email, picture } = payload;
+
+    const user = await User.findOne({ email });
+
+    if (email_verified) {
+      if (user) {
+        // Remove the password field from the user object
+        const userWithoutPassword = { ...user.toObject() };
+        delete userWithoutPassword.password;
+
+        return res.status(200).json({
+          status: 'success',
+          message: 'Successfully logged in with Google',
+          user: userWithoutPassword,
+        });
+      } else {
+        // Generate a password for the user using bcrypt
+        const password = bcrypt.genSaltSync(10);
+
+        // Hash the password using bcrypt
+        const hashedPassword = bcrypt.hashSync(password, 10);
+
+        const newUser = new User({
+          firstName: given_name,
+          lastName: family_name,
+          email,
+          phone: phoneNumber,
+          password: hashedPassword,
+          image: picture,
+        });
+
+        const createdUser = await newUser.save();
+
+        if (!createdUser) {
+          throw createError(500, 'Account not created with Google');
+        }
+
+        // Remove the password field from the user object
+        const userWithoutPassword = { ...createdUser.toObject() };
+        delete userWithoutPassword.password;
+
+        return res.status(200).json({
+          status: 'success',
+          message: 'Successfully logged in with Google',
+          user: userWithoutPassword,
+        });
+      }
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 // Helper function to generate OTP code
 const generateOTPCode = () => {
@@ -571,7 +648,7 @@ const loginUser = async (req, res, next) => {
   }
 };
 
-/*
+
 
 // Login with Google
 const loginWithGoogle = async (req, res, next) => {
@@ -596,30 +673,34 @@ const loginWithGoogle = async (req, res, next) => {
     }
 
     // Create and send the JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.PASS_SEC, { expiresIn: '1h' });
-    const { isAdmin, ...otherDetails } = user._doc;
+    const jwtToken = jwt.sign({ userId: user._id }, process.env.PASS_SEC, { expiresIn: '1h' });
+
+    // Ensure that sensitive details like the password are not sent to the client
+    const { password, ...otherDetails } = user._doc;
 
     return res.status(200).json({
       status: 'success',
       message: 'Successfully logged in with Google',
-      token,
+      token: jwtToken,
       user: otherDetails,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({
       status: 'failed',
       message: 'Google login failed',
     });
   }
 };
-*/
+
+
 
 const authController = {
   registerUser,
   loginUser,
   requestOTP,
   verifyOTP,
+  googleAuth
   //loginWithGoogle,
 };
 

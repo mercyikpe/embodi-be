@@ -47,7 +47,6 @@ const getDiseases = async (req, res) => {
       data: diseases,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while fetching diseases.",
@@ -69,8 +68,87 @@ const getDiseaseDetails = async (req, res) => {
 
     return res.status(200).json({ message: 'Disease details retrieved successfully.', data: disease });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({ message: 'An error occurred while retrieving disease details.' });
+  }
+};
+
+const updateDisease = async (req, res) => {
+  try {
+    const { diseaseId } = req.params;
+    const { title, category, detailTitle, detail } = req.body;
+    // const photo = req.file;
+
+    // Find the disease by ID
+    const disease = await Disease.findById(diseaseId);
+
+    // Check if the disease exists
+    if (!disease) {
+      return res.status(404).json({
+        status: "failed",
+        message: "Disease not found. Please enter a valid diseaseId.",
+      });
+    }
+
+    // Update the disease properties with new data
+    disease.title = title;
+    disease.category = category;
+    disease.detailTitle = detailTitle;
+    disease.detail = detail;
+    // disease.photo = photo.path;
+
+    if (req.file) {
+      disease.photo = req.file.path;
+    }
+
+    // Save the updated disease to the database
+    const updatedDisease = await disease.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Disease updated successfully.",
+      data: updatedDisease,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while updating the disease.",
+    });
+  }
+};
+
+const handleDiseaseDelete = async (req, res) => {
+  try {
+    const { diseaseId } = req.params;
+
+    // Find the disease by its ID
+    const disease = await Disease.findById(diseaseId);
+
+    if (!disease) {
+      return res.status(404).json({ message: 'Disease not found.' });
+    }
+
+    // Get the path to the disease photo
+    const diseasePhotoPath = disease.photo;
+
+    // Check if the disease has a photo
+    if (diseasePhotoPath) {
+      // Attempt to delete the disease photo
+      fs.unlink(diseasePhotoPath, (error) => {
+        if (error) {
+          console.error('Error deleting disease photo:', error);
+        } else {
+          console.log('Disease photo was deleted');
+        }
+      });
+    }
+
+    // Remove the disease from the database
+    await Disease.findByIdAndDelete(diseaseId);
+
+    return res.status(200).json({ message: 'Disease deleted successfully.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred while deleting the disease.' });
   }
 };
 
@@ -132,80 +210,7 @@ const getDiseaseWithHighestEngagement = async (req, res) => {
 // controllers/diseaseController.js
 
 
-const updateDisease = async (req, res) => {
-  try {
-    const { diseaseId } = req.params;
-    const { title, category, detailTitle, detail } = req.body;
 
-    // Find the disease by ID
-    const disease = await Disease.findById(diseaseId);
-
-    // Check if the disease exists
-    if (!disease) {
-      return res.status(404).json({
-        status: "failed",
-        message: "Disease not found. Please enter a valid diseaseId.",
-      });
-    }
-
-    // Update the disease properties with new data
-    disease.title = title;
-    disease.category = category;
-    disease.detailTitle = detailTitle;
-    disease.detail = detail;
-
-    // Save the updated disease to the database
-    const updatedDisease = await disease.save();
-
-    return res.status(200).json({
-      status: "success",
-      message: "Disease updated successfully.",
-      data: updatedDisease,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: "failed",
-      message: "An error occurred while updating the disease.",
-    });
-  }
-};
-
-const handleDiseaseDelete = async (req, res) => {
-  try {
-    const { diseaseId } = req.params;
-
-    // Find the disease by its ID
-    const disease = await Disease.findById(diseaseId);
-
-    if (!disease) {
-      return res.status(404).json({ message: 'Disease not found.' });
-    }
-
-    // Get the path to the disease photo
-    const diseasePhotoPath = disease.photo;
-
-    // Check if the disease has a photo
-    if (diseasePhotoPath) {
-      // Attempt to delete the disease photo
-      fs.unlink(diseasePhotoPath, (error) => {
-        if (error) {
-          console.error('Error deleting disease photo:', error);
-        } else {
-          console.log('Disease photo was deleted');
-        }
-      });
-    }
-
-    // Remove the disease from the database
-    await Disease.findByIdAndDelete(diseaseId);
-
-    return res.status(200).json({ message: 'Disease deleted successfully.' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'An error occurred while deleting the disease.' });
-  }
-};
 
 
 /////GET ALL DISEASE ALONGSIDE QUESTIONNAIRE
