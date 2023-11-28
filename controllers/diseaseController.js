@@ -36,7 +36,6 @@ const createDiseases = async (req, res) => {
   }
 };
 
-
 // Get all diseases
 const getDiseases = async (req, res) => {
   try {
@@ -63,12 +62,19 @@ const getDiseaseDetails = async (req, res) => {
     const disease = await Disease.findById(diseaseId);
 
     if (!disease) {
-      return res.status(404).json({ message: 'Disease not found.' });
+      return res.status(404).json({ message: "Disease not found." });
     }
 
-    return res.status(200).json({ message: 'Disease details retrieved successfully.', data: disease });
+    return res
+      .status(200)
+      .json({
+        message: "Disease details retrieved successfully.",
+        data: disease,
+      });
   } catch (error) {
-    return res.status(500).json({ message: 'An error occurred while retrieving disease details.' });
+    return res
+      .status(500)
+      .json({ message: "An error occurred while retrieving disease details." });
   }
 };
 
@@ -124,7 +130,7 @@ const handleDiseaseDelete = async (req, res) => {
     const disease = await Disease.findById(diseaseId);
 
     if (!disease) {
-      return res.status(404).json({ message: 'Disease not found.' });
+      return res.status(404).json({ message: "Disease not found." });
     }
 
     // Get the path to the disease photo
@@ -135,9 +141,9 @@ const handleDiseaseDelete = async (req, res) => {
       // Attempt to delete the disease photo
       fs.unlink(diseasePhotoPath, (error) => {
         if (error) {
-          console.error('Error deleting disease photo:', error);
+          console.error("Error deleting disease photo:", error);
         } else {
-          console.log('Disease photo was deleted');
+          console.log("Disease photo was deleted");
         }
       });
     }
@@ -145,13 +151,13 @@ const handleDiseaseDelete = async (req, res) => {
     // Remove the disease from the database
     await Disease.findByIdAndDelete(diseaseId);
 
-    return res.status(200).json({ message: 'Disease deleted successfully.' });
+    return res.status(200).json({ message: "Disease deleted successfully." });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'An error occurred while deleting the disease.' });
+    return res
+      .status(500)
+      .json({ message: "An error occurred while deleting the disease." });
   }
 };
-
 
 // Function to find diseases with at least 100 views per week
 const getPopularDiseases = async (req, res) => {
@@ -175,7 +181,6 @@ const getPopularDiseases = async (req, res) => {
       popularDiseases: popularDiseases,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while fetching popular diseases.",
@@ -198,7 +203,6 @@ const getDiseaseWithHighestEngagement = async (req, res) => {
         : 0,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       status: "failed",
       message:
@@ -206,19 +210,6 @@ const getDiseaseWithHighestEngagement = async (req, res) => {
     });
   }
 };
-
-// controllers/diseaseController.js
-
-
-
-
-
-/////GET ALL DISEASE ALONGSIDE QUESTIONNAIRE
-
-
-// Correct usage of ObjectId with 'new' keyword
-//const objectId = new ObjectId();
-//console.log(objectId); // Should print a new ObjectId
 
 const viewQuestionnaireWithDisease = async (req, res) => {
   try {
@@ -251,5 +242,5 @@ module.exports = {
   getDiseaseWithHighestEngagement,
   viewQuestionnaireWithDisease,
   handleDiseaseDelete,
-  getDiseaseDetails
+  getDiseaseDetails,
 };

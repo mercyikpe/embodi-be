@@ -7,12 +7,12 @@ const User = require("../models/User");
 const transporter = require("../utilities/transporter");
 const OTPCode = require("../models/OtpCode"); // Add this line to import the OtpCode model
 require("dotenv").config();
-const { LoginTicket, OAuth2Client } = require('google-auth-library');
+const { LoginTicket, OAuth2Client } = require("google-auth-library");
 
 const oAuth2Client = new OAuth2Client(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    'postmessage'
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  "postmessage"
 );
 
 // POST api/users/auth/google
@@ -20,14 +20,17 @@ const oAuth2Client = new OAuth2Client(
 const googleAuth = async (req, res, next) => {
   try {
     if (!req.body.code) {
-      throw createError(400, 'No Google credential found. Please try again later.');
+      throw createError(
+        400,
+        "No Google credential found. Please try again later."
+      );
     }
     const { tokens } = await oAuth2Client.getToken(req.body.code);
     const idToken = tokens.id_token;
 
     // Ensure that idToken is not null or undefined
     if (!idToken) {
-      throw createError(400, 'Invalid Google token');
+      throw createError(400, "Invalid Google token");
     }
 
     // Verify the credential
@@ -40,10 +43,11 @@ const googleAuth = async (req, res, next) => {
     const payload = ticket.getPayload();
 
     if (!payload) {
-      throw createError(400, 'Invalid Google token payload');
+      throw createError(400, "Invalid Google token payload");
     }
 
-    const { email_verified, given_name, family_name, name, email, picture } = payload;
+    const { email_verified, given_name, family_name, name, email, picture } =
+      payload;
 
     const user = await User.findOne({ email });
 
@@ -54,8 +58,8 @@ const googleAuth = async (req, res, next) => {
         delete userWithoutPassword.password;
 
         return res.status(200).json({
-          status: 'success',
-          message: 'Successfully logged in with Google',
+          status: "success",
+          message: "Successfully logged in with Google",
           user: userWithoutPassword,
         });
       } else {
@@ -77,7 +81,7 @@ const googleAuth = async (req, res, next) => {
         const createdUser = await newUser.save();
 
         if (!createdUser) {
-          throw createError(500, 'Account not created with Google');
+          throw createError(500, "Account not created with Google");
         }
 
         // Remove the password field from the user object
@@ -85,8 +89,8 @@ const googleAuth = async (req, res, next) => {
         delete userWithoutPassword.password;
 
         return res.status(200).json({
-          status: 'success',
-          message: 'Successfully logged in with Google',
+          status: "success",
+          message: "Successfully logged in with Google",
           user: userWithoutPassword,
         });
       }
@@ -95,7 +99,6 @@ const googleAuth = async (req, res, next) => {
     next(error);
   }
 };
-
 
 // Helper function to generate OTP code
 const generateOTPCode = () => {
@@ -106,7 +109,6 @@ const generateOTPCode = () => {
   }
   return otpCode;
 };
-
 
 const registerUser = async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password } = req.body;
@@ -245,7 +247,7 @@ const resendOTP = async (user, res) => {
   });
 };
 
-
+////// REQUEST FOR A NEW OTP IF USER DIDNT RECEIVE IT
 const requestOTP = async (req, res) => {
   const { email } = req.body;
 
@@ -266,133 +268,6 @@ const requestOTP = async (req, res) => {
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while resending the verification code.",
-    });
-  }
-};
-
-
-const registerUserrrr = async (req, res) => {
-  const { firstName, lastName, phoneNumber, email, password } = req.body;
-
-  try {
-    // Check if the user with the given phone number already exists
-    const existingUser = await User.findOne({ phoneNumber });
-
-    if (existingUser) {
-      return res.status(400).json({
-        status: "failed",
-        message: "Phone number already exists.",
-      });
-    }
-
-    // Check if the user with the given email already exists
-    let user = await User.findOne({ email });
-
-    if (user) {
-      if (user.verified) {
-        // User is already verified
-        delete user.password;
-        return res.status(400).json({
-          status: "failed",
-          message: "User already exists and is verified.",
-          user: user,
-        });
-      }
-
-      // Resend OTP for account verification
-      const otpCode = generateOTPCode();
-      const expirationTime = new Date(Date.now() + 10 * 60 * 1000); // Set the expiration time to 10 minutes from now
-
-      // Save the new OTP code to the database
-      const newOTPCode = new OTPCode({
-        userId: user._id,
-        code: otpCode,
-        createdAt: Date.now(),
-        expiresAt: expirationTime,
-      });
-      await newOTPCode.save();
-
-      // Prepare and send the email using the transporter and sendEmail function
-      const mailOptions = {
-        from: process.env.AUTH_EMAIL,
-        to: user.email,
-        subject: "Verify Your Email",
-        html: `
-          <h1>Email Verification</h1>
-          <h3>Welcome ${lastName}, </h3>
-          <p>Please enter the verification code to continue. The code will expire after <em>10 minutes</em>.</p>
-          <h2><strong>${otpCode}</strong></h2>
-        `,
-      };
-
-      await transporter.sendMail(mailOptions);
-
-      // Exclude the password field from the user object in the response
-      const userWithoutPassword = { ...user._doc };
-      delete userWithoutPassword.password;
-
-      return res.status(200).json({
-        status: "success",
-        message: "Account already registered, new OTP sent for verification.",
-        // user: user,
-        user: userWithoutPassword,
-      });
-    }
-
-    // If the user does not exist, create a new user and set their verified status to false
-    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
-    const newUser = new User({
-      firstName,
-      lastName,
-      phoneNumber,
-      email,
-      password: hashedPassword,
-      verified: false,
-    });
-
-    const savedUser = await newUser.save();
-
-    // Resend OTP for account verification
-    const otpCode = generateOTPCode();
-    const expirationTime = new Date(Date.now() + 10 * 60 * 1000); // Set the expiration time to 10 minutes from now
-
-    // Save the new OTP code to the database
-    const newOTPCode = new OTPCode({
-      userId: savedUser._id,
-      code: otpCode,
-      createdAt: Date.now(),
-      expiresAt: expirationTime,
-    });
-    await newOTPCode.save();
-
-    // Prepare and send the email using the transporter and sendEmail function
-    const mailOptions = {
-      from: process.env.AUTH_EMAIL,
-      to: savedUser.email,
-      subject: "Verify Your Email",
-      html: `
-      <h1>Email Verification</h1>
-      <p> Welcome ${savedUser.lastName}, Please enter the verification code to continue. The code will expire after <em>10 minutes</em></p>
-      <h3><strong>${otpCode}</strong></h3>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-
-    // Exclude the password field from the user object in the response
-    const userWithoutPassword = { ...savedUser._doc };
-    delete userWithoutPassword.password;
-
-    return res.status(200).json({
-      status: "success",
-      message: "Sign up successful, OTP sent for verification.",
-      // user: savedUser,
-      user: userWithoutPassword,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: "failed",
-      message: "An error occurred while signing up. Please try again.",
     });
   }
 };
@@ -465,78 +340,6 @@ const verifyOTP = async (req, res) => {
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while verifying the account.",
-    });
-  }
-};
-
-////// REQUEST FOR A NEW OTP IF USER DIDNT RECEIVE IT
-const requestOTPss = async (req, res) => {
-  const { email } = req.body;
-
-  // Check if the email is provided
-  if (!email) {
-    return res.status(400).json({
-      status: "failed",
-      message: "Email cannot be blank",
-    });
-  }
-
-  try {
-    // Check if the user with the provided email exists and is unverified
-    const existingUser = await User.findOne({ email, verified: false });
-
-    if (!existingUser) {
-      return res.status(400).json({
-        status: "failed",
-        message: "User with the provided email not found or already verified.",
-      });
-    }
-
-    // Regenerate a new OTP for the existing unverified user
-    const otpCode = generateOTPCode();
-    const expirationTime = new Date(Date.now() + 10 * 60 * 1000); // Set the expiration time to 10 minutes from now
-
-    // Save the new OTP code to the database
-    const newOTPCode = new OTPCode({
-      userId: existingUser._id,
-      code: otpCode,
-      createdAt: Date.now(),
-      expiresAt: expirationTime,
-    });
-    await newOTPCode.save();
-
-    // Resend the OTP to the user's email
-    const mailOptions = {
-      from: process.env.AUTH_EMAIL,
-      to: existingUser.email,
-      subject: "Verify Your Email",
-      html: `
-        <h1>Email Verification</h1>
-        <p><strong>${otpCode}</strong></p>
-        <p>Please enter the verification code in your account settings to verify your email. The code will expire after <em>10 minutes</em></p>
-      `,
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log(error);
-        return res.status(500).json({
-          status: "failed",
-          message: "An error occurred while resending the verification code.",
-        });
-      } else {
-        console.log("Email sent: " + info.response);
-        return res.status(200).json({
-          status: "success",
-          message:
-              "Verification code has been resent. Please check your email.",
-        });
-      }
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: "failed",
-      message: "An error occurred while resending the verification code.",
     });
   }
 };
@@ -648,60 +451,12 @@ const loginUser = async (req, res, next) => {
   }
 };
 
-
-
-// Login with Google
-const loginWithGoogle = async (req, res, next) => {
-  try {
-    // Authenticate the user with the Google token
-    const { token } = req.body;
-    const profile = await getGoogleProfile(token);
-
-    // Check if the user exists in the database
-    let user = await User.findOne({ email: profile.email });
-
-    // If the user does not exist, create a new user account
-    if (!user) {
-      user = new User({
-        username: profile.name,
-        email: profile.email,
-        password: '', // Since the user is logging in with Google, we can set an empty password
-        verified: true, // We assume that the user's email is already verified by Google
-      });
-
-      user = await user.save();
-    }
-
-    // Create and send the JWT token
-    const jwtToken = jwt.sign({ userId: user._id }, process.env.PASS_SEC, { expiresIn: '1h' });
-
-    // Ensure that sensitive details like the password are not sent to the client
-    const { password, ...otherDetails } = user._doc;
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Successfully logged in with Google',
-      token: jwtToken,
-      user: otherDetails,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      status: 'failed',
-      message: 'Google login failed',
-    });
-  }
-};
-
-
-
 const authController = {
   registerUser,
   loginUser,
   requestOTP,
   verifyOTP,
-  googleAuth
-  //loginWithGoogle,
+  googleAuth,
 };
 
 module.exports = authController;
