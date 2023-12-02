@@ -14,7 +14,7 @@ const signUpAsDoctors = async (req, res) => {
     // Check if the user making the request is an admin
     const adminUser = await User.findById(adminUserId);
 
-    if (adminUser && adminUser.role !== "isAdmin") {
+    if (adminUser || adminUser.role !== "isAdmin") {
       return res.status(403).json({
         status: "failed",
         message: "You do not have permission to sign up doctors.",
@@ -46,7 +46,7 @@ const signUpAsDoctors = async (req, res) => {
       });
 
       return res.json({
-        status: 200,
+        status: 201,
         message: "Doctor created successfully.",
       });
     } else {
@@ -88,10 +88,9 @@ const signUpAsDoctors = async (req, res) => {
       });
     }
   } catch (error) {
-    console.log("Error signing up as doctor:", error);
     return res.status(500).json({
       status: "failed",
-      message: "An error occurred while processing your request.",
+      message: "An error occurred while inviting a doctor.",
     });
   }
 };
