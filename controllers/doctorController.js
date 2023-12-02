@@ -14,7 +14,7 @@ const signUpAsDoctors = async (req, res) => {
     // Check if the user making the request is an admin
     const adminUser = await User.findById(adminUserId);
 
-    if (adminUser || adminUser.role !== "isAdmin") {
+    if (!adminUser || adminUser.role !== "isAdmin") {
       return res.status(403).json({
         status: "failed",
         message: "You do not have permission to sign up doctors.",
