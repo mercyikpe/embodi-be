@@ -14,7 +14,7 @@ const signUpAsDoctors = async (req, res) => {
     // Check if the user making the request is an admin
     const adminUser = await User.findById(adminUserId);
 
-    if (!adminUser || adminUser.role !== "isAdmin") {
+    if (adminUser && adminUser.role !== "isAdmin") {
       return res.status(403).json({
         status: "failed",
         message: "You do not have permission to sign up doctors.",
@@ -31,10 +31,10 @@ const signUpAsDoctors = async (req, res) => {
 
       // Send an email notifying the user that they are now a doctor
       const mailOptions = {
-        from: "Your Email <youremail@gmail.com>",
+        from: "<youremail@gmail.com>",
         to: email,
-        subject: "Congratulations! You are now a doctor",
-        html: "<p>You have been verified as a doctor.</p>",
+        subject: "Congratulations! You have been invited as a doctor",
+        html: "<p>You have been invited as a Doctor on Embodiment Health, Please login and update your info to have your account verified.</p>",
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
@@ -68,10 +68,10 @@ const signUpAsDoctors = async (req, res) => {
       const verificationLink = `http://emboimentapp.com/verify-doctor?token=${verificationToken}`;
 
       const mailOptions = {
-        from: "Your Email <youremail@gmail.com>",
+        from: "<youremail@gmail.com>",
         to: email,
         subject: "Verify Your Doctor Account",
-        html: `<p>Please click the link below to verify your doctor account:</p><a href="${verificationLink}">${verificationLink}</a>`,
+        html: `<p>Please click the link below to verify your Doctor account:</p><a href="${verificationLink}">${verificationLink}</a>`,
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
