@@ -60,15 +60,20 @@ const InviteDoctor = async (req, res) => {
           { expiresIn: "10h" }
       );
 
-      const verificationLink = `http://emboimentapp.com/verify-doctor?token=${verificationToken}`;
+      const downloadLink = `https://emboimentapp.com/verify-doctor`;
 
       const mailOptions = {
         from: transporter.options.auth.user,
         // from: "Your Email <youremail@gmail.com>",
         to: email,
-        subject: "Verify Your Doctor Account",
-        html: `<p>Please click the link below to verify your doctor account:</p><a href="${verificationLink}">${verificationLink}</a>`,
-      };
+        subject: "You have been Invited",
+        html: `<p>Congratulations, you have been invited as a Doctor on Embodiment. Please Download the Embodiment Health app and register with the following info:</p>
+        
+        <p>Email: <b>${email}</b></p>
+        <a href="${downloadLink}">Click here to download the app</a> 
+        
+        <p>Or copy this link ${downloadLink} and paste in yur broswer to download the app.</p>`
+      }
 
       await transporter.sendMail(mailOptions);
 
