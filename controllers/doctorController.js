@@ -91,7 +91,8 @@ const signUpAsDoctors = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       status: "failed",
-      message: "An error occurred while inviting a doctor.",
+      message: "An error occurred while processing your request.",
+      error: error.message,
     });
   }
 };

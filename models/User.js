@@ -17,27 +17,27 @@ const UserSchema = new mongoose.Schema(
 
     firstName: {
       type: String,
-      required: true,
+      // required: true,
     },
     lastName: {
       type: String,
-      required: true,
+      // required: true,
     },
     email: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
       lowercase: true,
     },
     phoneNumber: {
       type: String,
       unique: true,
-      required: true,
+      // required: true,
       // sparse: true,
     },
     password: {
       type: String,
-      required: true,
+      // required: true,
     },
 
     role: {
