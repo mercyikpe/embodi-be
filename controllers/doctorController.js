@@ -10,6 +10,7 @@ const mongoose = require("mongoose");
 const signUpAsDoctors = async (req, res) => {
   const { email, adminUserId } = req.body;
 
+
   try {
     // Check if the user making the request is an admin
     const adminUser = await User.findById(adminUserId);
