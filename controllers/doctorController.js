@@ -12,16 +12,6 @@ const InviteDoctor = async (req, res) => {
   const { email, adminUserId } = req.body;
 
   try {
-    // Check if the user making the request is an admin
-    const adminUser = await User.findById(adminUserId);
-
-    if (!adminUser || adminUser.role !== "isAdmin") {
-      return res.status(403).json({
-        status: "failed",
-        message: "You do not have permission to sign up doctors.",
-      });
-    }
-
     // Check if the user with the given email already exists
     let user = await User.findOne({ email });
 
@@ -38,13 +28,7 @@ const InviteDoctor = async (req, res) => {
         html: "<p>You have been verified as a doctor.</p>",
       };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log("Error sending verification email:", error);
-        } else {
-          console.log("Verification email sent:", info.response);
-        }
-      });
+      await transporter.sendMail(mailOptions);
 
       return res.json({
         status: 200,
@@ -63,7 +47,7 @@ const InviteDoctor = async (req, res) => {
       // Generate a verification token and send it via email
       const verificationToken = jwt.sign(
           { email },
-          process.env.JWT_SEC_KEY, // mine is stored in env
+          process.env.JWT_SEC_KEY,
           { expiresIn: "10h" }
       );
 
@@ -76,31 +60,25 @@ const InviteDoctor = async (req, res) => {
         html: `<p>Please click the link below to verify your doctor account:</p><a href="${verificationLink}">${verificationLink}</a>`,
       };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log("Error sending verification email:", error);
-        } else {
-          console.log("Verification email sent:", info.response);
-        }
-      });
+      await transporter.sendMail(mailOptions);
 
       return res.json({
-        status: 200,
+        status: 201,
         message: "Verification email sent. Please verify your doctor account.",
       });
     }
   } catch (error) {
-    console.log("Error signing up as doctor:", error);
+    console.log("Error inviting doctor:", error);
     return res.status(500).json({
       status: "failed",
-      message: "An error occurred while processing your request.",
+      message: "An error occurred while inviting the doctor.",
     });
   }
 };
 
+
 function generateRandomPhoneNumber() {
-  // Replace with your random phone number generation logic
-  // For simplicity, generating a random 10-digit number here
+  // generate a random 10-digit number
   return Math.floor(1000000000 + Math.random() * 9000000000).toString();
 }
 
@@ -110,14 +88,14 @@ const signUpAsDoctors = async (req, res) => {
 
   try {
     // Check if the user making the request is an admin
-    const adminUser = await User.findById(adminUserId);
-
-    if (!adminUser || adminUser.role !== "isAdmin") {
-      return res.status(403).json({
-        status: "failed",
-        message: "You do not have permission to sign up doctors.",
-      });
-    }
+    // const adminUser = await User.findById(adminUserId);
+    //
+    // if (!adminUser || adminUser.role !== "isAdmin") {
+    //   return res.status(403).json({
+    //     status: "failed",
+    //     message: "You do not have permission to sign up doctors.",
+    //   });
+    // }
 
     // Check if the user with the given email already exists
     let user = await User.findOne({ email });
@@ -845,7 +823,7 @@ const removeDoctorRole = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         status: "failed",
-        message: "User not found. Please enter a valid user ID.",
+        message: "Doctor not found. Please select a valid Doctor.",
       });
     }
 
