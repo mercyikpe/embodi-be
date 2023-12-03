@@ -92,6 +92,7 @@ const signUpAsDoctors = async (req, res) => {
     return res.status(500).json({
       status: "failed",
       message: "An error occurred while processing your request.",
+      error: error.message,
     });
   }
 };
