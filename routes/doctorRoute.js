@@ -10,7 +10,8 @@ router.get("/", verifyToken, verifyDoctor, (req, res) => {
 });
 
 ////// sign uo doctor
-router.post("/signupdoctor", doctorController.signUpAsDoctors);
+// router.post("/signupdoctor", doctorController.signUpAsDoctors);
+router.post("/signupdoctor", doctorController.InviteDoctor);
 
 ///SIGNIN dOCTOR
 router.post('/login', doctorController.doctorSignin)

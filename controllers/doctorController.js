@@ -7,6 +7,104 @@ const mongoose = require("mongoose");
 //const DoctorInfo = require('../models/DoctorInfo');
 
 // Function to sign up a user as a doctor
+
+const InviteDoctor = async (req, res) => {
+  const { email, adminUserId } = req.body;
+
+  try {
+    // Check if the user making the request is an admin
+    const adminUser = await User.findById(adminUserId);
+
+    if (!adminUser || adminUser.role !== "isAdmin") {
+      return res.status(403).json({
+        status: "failed",
+        message: "You do not have permission to sign up doctors.",
+      });
+    }
+
+    // Check if the user with the given email already exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // If the user exists, update their role to 'isDoctor' and save the user
+      user.role = "isDoctor";
+      await user.save();
+
+      // Send an email notifying the user that they are now a doctor
+      const mailOptions = {
+        from: "Your Email <youremail@gmail.com>",
+        to: email,
+        subject: "Congratulations! You are now a doctor",
+        html: "<p>You have been verified as a doctor.</p>",
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log("Error sending verification email:", error);
+        } else {
+          console.log("Verification email sent:", info.response);
+        }
+      });
+
+      return res.json({
+        status: 200,
+        message: "Doctor created successfully.",
+      });
+    } else {
+      // If the user does not exist, create a new user with role 'isDoctor'
+      const doctor = new User({
+        email,
+        role: "isDoctor",
+        phoneNumber: generateRandomPhoneNumber(),
+      });
+
+      await doctor.save();
+
+      // Generate a verification token and send it via email
+      const verificationToken = jwt.sign(
+          { email },
+          process.env.JWT_SEC_KEY, // mine is stored in env
+          { expiresIn: "10h" }
+      );
+
+      const verificationLink = `http://emboimentapp.com/verify-doctor?token=${verificationToken}`;
+
+      const mailOptions = {
+        from: "Your Email <youremail@gmail.com>",
+        to: email,
+        subject: "Verify Your Doctor Account",
+        html: `<p>Please click the link below to verify your doctor account:</p><a href="${verificationLink}">${verificationLink}</a>`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log("Error sending verification email:", error);
+        } else {
+          console.log("Verification email sent:", info.response);
+        }
+      });
+
+      return res.json({
+        status: 200,
+        message: "Verification email sent. Please verify your doctor account.",
+      });
+    }
+  } catch (error) {
+    console.log("Error signing up as doctor:", error);
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while processing your request.",
+    });
+  }
+};
+
+function generateRandomPhoneNumber() {
+  // Replace with your random phone number generation logic
+  // For simplicity, generating a random 10-digit number here
+  return Math.floor(1000000000 + Math.random() * 9000000000).toString();
+}
+
+
 const signUpAsDoctors = async (req, res) => {
   const { email, adminUserId } = req.body;
 
@@ -831,4 +929,5 @@ module.exports = {
   viewDoctorInfo,
   removeDoctorRole,
   rateDoctor,
+  InviteDoctor
 };

@@ -17,11 +17,11 @@ const UserSchema = new mongoose.Schema(
 
     firstName: {
       type: String,
-      required: true,
+      required: false,
     },
     lastName: {
       type: String,
-      required: true,
+      required: false,
     },
     email: {
       type: String,
@@ -32,12 +32,12 @@ const UserSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
       unique: true,
-      required: true,
-      // sparse: true,
+      required: false,
+      sparse: true,
     },
     password: {
       type: String,
-      required: true,
+      required: false,
     },
 
     role: {
