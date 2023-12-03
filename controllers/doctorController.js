@@ -16,13 +16,22 @@ const InviteDoctor = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
+      // Check if the user is already a doctor and is verified
+      if (user.role === "isDoctor" && user.verified) {
+        return res.json({
+          status: 200,
+          message: "Doctor was already invited and verified.",
+        });
+      }
+
       // If the user exists, update their role to 'isDoctor' and save the user
       user.role = "isDoctor";
       await user.save();
 
       // Send an email notifying the user that they are now a doctor
       const mailOptions = {
-        from: "Your Email <youremail@gmail.com>",
+        from: transporter.options.auth.user,
+        // from: "Your Email <youremail@gmail.com>",
         to: email,
         subject: "Congratulations! You are now a doctor",
         html: "<p>You have been verified as a doctor.</p>",
@@ -54,7 +63,8 @@ const InviteDoctor = async (req, res) => {
       const verificationLink = `http://emboimentapp.com/verify-doctor?token=${verificationToken}`;
 
       const mailOptions = {
-        from: "Your Email <youremail@gmail.com>",
+        from: transporter.options.auth.user,
+        // from: "Your Email <youremail@gmail.com>",
         to: email,
         subject: "Verify Your Doctor Account",
         html: `<p>Please click the link below to verify your doctor account:</p><a href="${verificationLink}">${verificationLink}</a>`,
