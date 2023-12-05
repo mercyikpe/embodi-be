@@ -244,7 +244,7 @@ const resendOTP = async (user, res) => {
   return res.status(200).json({
     status: "success",
     message: "Verification code has been resent. Please check your email.",
-    user: { id, email }
+   user
   });
 };
 
