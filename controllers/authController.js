@@ -238,13 +238,17 @@ const resendOTP = async (user, res) => {
 
   await transporter.sendMail(mailOptions);
 
-  const userWithoutPassword = { ...user._doc };
-  delete userWithoutPassword.password;
+  // const userWithoutPassword = { ...user._doc };
+  // delete userWithoutPassword.password;
+
+  // Use .select() to include only necessary fields
+  const userWithoutPassword = await User.findById(user._id).select('id email');
+
 
   return res.status(200).json({
     status: "success",
     message: "Verification code has been resent. Please check your email.",
-   user
+    user: userWithoutPassword,
   });
 };
 
