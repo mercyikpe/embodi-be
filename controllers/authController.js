@@ -230,7 +230,7 @@ const resendOTP = async (user, res) => {
     subject: "Verify Your Email",
     html: `
       <h1>Email Verification</h1>
-      <p>Welcome ${user.lastName},</p>
+      <p>Welcome ${user.firstName},</p>
       <p>Please enter the verification code in your account settings to verify your email. The code will expire after <em>10 minutes</em>.</p>
       <h2><strong>${otpCode}</strong></h2>
     `,
