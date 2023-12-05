@@ -516,6 +516,7 @@ const loginUser = async (req, res, next) => {
     return res.status(500).json({
       status: "failed",
       message: "Error while logging in. Please try again later.",
+      error: error.message,  // Add this line to include the error message in the response
     });
   }
 };
