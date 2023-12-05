@@ -6,18 +6,15 @@ const questionnaireNotification = async (userId, questionnaireDetails) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      throw new Error("User not found");
     }
-
-    console.log("questionnaireDetails", questionnaireDetails);
-
     const userNotification = new Notification({
       recipient: user._id,
-      sender: userId,
-      diseaseTitle: `${questionnaireDetails.diseaseName}`,
+       sender: userId,
+      // diseaseTitle: `${questionnaireDetails}`,
       status: "unread",
       notificationType: "questionnaire",
-      message: `${questionnaireDetails.diseaseName} has been prescribed for you`,
+      message: `${questionnaireDetails} has been prescribed for you`,
     });
 
     // Save the notification for the user
@@ -32,6 +29,7 @@ const questionnaireNotification = async (userId, questionnaireDetails) => {
     throw error;
   }
 };
+
 
 const getUserOrders = async (req, res) => {
   const user = req.params.userId;
