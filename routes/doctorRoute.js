@@ -14,7 +14,7 @@ router.get("/", verifyToken, verifyDoctor, (req, res) => {
 router.post("/signupdoctor", doctorController.InviteDoctor);
 
 ///SIGNIN dOCTOR
-router.post('/login', doctorController.doctorSignin)
+// router.post('/login', doctorController.doctorSignin)
 
 // update doctor's user information fields and addtional information
 router.put("/update/:userId", doctorController.updateDoctorInfo);

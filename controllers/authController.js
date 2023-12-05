@@ -472,6 +472,113 @@ const loginUser = async (req, res, next) => {
       verifyBadge: user.verifyBadge,
       verified: user.verified,
       avatar: user.avatar,
+      dob: user.dob,
+      address: user.address,
+      gender: user.gender,
+      allergies: user.allergies,
+      disease: user.disease,
+      questionaire: user.questionaire,
+      bookedAppointments: user.bookedAppointments,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+
+    if (user.role === "isDoctor") {
+      // Fetch the doctorInfo and add its data to userDetails
+      let doctorInfo = await DoctorInfo.findOne({ user: user._id });
+
+      // If doctorInfo doesn't exist, create it
+      if (!doctorInfo) {
+        const newDoctorInfo = new DoctorInfo({ user: user._id });
+        await newDoctorInfo.save();
+        doctorInfo = newDoctorInfo;
+      }
+
+      userDetails.doctorId = doctorInfo._id;
+      userDetails.qualification = doctorInfo.qualification;
+      userDetails.specialty = doctorInfo.specialty;
+      userDetails.yearOfExperience = doctorInfo.yearOfExperience;
+      userDetails.rate = doctorInfo.rate;
+      userDetails.bio = doctorInfo.bio;
+      userDetails.bankName = doctorInfo.bankName;
+      userDetails.accountName = doctorInfo.accountName;
+      userDetails.accountNumber = doctorInfo.accountNumber;
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Successfully signed in",
+      user: userDetails,
+      token,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({
+      status: "failed",
+      message: "Error while logging in. Please try again later.",
+    });
+  }
+};
+
+
+const loginUserrr = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Email field is required",
+      });
+    }
+
+    let user = await User.findOne({ email }).populate({
+      path: "doctorInfo",
+      model: "DoctorInfo",
+      populate: {
+        path: "user",
+        model: "User",
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Invalid password",
+      });
+    }
+
+    if (!user.verified) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Please verify your email before signing in",
+      });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, {
+      expiresIn: "24h",
+    });
+
+    let userDetails = {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      status: user.status,
+      verifyBadge: user.verifyBadge,
+      verified: user.verified,
+      avatar: user.avatar,
       // image: user.image,
       dob: user.dob,
       address: user.address,
