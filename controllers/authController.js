@@ -147,8 +147,8 @@ const registerUser = async (req, res) => {
 
       const savedUser = await user.save();
 
-      // Resend OTP for account verification
-      return resendOTP(savedUser, res);
+      // Send OTP for account verification
+      return sendOTP(savedUser, res);
     }
 
     // If the user does not exist, create a new user and set their verified status to false
@@ -486,7 +486,7 @@ const loginUser = async (req, res, next) => {
 
     if (user.role === "isDoctor") {
       // Fetch the doctorInfo and add its data to userDetails
-      const doctorInfo = await DoctorInfo.findOne({ user: user._id });
+      let doctorInfo = await DoctorInfo.findOne({ user: user._id });
 
       // If doctorInfo doesn't exist, create it
       if (!doctorInfo) {
@@ -509,14 +509,14 @@ const loginUser = async (req, res, next) => {
     return res.status(200).json({
       status: "success",
       message: "Successfully signed in",
-      token,
       user: userDetails,
+      token,
     });
   } catch (error) {
     // console.log(error);
     return res.status(500).json({
       status: "failed",
-      message: "Internal server error",
+      message: "Error while logging in. Please try again later.",
     });
   }
 };

@@ -79,7 +79,7 @@ const InviteDoctor = async (req, res) => {
 
       return res.json({
         status: 201,
-        message: "Verification email sent. Please verify your doctor account.",
+        message: "Invitation email sent. Please tell the doctor to register using the invited email address.",
       });
     }
   } catch (error) {
