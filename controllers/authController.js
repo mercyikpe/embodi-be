@@ -138,6 +138,70 @@ const registerUser = async (req, res) => {
         });
       }
 
+      const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
+      // If the user is not verified, update the user's information
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.phoneNumber = phoneNumber;
+      user.password = hashedPassword;
+
+      const savedUser = await user.save();
+
+      // Resend OTP for account verification
+      return resendOTP(savedUser, res);
+    }
+
+    // If the user does not exist, create a new user and set their verified status to false
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
+    const newUser = new User({
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      password: hashedPassword,
+    });
+
+    const savedUser = await newUser.save();
+
+    // Send OTP for account verification
+    return sendOTP(savedUser, res);
+  } catch (error) {
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while signing up. Please try again.",
+    });
+  }
+};
+
+
+const registerUserddd = async (req, res) => {
+  const { firstName, lastName, phoneNumber, email, password } = req.body;
+
+  try {
+    // Check if the user with the given phone number already exists
+    const existingUser = await User.findOne({ phoneNumber });
+
+    if (existingUser) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Phone number already exists.",
+      });
+    }
+
+    // Check if the user with the given email already exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      if (user.verified) {
+        // User is already verified
+        delete user.password;
+        return res.status(400).json({
+          status: "failed",
+          message: "User already exists and is verified.",
+          user: user,
+        });
+      }
+
       // Resend OTP for account verification
       return resendOTP(user, res);
     }
@@ -164,6 +228,7 @@ const registerUser = async (req, res) => {
     });
   }
 };
+
 
 const sendOTP = async (user, res) => {
   const otpCode = generateOTPCode();
