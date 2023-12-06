@@ -10,11 +10,11 @@ const questionnaireNotification = async (userId, questionnaireDetails) => {
     }
     const userNotification = new Notification({
       recipient: user._id,
-       sender: userId,
-      // diseaseTitle: `${questionnaireDetails}`,
+      sender: userId,
+      diseaseTitle: `${questionnaireDetails.diseaseName}`,
       status: "unread",
       notificationType: "questionnaire",
-      message: `${questionnaireDetails} has been prescribed for you`,
+      message: `${questionnaireDetails.diseaseName} medication has been prescribed for you. ${questionnaireDetails.adminPrescription} `,
     });
 
     // Save the notification for the user

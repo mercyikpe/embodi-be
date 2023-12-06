@@ -107,14 +107,23 @@ const markQuestionnaireCompleted = async (req, res) => {
     let success = false;
 
     try {
+      // Fetch the disease document using the `diseaseId` from the questionnaire
+      const disease = await Disease.findById(questionnaire.diseaseId);
+
       // Get the user ID from the questionnaire
       const userId = questionnaire.user;
       questionnaire.prescription = prescription || "";
 
       // Call the function to create a notification
+      const questionnaireDetails = {
+        diseaseName: disease ? disease.title : "Unknown Disease",
+        adminPrescription: questionnaire ? questionnaire.prescription : "No medication",
+      };
+
+      /*
       const questionnaireDetails =
         questionnaire.prescription || "No medication";
-
+       */
       // Save the updated questionnaire
       questionnaire.status = "completed";
       await questionnaire.save();
