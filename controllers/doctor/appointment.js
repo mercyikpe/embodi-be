@@ -35,15 +35,73 @@ const markAppointmentAsCompleted = async (req, res) => {
     }
 
     // Retrieve the doctor's information
-    const doctor = await User.findById(doctorId);
+    const doctor = await DoctorInfo.findOne({ user: doctorId })
+        .select('rate overallEarnings monthlyEarnings pastAppointments');
+
 
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found." });
     }
 
+    // Add these logs to check the values
+    console.log("doctor.rate:", doctor.rate);
+
+    // Check if monthlyEarnings is defined
+    if (!doctor.monthlyEarnings) {
+      doctor.monthlyEarnings = [];
+    }
+
+    // Check if pastAppointments is defined
+    if (!doctor.pastAppointments) {
+      doctor.pastAppointments = [];
+    }
+
+    // Get the current month and year
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    // Check if the doctor has monthlyEarnings for the current month and year
+    const monthlyEarning = doctor.monthlyEarnings.find(
+        (entry) => entry.month === currentMonth && entry.year === currentYear
+    );
+
+    if (!monthlyEarning) {
+      // Create a new MonthlyEarning entry for the current month and year
+      doctor.monthlyEarnings.push({
+        month: currentMonth,
+        year: currentYear,
+        patientCount: 0,
+        earnings: 0,
+      });
+    }
+
+    // Calculate earnings for the completed appointment
+    const appointmentFee = doctor.rate || 200; // Use default value if rate is undefined
+    doctor.overallEarnings += appointmentFee; // Update overall earnings
+    console.log("appointmentFee:", appointmentFee);
+
+
+    // Update monthly earnings
+    const updatedMonthlyEarning = doctor.monthlyEarnings.find(
+        (entry) => entry.month === currentMonth && entry.year === currentYear
+    );
+
+    if (updatedMonthlyEarning) {
+      updatedMonthlyEarning.patientCount += 1;
+      updatedMonthlyEarning.earnings += appointmentFee;
+    } else {
+      // If no entry for the current month, create a new entry
+      doctor.monthlyEarnings.push({
+        month: currentMonth,
+        year: currentYear,
+        patientCount: 1,
+        earnings: appointmentFee,
+      });
+    }
+
     // Add the completed appointment to the doctor's past appointments
     const completedAppointment = appointment._id;
-
     doctor.pastAppointments.push(completedAppointment);
 
     // Save the updated doctor data
@@ -57,7 +115,7 @@ const markAppointmentAsCompleted = async (req, res) => {
     }
 
     // Update the status of the schedule to "Completed"
-    scheduleToMarkAsCompleted.status = "Completed";
+     scheduleToMarkAsCompleted.status = "Completed";
 
     // Save the updated appointment
     await appointment.save();
@@ -65,7 +123,6 @@ const markAppointmentAsCompleted = async (req, res) => {
     // Respond with a success message
     return res.status(200).json({ message: "Schedule marked as completed." });
   } catch (error) {
-    console.error("Error marking schedule as completed:", error);
     return res.status(500).json({
       message: "An error occurred while marking the schedule as completed.",
     });
