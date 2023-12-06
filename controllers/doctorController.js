@@ -608,6 +608,8 @@ const viewDoctorInfo = async (req, res) => {
           status: schedule.status,
           _id: schedule._id,
           bookingId: schedule.bookingId,
+          createdAt: schedule.createdAt,  // Include createdAt
+          updatedAt: schedule.updatedAt,  // Include updatedAt
         };
 
         if (schedule.patient) {
