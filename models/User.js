@@ -2,16 +2,8 @@ const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema(
   {
-    ///// for front end use
-    name: {
-      type: String,
-      //required: true,
-    },
-
-    //////// for user profile update
     avatar: {
       type: String,
-      // default: "public/images/default.png",
       default: "",
     },
 
@@ -112,7 +104,6 @@ const UserSchema = new mongoose.Schema(
         doctorName: String,
       },
     ],
-    ////
     sendAppointmentEmails: {
       type: Boolean,
       default: true,
