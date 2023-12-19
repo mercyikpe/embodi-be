@@ -8,6 +8,8 @@ const userController = require('../controllers/userController')
 const {viewAllDoctors} = require("../controllers/userController");
 const {getUserOrders} = require("../controllers/notifications/user/questionnaireNotification");
 
+const {createSubscription} = require("../controllers/subscription");
+
 const { verifyToken } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadFile');
 
@@ -58,6 +60,8 @@ router.post('/requestPasswordReset', requestNewPassword.requestPasswordReset);
 
 ////// verify OTP sent to email
 router.post('/updatePassword', requestNewPassword.verifyOTPAndPasswordReset);
+
+router.post('/subscribe',  createSubscription);
 
 // router.post('/verifyPasswordOtp', requestNewPassword.verifyOTP);
 
