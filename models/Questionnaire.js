@@ -10,8 +10,15 @@ const QuestionnaireSchema = new mongoose.Schema(
         answer: {
           type: String,
         },
+        isText: {
+          type: Boolean,
+          default: true,
+        },
       },
     ],
+    prescription: {
+      type: String,
+    },
     // Reference to the User who has this disease
     user: {
       type: mongoose.Schema.Types.ObjectId,

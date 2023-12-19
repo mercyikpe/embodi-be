@@ -163,26 +163,28 @@ const updateUser = async (req, res, next) => {
 const deleteUser = async (req, res, next) => {
   try {
     // Check if the user making the request is an admin
-    const adminUser = await User.findById(req.user.id);
-    if (!adminUser || adminUser.role !== "isAdmin") {
-      // Use '!=='
-      return res.status(403).json({
-        status: "failed",
-        message: "You do not have permission to delete users.",
-      });
-    }
+   //  const adminUser = await User.findById(adminUserId);
+
+    // console.log("adminUserId", adminUserId)
+    // if (!adminUser || adminUser.role !== "isAdmin") {
+    //   // Use '!=='
+    //   return res.status(403).json({
+    //     status: "failed",
+    //     message: "You do not have permission to delete users.",
+    //   });
+    // }
 
     // Check if the user to be deleted exists and is not an admin
     const userToDelete = await User.findById(req.params.id);
+
     if (!userToDelete) {
       return res.status(404).json({
         status: "failed",
-        message: "User not found. Please enter a valid userId.",
+        message: "User not found. Please select a valid user.",
       });
     }
 
     if (userToDelete.role === "isAdmin") {
-      // Use '==='
       return res.status(403).json({
         status: "failed",
         message: "You cannot delete an admin user.",
@@ -192,7 +194,7 @@ const deleteUser = async (req, res, next) => {
     await User.findByIdAndDelete(req.params.id);
     res.json({
       status: 200,
-      message: `User with ID ${req.params.id} deleted successfully`,
+      message: `User deleted successfully`,
     });
   } catch (error) {
     next(error);

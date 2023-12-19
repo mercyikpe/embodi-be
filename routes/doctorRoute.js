@@ -10,10 +10,11 @@ router.get("/", verifyToken, verifyDoctor, (req, res) => {
 });
 
 ////// sign uo doctor
-router.post("/signupdoctor", doctorController.signUpAsDoctors);
+// router.post("/signupdoctor", doctorController.signUpAsDoctors);
+router.post("/signupdoctor", doctorController.InviteDoctor);
 
 ///SIGNIN dOCTOR
-router.post('/login', doctorController.doctorSignin)
+// router.post('/login', doctorController.doctorSignin)
 
 // update doctor's user information fields and addtional information
 router.put("/update/:userId", doctorController.updateDoctorInfo);
@@ -38,9 +39,6 @@ router.put("/removedoctor/:userId", doctorController.removeDoctorRole);
 
 //// rate a doctor
 router.patch("/:doctorId/rate/:userId", doctorController.rateDoctor);
-
-
-
 
 ////fetchDoctor detils by id
 const { populateDoctorFields } = require("../middleware/populateFields");

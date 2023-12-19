@@ -22,6 +22,14 @@ const ScheduleSchema = new mongoose.Schema({
     ref: "User",
     // required: true,
   },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const AppointmentSchema = new mongoose.Schema(
@@ -34,6 +42,14 @@ const AppointmentSchema = new mongoose.Schema(
     date: {
       type: Date,
       // required: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
     },
     schedule: [ScheduleSchema],
 

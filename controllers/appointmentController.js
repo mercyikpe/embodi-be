@@ -147,6 +147,7 @@ const bookAppointment = async (req, res) => {
     scheduleSlot.status = "Booked";
     scheduleSlot.patient = patientId;
     scheduleSlot.bookingId = generateBookingId();
+    scheduleSlot.updatedAt = new Date(); // Manually update updatedAt for the scheduleSlot
 
     // Save the updated appointment
     await appointment.save();

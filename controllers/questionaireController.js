@@ -46,7 +46,7 @@ const createQuestionnaireForDisease = async (req, res) => {
 
     return res.status(201).json({
       status: "success",
-      message: "Questionnaire created successfully.",
+      message: "Questionnaire submitted successfully.",
       data: questionnaire, // Include the questionnaire data in the response
     });
   } catch (error) {
@@ -85,15 +85,18 @@ const viewAllQuestionnaires = async (req, res, next) => {
 
 const markQuestionnaireCompleted = async (req, res) => {
   const { questionnaireId } = req.params;
+  const { prescription } = req.body;
 
   try {
     // Find the questionnaire based on the questionnaireId
-    const questionnaire = await Questionnaire.findById(questionnaireId);
+    // const questionnaire = await Questionnaire.findById(questionnaireId).populate("user");
+    const questionnaire = await Questionnaire.findById(
+      questionnaireId
+    ).populate("user");
 
     if (!questionnaire) {
       return res.status(404).json({ message: "Questionnaire not found." });
     }
-
     // Check if the questionnaire is already marked as "Completed"
     if (questionnaire.status === "completed") {
       return res
@@ -101,39 +104,60 @@ const markQuestionnaireCompleted = async (req, res) => {
         .json({ message: "Questionnaire is already marked as completed." });
     }
 
-    // Update the status of the questionnaire to "Completed"
-    questionnaire.status = "completed";
+    let success = false;
 
-    // Save the updated questionnaire
-    await questionnaire.save();
+    try {
+      // Fetch the disease document using the `diseaseId` from the questionnaire
+      const disease = await Disease.findById(questionnaire.diseaseId);
 
-    // Get the user ID from the questionnaire
-    const userId = questionnaire.user;
+      // Get the user ID from the questionnaire
+      const userId = questionnaire.user;
+      questionnaire.prescription = prescription || "";
 
-    // Fetch the disease document using the `diseaseId` from the questionnaire
-    const disease = await Disease.findById(questionnaire.diseaseId);
+      // Call the function to create a notification
+      const questionnaireDetails = {
+        diseaseName: disease ? disease.title : "Unknown Disease",
+        adminPrescription: questionnaire ? questionnaire.prescription : "No medication",
+      };
 
-    // Define questionnaire details including the disease name
-    const questionnaireDetails = {
-      diseaseName: disease ? disease.title : "Unknown Disease", // Use disease.title if available, otherwise set to "Unknown Disease"
-    };
+      /*
+      const questionnaireDetails =
+        questionnaire.prescription || "No medication";
+       */
+      // Save the updated questionnaire
+      questionnaire.status = "completed";
+      await questionnaire.save();
 
-    // Call the function to create a notification
-    // const userNotification = await questionnaireNotificationUser(
-    //     userId,
-    //     questionnaireDetails
-    // );
+      // Attempt to send the questionnaire notification
+      await questionnaireNotificationUser(userId, questionnaireDetails);
 
-    await questionnaireNotificationUser(userId, questionnaireDetails);
-
-    // Respond with a success message and userNotification
-    return res
-      .status(200)
-      .json({ message: "Questionnaire marked as completed." });
+      success = true;
+    } catch (updateError) {
+      // If there's an error during the update, log the error
+      // Respond with an error message
+      return res.status(500).json({
+        error: updateError.message,
+        message: "Error marking the questionnaire as completed.",
+      });
+    } finally {
+      // Check the success flag before responding
+      if (success) {
+        // Respond with a success message and userNotification
+        return res
+          .status(200)
+          .json({ message: "Questionnaire marked as completed." });
+      } else {
+        // Rollback the status update if there was an error
+        questionnaire.status = "uncompleted";
+        questionnaire.prescription = ""; // Reset prescription if an error occurred
+        await questionnaire.save();
+      }
+    }
   } catch (error) {
+    // Handle the initial error when finding the questionnaire
     return res.status(500).json({
-      message:
-        "An error occurred while marking the questionnaire as completed.",
+      error: error.message,
+      message: "An error occurred while finding the questionnaire.",
     });
   }
 };

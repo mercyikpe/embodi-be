@@ -138,6 +138,70 @@ const registerUser = async (req, res) => {
         });
       }
 
+      const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
+      // If the user is not verified, update the user's information
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.phoneNumber = phoneNumber;
+      user.password = hashedPassword;
+
+      const savedUser = await user.save();
+
+      // Send OTP for account verification
+      return sendOTP(savedUser, res);
+    }
+
+    // If the user does not exist, create a new user and set their verified status to false
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
+    const newUser = new User({
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      password: hashedPassword,
+    });
+
+    const savedUser = await newUser.save();
+
+    // Send OTP for account verification
+    return sendOTP(savedUser, res);
+  } catch (error) {
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while signing up. Please try again.",
+    });
+  }
+};
+
+
+const registerUserddd = async (req, res) => {
+  const { firstName, lastName, phoneNumber, email, password } = req.body;
+
+  try {
+    // Check if the user with the given phone number already exists
+    const existingUser = await User.findOne({ phoneNumber });
+
+    if (existingUser) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Phone number already exists.",
+      });
+    }
+
+    // Check if the user with the given email already exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      if (user.verified) {
+        // User is already verified
+        delete user.password;
+        return res.status(400).json({
+          status: "failed",
+          message: "User already exists and is verified.",
+          user: user,
+        });
+      }
+
       // Resend OTP for account verification
       return resendOTP(user, res);
     }
@@ -165,6 +229,7 @@ const registerUser = async (req, res) => {
   }
 };
 
+
 const sendOTP = async (user, res) => {
   const otpCode = generateOTPCode();
   const expirationTime = new Date(Date.now() + 10 * 60 * 1000); // Set the expiration time to 10 minutes from now
@@ -183,7 +248,7 @@ const sendOTP = async (user, res) => {
     subject: "Verify Your Email",
     html: `
       <h1>Email Verification</h1>
-      <p>Welcome ${user.lastName},</p>
+      <p>Welcome ${user.firstName},</p>
       <p>Please enter the verification code to continue. The code will expire after <em>10 minutes</em>.</p>
       <h2><strong>${otpCode}</strong></h2>
     `,
@@ -230,20 +295,25 @@ const resendOTP = async (user, res) => {
     subject: "Verify Your Email",
     html: `
       <h1>Email Verification</h1>
-      <p>Welcome ${user.lastName},</p>
-      <p>Please enter the verification code in your account settings to verify your email. The code will expire after <em>10 minutes</em>.</p>
+      <p>Welcome ${user.firstName},</p>
+      <p>Please enter the verification code to continue. The code will expire after <em>10 minutes</em>.</p>
       <h2><strong>${otpCode}</strong></h2>
     `,
   };
 
   await transporter.sendMail(mailOptions);
 
-  const userWithoutPassword = { ...user._doc };
-  delete userWithoutPassword.password;
+  // const userWithoutPassword = { ...user._doc };
+  // delete userWithoutPassword.password;
+
+  // Use .select() to include only necessary fields
+  const userWithoutPassword = await User.findById(user._id).select('id email');
+
 
   return res.status(200).json({
     status: "success",
     message: "Verification code has been resent. Please check your email.",
+    user: userWithoutPassword,
   });
 };
 
@@ -402,7 +472,6 @@ const loginUser = async (req, res, next) => {
       verifyBadge: user.verifyBadge,
       verified: user.verified,
       avatar: user.avatar,
-      // image: user.image,
       dob: user.dob,
       address: user.address,
       gender: user.gender,
@@ -416,7 +485,7 @@ const loginUser = async (req, res, next) => {
 
     if (user.role === "isDoctor") {
       // Fetch the doctorInfo and add its data to userDetails
-      const doctorInfo = await DoctorInfo.findOne({ user: user._id });
+      let doctorInfo = await DoctorInfo.findOne({ user: user._id });
 
       // If doctorInfo doesn't exist, create it
       if (!doctorInfo) {
@@ -439,14 +508,123 @@ const loginUser = async (req, res, next) => {
     return res.status(200).json({
       status: "success",
       message: "Successfully signed in",
-      token,
       user: userDetails,
+      token,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({
+      status: "failed",
+      message: "Error while logging in. Please try again later.",
+      error: error.message,  // Add this line to include the error message in the response
+    });
+  }
+};
+
+
+const loginUserrr = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Email field is required",
+      });
+    }
+
+    let user = await User.findOne({ email }).populate({
+      path: "doctorInfo",
+      model: "DoctorInfo",
+      populate: {
+        path: "user",
+        model: "User",
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Invalid password",
+      });
+    }
+
+    if (!user.verified) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Please verify your email before signing in",
+      });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SEC_KEY, {
+      expiresIn: "24h",
+    });
+
+    let userDetails = {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      status: user.status,
+      verifyBadge: user.verifyBadge,
+      verified: user.verified,
+      avatar: user.avatar,
+      // image: user.image,
+      dob: user.dob,
+      address: user.address,
+      gender: user.gender,
+      allergies: user.allergies,
+      disease: user.disease,
+      questionaire: user.questionaire,
+      bookedAppointments: user.bookedAppointments,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+
+    if (user.role === "isDoctor") {
+      // Fetch the doctorInfo and add its data to userDetails
+      let doctorInfo = await DoctorInfo.findOne({ user: user._id });
+
+      // If doctorInfo doesn't exist, create it
+      if (!doctorInfo) {
+        const newDoctorInfo = new DoctorInfo({ user: user._id });
+        await newDoctorInfo.save();
+        doctorInfo = newDoctorInfo;
+      }
+
+      userDetails.doctorId = doctorInfo._id;
+      userDetails.qualification = doctorInfo.qualification;
+      userDetails.specialty = doctorInfo.specialty;
+      userDetails.yearOfExperience = doctorInfo.yearOfExperience;
+      userDetails.rate = doctorInfo.rate;
+      userDetails.bio = doctorInfo.bio;
+      userDetails.bankName = doctorInfo.bankName;
+      userDetails.accountName = doctorInfo.accountName;
+      userDetails.accountNumber = doctorInfo.accountNumber;
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Successfully signed in",
+      user: userDetails,
+      token,
     });
   } catch (error) {
     // console.log(error);
     return res.status(500).json({
       status: "failed",
-      message: "Internal server error",
+      message: "Error while logging in. Please try again later.",
     });
   }
 };

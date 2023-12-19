@@ -7,20 +7,111 @@ const mongoose = require("mongoose");
 //const DoctorInfo = require('../models/DoctorInfo');
 
 // Function to sign up a user as a doctor
+
+const InviteDoctor = async (req, res) => {
+  const { email, adminUserId } = req.body;
+
+  try {
+    // Check if the user with the given email already exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // Check if the user is already a doctor and is verified
+      if (user.role === "isDoctor" && user.verified) {
+        return res.json({
+          status: 200,
+          message: "Doctor was already invited and verified.",
+        });
+      }
+
+      // If the user exists, update their role to 'isDoctor' and save the user
+      user.role = "isDoctor";
+      await user.save();
+
+      // Send an email notifying the user that they are now a doctor
+      const mailOptions = {
+        from: transporter.options.auth.user,
+        // from: "Your Email <youremail@gmail.com>",
+        to: email,
+        subject: "Congratulations! You are now a doctor",
+        html: "<p>You have been verified as a doctor.</p>",
+      };
+
+      await transporter.sendMail(mailOptions);
+
+      return res.json({
+        status: 200,
+        message: "Doctor created successfully.",
+      });
+    } else {
+      // If the user does not exist, create a new user with role 'isDoctor'
+      const doctor = new User({
+        email,
+        role: "isDoctor",
+        phoneNumber: generateRandomPhoneNumber(),
+      });
+
+      await doctor.save();
+
+      // Generate a verification token and send it via email
+      const verificationToken = jwt.sign(
+          { email },
+          process.env.JWT_SEC_KEY,
+          { expiresIn: "10h" }
+      );
+
+      const downloadLink = `https://emboimentapp.com/verify-doctor`;
+
+      const mailOptions = {
+        from: transporter.options.auth.user,
+        // from: "Your Email <youremail@gmail.com>",
+        to: email,
+        subject: "You have been Invited",
+        html: `<p>Congratulations, you have been invited as a Doctor on Embodiment. Please Download the Embodiment Health app and register with the following info:</p>
+        
+        <p>Email: <b>${email}</b></p>
+        <a href="${downloadLink}">Click here to download the app</a> 
+        
+        <p>Or copy this link ${downloadLink} and paste in yur broswer to download the app.</p>`
+      }
+
+      await transporter.sendMail(mailOptions);
+
+      return res.json({
+        status: 201,
+        message: "Invitation email sent. Please tell the doctor to register using the invited email address.",
+      });
+    }
+  } catch (error) {
+    console.log("Error inviting doctor:", error);
+    return res.status(500).json({
+      status: "failed",
+      message: "An error occurred while inviting the doctor.",
+    });
+  }
+};
+
+
+function generateRandomPhoneNumber() {
+  // generate a random 10-digit number
+  return Math.floor(1000000000 + Math.random() * 9000000000).toString();
+}
+
+
 const signUpAsDoctors = async (req, res) => {
   const { email, adminUserId } = req.body;
 
 
   try {
     // Check if the user making the request is an admin
-    const adminUser = await User.findById(adminUserId);
-
-    if (!adminUser || adminUser.role !== "isAdmin") {
-      return res.status(403).json({
-        status: "failed",
-        message: "You do not have permission to sign up doctors.",
-      });
-    }
+    // const adminUser = await User.findById(adminUserId);
+    //
+    // if (!adminUser || adminUser.role !== "isAdmin") {
+    //   return res.status(403).json({
+    //     status: "failed",
+    //     message: "You do not have permission to sign up doctors.",
+    //   });
+    // }
 
     // Check if the user with the given email already exists
     let user = await User.findOne({ email });
@@ -518,6 +609,8 @@ const viewDoctorInfo = async (req, res) => {
           status: schedule.status,
           _id: schedule._id,
           bookingId: schedule.bookingId,
+          createdAt: schedule.createdAt,  // Include createdAt
+          updatedAt: schedule.updatedAt,  // Include updatedAt
         };
 
         if (schedule.patient) {
@@ -748,7 +841,7 @@ const removeDoctorRole = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         status: "failed",
-        message: "User not found. Please enter a valid user ID.",
+        message: "Doctor not found. Please select a valid Doctor.",
       });
     }
 
@@ -832,4 +925,5 @@ module.exports = {
   viewDoctorInfo,
   removeDoctorRole,
   rateDoctor,
+  InviteDoctor
 };

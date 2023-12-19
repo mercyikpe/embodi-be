@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const MonthlyEarningSchema = require("./DoctorEarning");
 
 const DoctorInfoSchema = new mongoose.Schema(
   {
@@ -7,7 +8,6 @@ const DoctorInfoSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
     },
 
     appointments: [
@@ -42,7 +42,20 @@ const DoctorInfoSchema = new mongoose.Schema(
     // rate fee of the doctor
     rate: {
       type: Number,
+      default: 200, // Set the default value to 200
       // required: true,
+    },
+
+    // Monthly earnings details
+    monthlyEarnings: {
+      type: [MonthlyEarningSchema],
+      default: [],
+    },
+
+    // Overall earnings
+    overallEarnings: {
+      type: Number,
+      default: 0,
     },
 
     bio: {
