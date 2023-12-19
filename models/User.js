@@ -96,24 +96,6 @@ const UserSchema = new mongoose.Schema(
       },
     ],
 
-    // disease: [
-    //   {
-    //     disease: {
-    //       type: mongoose.Schema.Types.ObjectId,
-    //       ref: "Disease",
-    //     },
-    //     data: {
-    //       // Fields to store data specific to the disease
-    //       // For example: symptoms, treatment, notes, etc.
-    //     },
-    //   },
-    // ],
-
-    // questionaire: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Questionaire",
-    // },
-
     bookedAppointments: [
       {
         appointment: {
@@ -146,6 +128,13 @@ const UserSchema = new mongoose.Schema(
     isValid: {
       type: Boolean,
       default: true,
+    },
+
+    subscription: {
+      plan: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "SubscriptionPlan",
+      },
     },
   },
 

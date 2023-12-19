@@ -2,7 +2,6 @@ const User = require("../../models/User");
 const Appointment = require("../../models/Appointment");
 const DoctorInfo = require("../../models/DoctorInfo");
 
-
 // Controller to mark an appointment as completed by a doctor
 const markAppointmentAsCompleted = async (req, res) => {
   const { doctorId, scheduleId } = req.params;
@@ -11,7 +10,7 @@ const markAppointmentAsCompleted = async (req, res) => {
     // Find the appointment that contains the schedule with the specified scheduleId
     const appointment = await Appointment.findOne({
       doctor: doctorId,
-      'schedule._id': scheduleId,
+      "schedule._id": scheduleId,
     });
 
     if (!appointment) {
@@ -20,7 +19,7 @@ const markAppointmentAsCompleted = async (req, res) => {
 
     // Retrieve the schedule within the appointment based on scheduleId
     const scheduleToMarkAsCompleted = appointment.schedule.find(
-        (schedule) => schedule._id.toString() === scheduleId
+      (schedule) => schedule._id.toString() === scheduleId
     );
 
     if (!scheduleToMarkAsCompleted) {
@@ -30,14 +29,14 @@ const markAppointmentAsCompleted = async (req, res) => {
     // Check if the schedule is already marked as "Completed"
     if (scheduleToMarkAsCompleted.status === "Completed") {
       return res
-          .status(400)
-          .json({ message: "Schedule is already marked as completed." });
+        .status(400)
+        .json({ message: "Schedule is already marked as completed." });
     }
 
     // Retrieve the doctor's information
-    const doctor = await DoctorInfo.findOne({ user: doctorId })
-        .select('rate overallEarnings monthlyEarnings pastAppointments');
-
+    const doctor = await DoctorInfo.findOne({ user: doctorId }).select(
+      "rate overallEarnings monthlyEarnings pastAppointments"
+    );
 
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found." });
@@ -63,7 +62,7 @@ const markAppointmentAsCompleted = async (req, res) => {
 
     // Check if the doctor has monthlyEarnings for the current month and year
     const monthlyEarning = doctor.monthlyEarnings.find(
-        (entry) => entry.month === currentMonth && entry.year === currentYear
+      (entry) => entry.month === currentMonth && entry.year === currentYear
     );
 
     if (!monthlyEarning) {
@@ -81,10 +80,9 @@ const markAppointmentAsCompleted = async (req, res) => {
     doctor.overallEarnings += appointmentFee; // Update overall earnings
     console.log("appointmentFee:", appointmentFee);
 
-
     // Update monthly earnings
     const updatedMonthlyEarning = doctor.monthlyEarnings.find(
-        (entry) => entry.month === currentMonth && entry.year === currentYear
+      (entry) => entry.month === currentMonth && entry.year === currentYear
     );
 
     if (updatedMonthlyEarning) {
@@ -115,7 +113,7 @@ const markAppointmentAsCompleted = async (req, res) => {
     }
 
     // Update the status of the schedule to "Completed"
-     scheduleToMarkAsCompleted.status = "Completed";
+    scheduleToMarkAsCompleted.status = "Completed";
 
     // Save the updated appointment
     await appointment.save();
@@ -128,7 +126,6 @@ const markAppointmentAsCompleted = async (req, res) => {
     });
   }
 };
-
 
 const getBookedAndCompletedAppointments = async (req, res) => {
   const { doctorId } = req.params;
@@ -172,7 +169,6 @@ const getBookedAndCompletedAppointments = async (req, res) => {
       data: groupedSchedules,
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       message: "An error occurred while getting appointments.",
     });

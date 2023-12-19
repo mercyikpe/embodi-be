@@ -40,9 +40,6 @@ router.put("/removedoctor/:userId", doctorController.removeDoctorRole);
 //// rate a doctor
 router.patch("/:doctorId/rate/:userId", doctorController.rateDoctor);
 
-
-
-
 ////fetchDoctor detils by id
 const { populateDoctorFields } = require("../middleware/populateFields");
 
