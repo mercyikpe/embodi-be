@@ -31,6 +31,8 @@ const createQuestionnaireForDisease = async (req, res) => {
     const questionnaire = new Questionnaire(questionnaireData);
     await questionnaire.save();
 
+    // decrease the questionnairesCount
+
     // Use the disease title in the notification
     const diseaseTitle = disease.title;
 

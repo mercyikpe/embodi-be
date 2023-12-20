@@ -3,6 +3,8 @@ const Appointment = require("../models/Appointment");
 const DoctorInfo = require("../models/DoctorInfo");
 const User = require("../models/User");
 const Patient = require("../models/User");
+const SubscriptionPlan = require("../models/Subscription")
+
 const transporter = require("../utilities/transporter");
 //const moment = require('moment');
 const mongoose = require("mongoose");
@@ -143,52 +145,74 @@ const bookAppointment = async (req, res) => {
         .json({ message: "This appointment slot is already booked." });
     }
 
-    // Update the schedule slot status, assign patientId, and bookingId
-    scheduleSlot.status = "Booked";
-    scheduleSlot.patient = patientId;
-    scheduleSlot.bookingId = generateBookingId();
-    scheduleSlot.updatedAt = new Date(); // Manually update updatedAt for the scheduleSlot
+    const SubscriptionData = await SubscriptionPlan.findOne({userId: patientId })
 
-    // Save the updated appointment
-    await appointment.save();
 
-    try {
-      // Call the function to create a notification
-      await createAppointmentNotification(doctorId, patientId, {
-        date: appointment.date, // Pass the 'date' property
-        startTime: startTime, // Pass the appointment startTime
-        appointmentId,
-        scheduleId: scheduleSlot._id,
-      });
+    // const SubscriptionData = await SubscriptionPlan.findById(patient)
+    console.log("patient subscription", SubscriptionData)
 
-      // Set the flag to indicate successful notification creation
-      notificationCreated = true;
-    } catch (notificationError) {
-      // Handle the notification error here (e.g., log it)
-      console.error(notificationError);
+
+    // Decrease subscription consultationsCount
+    if (patient.subscription && patient.subscription.type === "individual") {
+      // For individual plans, decrement consultationsCount
+      if (patient.subscription.consultationsCount > 0) {
+        patient.subscription.consultationsCount--;
+        await patient.save();
+      }
     }
 
-    if (notificationCreated) {
-      return res.status(200).json({
-        message: "Appointment booked successfully.",
-        appointment: {
-          _id: appointment._id,
-          date: appointment.date,
-          doctorId: appointment.doctor,
-          bookedAppointment: scheduleSlot, // Return the booked appointment slot
-        },
-      });
-    } else {
-      // If notification creation fails, revert the schedule slot status
-      scheduleSlot.status = "Scheduled";
-      scheduleSlot.patient = undefined;
-      scheduleSlot.bookingId = undefined;
-      await appointment.save();
+    return res.status(200).json({
+      message: "Appointment found",
+    });
 
-      return res.status(500).json({
-        message: "An error occurred while booking the appointment.",
-      });
-    }
+    /*try {
+       // Update the schedule slot status, assign patientId, and bookingId
+       scheduleSlot.status = "Booked";
+       scheduleSlot.patient = patientId;
+       scheduleSlot.bookingId = generateBookingId();
+       scheduleSlot.updatedAt = new Date(); // Manually update updatedAt for the scheduleSlot
+
+       // Save the updated appointment
+       await appointment.save();
+
+
+         // Call the function to create a notification
+         await createAppointmentNotification(doctorId, patientId, {
+           date: appointment.date, // Pass the 'date' property
+           startTime: startTime, // Pass the appointment startTime
+           appointmentId,
+           scheduleId: scheduleSlot._id,
+         });
+
+         // Set the flag to indicate successful notification creation
+         notificationCreated = true;
+       } catch (notificationError) {
+         // Handle the notification error here (e.g., log it)
+         console.error(notificationError);
+       }
+
+       if (notificationCreated) {
+         return res.status(200).json({
+           message: "Appointment booked successfully.",
+           appointment: {
+             _id: appointment._id,
+             date: appointment.date,
+             doctorId: appointment.doctor,
+             bookedAppointment: scheduleSlot, // Return the booked appointment slot
+           },
+         });
+       } else {
+         // If notification creation fails, revert the schedule slot status
+         scheduleSlot.status = "Scheduled";
+         scheduleSlot.patient = undefined;
+         scheduleSlot.bookingId = undefined;
+         await appointment.save();
+
+         return res.status(500).json({
+           message: "An error occurred while booking the appointment.",
+         });
+       }
+        */
   } catch (error) {
     return res
       .status(500)
