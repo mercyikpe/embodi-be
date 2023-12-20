@@ -135,14 +135,7 @@ const UserSchema = new mongoose.Schema(
     isValid: {
       type: Boolean,
       default: true,
-    },
-
-    subscription: {
-      plan: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "SubscriptionPlan",
-      },
-    },
+    }
   },
 
   { timestamps: true }
