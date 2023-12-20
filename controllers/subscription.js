@@ -1,5 +1,6 @@
 const SubscriptionPlan = require("../models/Subscription");
 
+
 const createSubscription = async (req, res) => {
     try {
         const {
@@ -12,6 +13,9 @@ const createSubscription = async (req, res) => {
             expiryDate,
             remainingMonths,
         } = req.body;
+
+
+        await SubscriptionPlan.deleteOne({ userId })
 
         const newSubscription = new SubscriptionPlan({
             userId,

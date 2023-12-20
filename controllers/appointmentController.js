@@ -145,7 +145,7 @@ const bookAppointment = async (req, res) => {
         .json({ message: "This appointment slot is already booked." });
     }
 
-    const SubscriptionData = await SubscriptionPlan.findOne({ userId: patientId }).then(patient => {
+    await SubscriptionPlan.findOne({ userId: patientId }).then(patient => {
 
       if (patient.consultationsCount > 0) {
         patient.consultationsCount--;

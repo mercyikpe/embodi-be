@@ -5,6 +5,7 @@ const questionnaireNotification = require("./notifications/admin/questionnaireNo
 const {
   questionnaireNotificationUser,
 } = require("./notifications/user/questionnaireNotification");
+const SubscriptionPlan = require("../models/Subscription")
 
 ///////CREATE QUESTIONNAIRE USING DISEASE ID
 const createQuestionnaireForDisease = async (req, res) => {
@@ -32,6 +33,15 @@ const createQuestionnaireForDisease = async (req, res) => {
     await questionnaire.save();
 
     // decrease the questionnairesCount
+    await SubscriptionPlan.findOne({ userId }).then(user => {
+
+      if (user.questionnairesCount > 0) {
+        user.questionnairesCount--;
+      }
+      user.save();
+
+      return user
+    })
 
     // Use the disease title in the notification
     const diseaseTitle = disease.title;
