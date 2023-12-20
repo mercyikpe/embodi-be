@@ -9,19 +9,11 @@ const UserSchema = new mongoose.Schema(
 
     firstName: {
       type: String,
-<<<<<<< HEAD
-      // required: true,
-    },
-    lastName: {
-      type: String,
-      // required: true,
-=======
       required: false,
     },
     lastName: {
       type: String,
       required: false,
->>>>>>> 08446891bf012606bc45e112733f7c37091d5221
     },
     email: {
       type: String,
@@ -32,20 +24,12 @@ const UserSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
       unique: true,
-<<<<<<< HEAD
-      // required: true,
-=======
       required: false,
->>>>>>> 08446891bf012606bc45e112733f7c37091d5221
       sparse: true,
     },
     password: {
       type: String,
-<<<<<<< HEAD
-      // required: true,
-=======
       required: false,
->>>>>>> 08446891bf012606bc45e112733f7c37091d5221
     },
 
     role: {

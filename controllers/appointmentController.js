@@ -145,74 +145,66 @@ const bookAppointment = async (req, res) => {
         .json({ message: "This appointment slot is already booked." });
     }
 
-    const SubscriptionData = await SubscriptionPlan.findOne({userId: patientId })
+    const SubscriptionData = await SubscriptionPlan.findOne({ userId: patientId }).then(patient => {
 
-
-    // const SubscriptionData = await SubscriptionPlan.findById(patient)
-    console.log("patient subscription", SubscriptionData)
-
-
-    // Decrease subscription consultationsCount
-    if (patient.subscription && patient.subscription.type === "individual") {
-      // For individual plans, decrement consultationsCount
-      if (patient.subscription.consultationsCount > 0) {
-        patient.subscription.consultationsCount--;
-        await patient.save();
+      if (patient.consultationsCount > 0) {
+        patient.consultationsCount--;
       }
+      patient.save();
+
+      return patient
+    })
+
+
+
+    try {
+      // Update the schedule slot status, assign patientId, and bookingId
+      scheduleSlot.status = "Booked";
+      scheduleSlot.patient = patientId;
+      scheduleSlot.bookingId = generateBookingId();
+      scheduleSlot.updatedAt = new Date(); // Manually update updatedAt for the scheduleSlot
+
+      // Save the updated appointment
+      await appointment.save();
+
+
+      // Call the function to create a notification
+      await createAppointmentNotification(doctorId, patientId, {
+        date: appointment.date, // Pass the 'date' property
+        startTime: startTime, // Pass the appointment startTime
+        appointmentId,
+        scheduleId: scheduleSlot._id,
+      });
+
+      // Set the flag to indicate successful notification creation
+      notificationCreated = true;
+    } catch (notificationError) {
+      // Handle the notification error here (e.g., log it)
+      console.error(notificationError);
     }
 
-    return res.status(200).json({
-      message: "Appointment found",
-    });
+    if (notificationCreated) {
+      return res.status(200).json({
+        message: "Appointment booked successfully.",
+        appointment: {
+          _id: appointment._id,
+          date: appointment.date,
+          doctorId: appointment.doctor,
+          bookedAppointment: scheduleSlot, // Return the booked appointment slot
+        },
+      });
+    } else {
+      // If notification creation fails, revert the schedule slot status
+      scheduleSlot.status = "Scheduled";
+      scheduleSlot.patient = undefined;
+      scheduleSlot.bookingId = undefined;
+      await appointment.save();
 
-    /*try {
-       // Update the schedule slot status, assign patientId, and bookingId
-       scheduleSlot.status = "Booked";
-       scheduleSlot.patient = patientId;
-       scheduleSlot.bookingId = generateBookingId();
-       scheduleSlot.updatedAt = new Date(); // Manually update updatedAt for the scheduleSlot
+      return res.status(500).json({
+        message: "An error occurred while booking the appointment.",
+      });
+    }
 
-       // Save the updated appointment
-       await appointment.save();
-
-
-         // Call the function to create a notification
-         await createAppointmentNotification(doctorId, patientId, {
-           date: appointment.date, // Pass the 'date' property
-           startTime: startTime, // Pass the appointment startTime
-           appointmentId,
-           scheduleId: scheduleSlot._id,
-         });
-
-         // Set the flag to indicate successful notification creation
-         notificationCreated = true;
-       } catch (notificationError) {
-         // Handle the notification error here (e.g., log it)
-         console.error(notificationError);
-       }
-
-       if (notificationCreated) {
-         return res.status(200).json({
-           message: "Appointment booked successfully.",
-           appointment: {
-             _id: appointment._id,
-             date: appointment.date,
-             doctorId: appointment.doctor,
-             bookedAppointment: scheduleSlot, // Return the booked appointment slot
-           },
-         });
-       } else {
-         // If notification creation fails, revert the schedule slot status
-         scheduleSlot.status = "Scheduled";
-         scheduleSlot.patient = undefined;
-         scheduleSlot.bookingId = undefined;
-         await appointment.save();
-
-         return res.status(500).json({
-           message: "An error occurred while booking the appointment.",
-         });
-       }
-        */
   } catch (error) {
     return res
       .status(500)
@@ -451,11 +443,11 @@ const fetchBookedAppointments = async (req, res) => {
         appointments: appointment.appointments.map((appt) => {
           const patientInfo = appt.patient
             ? {
-                patientId: appt.patient._id,
-                patientName: `${appt.patient.firstName} ${appt.patient.lastName}`,
-                patientEmail: appt.patient.email,
-                patientPhoneNumber: appt.patient.phoneNumber,
-              }
+              patientId: appt.patient._id,
+              patientName: `${appt.patient.firstName} ${appt.patient.lastName}`,
+              patientEmail: appt.patient.email,
+              patientPhoneNumber: appt.patient.phoneNumber,
+            }
             : null;
 
           return {
@@ -504,11 +496,11 @@ const fetchCompletedAppointments = async (req, res) => {
         appointments: appointment.appointments.map((appt) => {
           const patientInfo = appt.patient
             ? {
-                patientId: appt.patient._id,
-                patientName: `${appt.patient.firstName} ${appt.patient.lastName}`,
-                patientEmail: appt.patient.email,
-                patientPhoneNumber: appt.patient.phoneNumber,
-              }
+              patientId: appt.patient._id,
+              patientName: `${appt.patient.firstName} ${appt.patient.lastName}`,
+              patientEmail: appt.patient.email,
+              patientPhoneNumber: appt.patient.phoneNumber,
+            }
             : null;
 
           return {
