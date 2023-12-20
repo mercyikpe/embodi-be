@@ -29,6 +29,7 @@ const createQuestionnaireForDisease = async (req, res) => {
       user: userId, // Associate the questionnaire with the user
     };
 
+
     const questionnaire = new Questionnaire(questionnaireData);
     await questionnaire.save();
 
@@ -38,6 +39,7 @@ const createQuestionnaireForDisease = async (req, res) => {
       if (user.questionnairesCount > 0) {
         user.questionnairesCount--;
       }
+
       user.save();
 
       return user

@@ -31,6 +31,10 @@ const SubscriptionPlanSchema = new mongoose.Schema({
     type: Number, // This field indicates the remaining months
     default: 0,
   },
+  isYearlyUpdated: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const SubscriptionPlan = mongoose.model(
